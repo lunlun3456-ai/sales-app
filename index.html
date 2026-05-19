@@ -4,228 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1a1a2e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Sales Reporter 日销报告</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-
   :root {
-    --bg: #f0f4ff;
-    --card: #ffffff;
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --accent: #f59e0b;
-    --success: #10b981;
-    --danger: #ef4444;
-    --text: #1e293b;
-    --text2: #64748b;
-    --border: #e2e8f0;
-    --shadow: 0 4px 24px rgba(37,99,235,0.10);
-    --radius: 18px;
-    --font: 'Nunito', sans-serif;
+    --bg: #f0f4ff; --card: #ffffff; --primary: #2563eb; --primary-dark: #1d4ed8;
+    --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --text: #1e293b;
+    --text2: #64748b; --border: #e2e8f0; --shadow: 0 4px 24px rgba(37,99,235,0.10); --radius: 18px; --font: 'Nunito', sans-serif;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 17px;
-    overflow-x: hidden;
-  }
-
-  /* ---- SCREENS ---- */
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; overflow-x: hidden; }
   .screen { display: none; min-height: 100vh; flex-direction: column; animation: fadeIn .25s; }
   .screen.active { display: flex; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-
-  /* ---- TOP BAR ---- */
-  .topbar {
-    background: var(--primary);
-    color: #fff;
-    padding: 18px 20px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 99;
-    box-shadow: 0 2px 12px rgba(37,99,235,0.18);
-  }
+  .topbar { background: var(--primary); color: #fff; padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 12px rgba(37,99,235,0.18); }
   .topbar h1 { font-size: 19px; font-weight: 800; letter-spacing: .3px; }
   .topbar .sub { font-size: 12px; opacity: .8; margin-top: 2px; }
-  .lang-btn {
-    background: rgba(255,255,255,0.18);
-    border: none;
-    color: #fff;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 14px;
-    font-family: var(--font);
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .lang-btn:hover { background: rgba(255,255,255,0.30); }
-
-  /* ---- LOGIN ---- */
-  #login-screen {
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
-    padding: 30px 24px;
-    min-height: 100vh;
-  }
-  .login-box {
-    background: #fff;
-    border-radius: 28px;
-    padding: 36px 28px 32px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
-  }
+  .lang-btn { background: rgba(255,255,255,0.18); border: none; color: #fff; border-radius: 20px; padding: 6px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  #login-screen { align-items: center; justify-content: center; background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%); padding: 30px 24px; min-height: 100vh; }
+  .login-box { background: #fff; border-radius: 28px; padding: 36px 28px 32px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
   .login-logo { text-align: center; margin-bottom: 22px; }
   .login-logo .icon { font-size: 54px; }
-  .login-logo h2 { font-size: 26px; font-weight: 900; color: var(--primary); margin-top: 6px; text-transform: uppercase; }
-  .login-logo p { font-size: 11px; color: var(--text2); margin-top: 3px; font-weight: 600; letter-spacing: 0.5px; }
+  .login-logo h2 { font-size: 24px; font-weight: 900; color: var(--primary); margin-top: 6px; }
+  .login-logo p { font-size: 12px; color: var(--text2); margin-top: 3px; font-weight: 600; }
   .field-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: block; }
   .input-wrap { margin-bottom: 16px; }
-  select, input[type=text], input[type=password], input[type=number], input[type=date], input[type=month] {
-    width: 100%;
-    padding: 14px 16px;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: var(--font);
-    color: var(--text);
-    background: var(--bg);
-    outline: none;
-    transition: border .2s;
-  }
+  select, input[type=text], input[type=password], input[type=number], input[type=date], input[type=month] { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: var(--font); color: var(--text); background: var(--bg); outline: none; transition: border .2s; }
   select:focus, input:focus { border-color: var(--primary); }
-  
-  .btn {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 17px;
-    font-family: var(--font);
-    font-weight: 800;
-    cursor: pointer;
-    transition: background .2s, transform .1s;
-    text-align: center;
-    margin-top: 6px;
-  }
+  .btn { display: block; width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 6px; }
   .btn:active { background: var(--primary-dark); transform: scale(.98); }
   .btn.secondary { background: var(--bg); color: var(--primary); border: 2px solid var(--border); }
   .btn.danger { background: var(--danger); }
   .btn.success { background: var(--success); }
-  .btn.refresh-btn {
-    width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; font-weight: bold; margin-top: 0;
-    background: var(--primary); display: flex; align-items: center; gap: 4px;
-  }
-
-  /* ---- MAIN CONTENT ---- */
+  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: var(--primary); display: flex; align-items: center; gap: 4px; }
   .content { padding: 18px 16px 100px; flex: 1; }
-
-  /* ---- BOTTOM NAV ---- */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff;
-    display: flex;
-    border-top: 1.5px solid var(--border);
-    box-shadow: 0 -2px 16px rgba(0,0,0,0.07);
-    z-index: 98;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 4px 8px;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: var(--font);
-    color: var(--text2);
-    font-size: 11px;
-    font-weight: 700;
-    transition: color .2s;
-  }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1.5px solid var(--border); box-shadow: 0 -2px 16px rgba(0,0,0,0.07); z-index: 98; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; border: none; background: none; font-family: var(--font); color: var(--text2); font-size: 11px; font-weight: 700; }
   .nav-item.active { color: var(--primary); }
   .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
-
-  /* ---- CARDS ---- */
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow);
-  }
+  .card { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
   .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
   .card-title { font-size: 15px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
-
   .amount-input-wrap { position: relative; margin-bottom: 6px; }
-  .amount-prefix {
-    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-    font-size: 20px; font-weight: 800; color: var(--primary);
-  }
+  .amount-prefix { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; font-weight: 800; color: var(--primary); }
   input.amount-input { padding-left: 54px; font-size: 26px; font-weight: 900; height: 64px; background: #eff6ff; border-color: var(--primary); }
-
-  /* ---- SUMMARY / TOTALS ---- */
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .stat-row:last-child { border-bottom: none; }
   .stat-label { font-size: 15px; color: var(--text2); font-weight: 600; }
   .stat-value { font-size: 17px; font-weight: 900; color: var(--text); }
   .stat-value.big { font-size: 26px; color: var(--primary); }
   .stat-value.green { color: var(--success); }
-
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 800;
-    background: #eff6ff;
-    color: var(--primary);
-    margin-left: 6px;
-  }
-
-  /* ---- STORE FILTER CHIPS ---- */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; background: #eff6ff; color: var(--primary); margin-left: 6px; }
   .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; }
   .filter-scroll::-webkit-scrollbar { display: none; }
-  .filter-chip {
-    white-space: nowrap;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    border: 2px solid var(--border);
-    background: #fff;
-    color: var(--text2);
-    cursor: pointer;
-    transition: all .2s;
-    flex-shrink: 0;
-  }
+  .filter-chip { white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: #fff; color: var(--text2); cursor: pointer; flex-shrink: 0; }
   .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-  /* ---- CONSOLIDATED FILTER PANEL ---- */
   .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-
-  /* ---- RECORD LIST ---- */
-  .record-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
-  }
+  .record-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
   .record-item:last-child { border-bottom: none; }
   .record-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
   .record-info { flex: 1; }
@@ -233,91 +68,36 @@
   .record-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
   .record-amount { font-size: 18px; font-weight: 900; color: var(--primary); }
   .record-sub { font-size: 11px; color: var(--text2); text-align: right; }
-
-  /* ---- ALERT / TOAST ---- */
-  #toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: #1e293b;
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 700;
-    opacity: 0;
-    transition: all .3s;
-    z-index: 999;
-    white-space: nowrap;
-    max-width: 85vw;
-    text-align: center;
-  }
+  #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; white-space: nowrap; max-width: 85vw; text-align: center; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #toast.success-toast { background: var(--success); }
   #toast.error-toast { background: var(--danger); }
   #toast.pending-toast { background: var(--accent); }
-
-  /* ---- MODAL ---- */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 200;
-    align-items: flex-end;
-    justify-content: center;
-  }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: #fff;
-    border-radius: 24px 24px 0 0;
-    padding: 28px 24px 40px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 80vh;
-    overflow-y: auto;
-    animation: slideUp .25s;
-  }
+  .modal-box { background: #fff; border-radius: 24px 24px 0 0; padding: 28px 24px 40px; width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto; animation: slideUp .25s; }
   @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
   .modal-title { font-size: 18px; font-weight: 900; color: var(--text); margin-bottom: 18px; }
-
   .progress-bar-wrap { background: var(--border); border-radius: 8px; height: 10px; overflow: hidden; margin-top: 6px; }
   .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 8px; transition: width .5s; }
-
   .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding-top: 10px; }
   .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
   .bar-fill { width: 100%; background: linear-gradient(180deg, #3b82f6, #1d4ed8); border-radius: 6px 6px 0 0; min-height: 4px; transition: height .5s; }
   .bar-label { font-size: 10px; color: var(--text2); margin-top: 4px; font-weight: 700; }
-
-  .welcome-banner {
-    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
-    border-radius: var(--radius);
-    padding: 20px;
-    color: #fff;
-    margin-bottom: 14px;
-    position: relative;
-    overflow: hidden;
-  }
+  .welcome-banner { background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%); border-radius: var(--radius); padding: 20px; color: #fff; margin-bottom: 14px; position: relative; overflow: hidden; }
   .welcome-banner h2 { font-size: 20px; font-weight: 900; }
-
   .divider { height: 1px; background: var(--border); margin: 16px 0; }
   .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
   .empty-state .e-icon { font-size: 48px; margin-bottom: 12px; }
-
   .role-tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; margin-left: 6px; }
   .role-tag.boss { background: #fde8e8; color: #b91c1c; }
   .role-tag.admin { background: #fee2e2; color: #991b1b; }
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
-
+  .role-tag.test { background: #e2e8f0; color: #475569; border: 1px dashed #94a3b8; } /* 🧪 Test Tag style */
   .tip-box { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 12px 16px; font-size: 13px; color: #78350f; margin-top: 10px; font-weight: 600; }
   .tip-box .tip-title { font-weight: 800; margin-bottom: 3px; }
-
-  .sent-row { display: flex; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .sent-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
-  .sent-dot.pending { background: var(--accent); }
-
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -329,12 +109,12 @@
   <div class="login-box">
     <div class="login-logo">
       <div class="icon">🏪</div>
-      <h2>Sales Report</h2>
-      <p>Cloud Synchronized System</p>
+      <h2>Sales Reporter</h2>
+      <p>Cloud Synchronized Login</p>
     </div>
     <div class="input-wrap">
-      <label class="field-label" id="lbl-name">Username / Staff ID</label>
-      <input type="text" id="login-name" placeholder="e.g. boss01, bonia_sab">
+      <label class="field-label" id="lbl-name">Username / Staff ID (Lower Case)</label>
+      <input type="text" id="login-name" placeholder="e.g. tester01, bonia_ali" autocomplete="off">
     </div>
     <div class="input-wrap">
       <label class="field-label" id="lbl-pass">PIN (4 digits)</label>
@@ -386,70 +166,50 @@
 </div>
 
 <script>
-// ============================================================
-//  STATE & LIVE DATABASE URL
-// ============================================================
 let lang = 'en';
 let currentUser = null;
 let currentTab = 'submit';
 let cachedUsers = {}; 
 
-// --- DATE FILTER STATE VARIABLES ---
-let selectedDateRange = 'today'; // 'today', 'yesterday', 'custom_date'
+let selectedDateRange = 'today';
 let customDateValue = new Date().toISOString().slice(0,10);
 let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
-let staffViewMode = 'daily'; // 'daily' or 'uptodate'
+let staffViewMode = 'daily';
 
-// PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyIu0ajFK5V1S-ROLb_liiVs7fpWyPbcrIdPl28NB0Q-SuyUYsF-NXXbivvxxPuzXlq/exec";
+// ⚠️ PASTE YOUR NEW DEPLOYED APPS SCRIPT URL HERE:
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6k6RqimoeKuTRnYjKKPGIOCyAWitXYbXyGnBpfSxfknmdC6nzxFAbfbNx3BGYuAw1/exec";
 
-const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern','Testing'];
+// ❌ "Testing" has been deleted from this array list below:
+const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 function getSales() { return loadData('sales_records', []); }
 function saveSales(arr) { saveData('sales_records', arr); }
 
-// ============================================================
-//  TRANSLATIONS
-// ============================================================
 const T = {
   en: {
-    store:'Store', role:'Role', pin:'PIN', refresh:'Refresh',
-    appTitle:'Sales Reporter', submit:'Submit', records:'Records', summary:'Summary', me:'Me',
-    submitCard:'Enter Today\'s Sales', cash:'Cash Sales 现金销额', qr:'QR Sales 扫码销额', card:'Credit Card 刷卡销额',
-    totalSales:'Total Sales 总计额', submitBtn:'Submit Report 提交报表', remark:'Remark 备注', 
-    recordsTab:'Sales Records', noRecords:'No records match this date filter',
-    summaryTab:'Sales Summary', accessDenied:'Access Restricted', todayTotal:'Range Total 选定内总计',
-    monthTotal:'Selected Month Total 选定月度总计', byStore:'Sales by Store', daily:'Daily Trend (Last 7 Days)',
-    profileTab:'My Profile', logout:'Logout 退出', advice:'💡 Tips & Advice',
-    tip1:'Submit sales every day before closing time.', tip2:'Double-check amounts before submitting.',
-    submitted:'Submitted successfully to Cloud Sheet! ✓', fillAll:'Please fill in sales amounts.',
-    confirmTitle:'Confirm Submission', confirmMsg:'Are you sure you want to submit?',
+    store:'Store', role:'Role', pin:'PIN', refresh:'Refresh', appTitle:'Sales Reporter', submit:'Submit', records:'Records', summary:'Summary', me:'Me',
+    submitCard:'Enter Today\'s Sales', cash:'Cash Sales 现金销额', qr:'QR Sales 扫码销额', card:'Credit Card 刷卡销额', totalSales:'Total Sales 总计额', submitBtn:'Submit Report 提交报表', remark:'Remark 备注', 
+    recordsTab:'Sales Records', noRecords:'No records match this date filter', summaryTab:'Sales Summary', accessDenied:'Access Restricted', accessMsg: 'Only Boss, Admin & Manager can view metrics.',
+    todayTotal:'Range Total 选定内总计', monthTotal:'Selected Month Total 选定月度总计', byStore:'Sales by Store', daily:'Daily Trend (Last 7 Days)',
+    profileTab:'My Profile', logout:'Logout 退出', advice:'💡 Tips & Advice', tip1:'Submit sales every day before closing time.', tip2:'Double-check amounts before submitting.',
+    submitted:'Submitted successfully to Cloud Sheet! ✓', fillAll:'Please fill in sales amounts.', confirmTitle:'Confirm Submission', confirmMsg:'Are you sure you want to submit?',
     alreadySubmitted:'Today\'s sales for this branch are already registered.', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
-    improvement:'📈 Evaluation & Metrics', filterRange:'Date Selection Range', customDateLabel:'Pick Custom Date',
-    selectMonthLabel:'Filter Monthly Sales', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期',
-    staffDailyOpt:'My Daily Sales Only', staffUptodateOpt:'Everyday Up To Date Sales'
+    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin', test:'Test User', filterRange:'Date Selection Range', customDateLabel:'Pick Custom Date',
+    selectMonthLabel:'Filter Monthly Sales', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期', staffDailyOpt:'My Daily Sales Only', staffUptodateOpt:'Everyday Up To Date Sales'
   },
   zh: {
-    store:'门店', role:'职位', pin:'密码', refresh:'刷新数据',
-    appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', me:'我的',
-    submitCard:'输入今日销售额', cash:'现金销额 (Cash)', qr:'扫码销额 (QR Pay)', card:'刷卡销额 (Card)',
-    totalSales:'总销售额', submitBtn:'确认提交报表', remark:'备注（选填）', 
-    recordsTab:'销售记录', noRecords:'在此日期筛选下暂无匹配记录',
-    summaryTab:'销售汇总', accessDenied:'权限受限', todayTotal:'指定日期总销额',
-    monthTotal:'指定月份总销额', byStore:'各门店月度排行', daily:'每日近七天趋势',
-    profileTab:'我的基本资料', logout:'安全退出登录', advice:'💡 日常维护小贴士',
-    tip1:'请在每日店铺打烊前，准确填写并提交日销。', tip2:'提交数据前，请务必仔细核对账目金额。',
-    submitted:'数据已成功云同步至谷歌表格！✓', fillAll:'请务必填写销售金额。',
-    confirmTitle:'确认核对数据', confirmMsg:'确认数据无误并提交系统吗？',
+    store:'门店', role:'职位', pin:'密码', refresh:'刷新数据', appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', me:'我的',
+    submitCard:'输入今日销售额', cash:'现金销额 (Cash)', qr:'扫码销额 (QR Pay)', card:'刷卡销额 (Card)', totalSales:'总销售额', submitBtn:'确认提交报表', remark:'备注（选填）', 
+    recordsTab:'销售记录', noRecords:'在此日期筛选下暂无匹配记录', summaryTab:'销售汇总', accessDenied:'权限受限', accessMsg: '仅老板、管理员及经理可查看汇总数据。',
+    todayTotal:'指定日期总销额', monthTotal:'指定月份总销额', byStore:'各门店月度排行', daily:'每日近七天趋势',
+    profileTab:'我的基本资料', logout:'安全退出登录', advice:'💡 日常维护小贴士', tip1:'请在每日店铺打烊前，准确填写并提交日销。', tip2:'提交数据前，请务必仔细核对账目金额。',
+    submitted:'数据已成功云同步至谷歌表格！✓', fillAll:'请务必填写销售金额。', confirmTitle:'确认核对数据', confirmMsg:'确认数据无误并提交系统吗？',
     alreadySubmitted:'该门店今日的销售额已经提交，请勿重复操作。', allStores:'所有门店',
-    staff:'店员', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
-    improvement:'📈 营业状态分析与指标', filterRange:'日期过滤范围', customDateLabel:'选择自定义日期',
-    selectMonthLabel:'按指定月份筛选排行', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期',
-    staffDailyOpt:'仅查看我今日的账单', staffUptodateOpt:'查看所有累积历史明细'
+    staff:'店员', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员', test:'测试账户', filterRange:'日期过滤范围', customDateLabel:'选择自定义日期',
+    selectMonthLabel:'按指定月份筛选排行', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期', staffDailyOpt:'仅查看我今日的账单', staffUptodateOpt:'查看所有累积历史明细'
   }
 };
 
@@ -461,25 +221,17 @@ function updateNavLabels() {
   document.getElementById('nav-summary-lbl').textContent = t('summary'); document.getElementById('nav-profile-lbl').textContent = t('me');
 }
 
-// ============================================================
-//  LIVE REFRESH ENGINE (CHANNELS SYNC BACK TO SHEET CORES)
-// ============================================================
 async function triggerSyncRefresh() {
-  if(!WEB_APP_URL || WEB_APP_URL === "PASTE_YOUR_GOOGLE_WEB_APP_URL_HERE") { showToast("Configuration Link Missing","error"); return; }
-  showToast(lang==='zh'?'正在同步云端最新账目...':'Fetching latest updates from Sheet...','pending');
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_GOOGLE_WEB_APP_URL")) return;
   try {
     const res = await fetch(WEB_APP_URL);
     const data = await res.json();
-    if (Array.isArray(data)) {
-      saveSales(data);
-      showToast(lang==='zh'?'更新成功！✓':'Database Up to Date! ✓','success');
-      renderCurrentTab();
-    }
-  } catch(e) { showToast("Sync Error: "+e,"error"); }
+    if (Array.isArray(data)) { saveSales(data); renderCurrentTab(); }
+  } catch(e) {}
 }
 
 async function fetchLiveUsers() {
-  if(!WEB_APP_URL || WEB_APP_URL === "PASTE_YOUR_GOOGLE_WEB_APP_URL_HERE") return null;
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_GOOGLE_WEB_APP_URL")) return null;
   try {
     const response = await fetch(`${WEB_APP_URL}?action=getUsers`);
     const users = await response.json();
@@ -491,11 +243,14 @@ async function fetchLiveUsers() {
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin = document.getElementById('login-pin').value.trim();
-  if(!username || !pin) { showToast('Please enter credentials','error'); return; }
-  showToast('Connecting...','pending');
+  if(!username || !pin) { showToast('Please enter username and PIN','error'); return; }
+  
+  showToast(lang==='zh'?'正在验证...':'Verifying Account...','pending');
   await fetchLiveUsers();
+  
   const userMatch = cachedUsers[username];
   if(!userMatch || userMatch.pin !== pin) { showToast('Invalid Username or PIN','error'); return; }
+  
   currentUser = userMatch; currentUser.username = username;
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
@@ -519,14 +274,11 @@ function renderCurrentTab() {
   if(currentTab==='profile') renderProfileTab();
 }
 
-// ============================================================
-//  TAB 1: SUBMISSION CORE
-// ============================================================
 function renderSubmitTab() {
   const now = new Date();
   const dateStr = now.toLocaleDateString(lang==='zh'?'zh-CN':'en-MY', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   const timeStr = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  const isRestrictedWorker = ['supervisor','staff'].includes(currentUser.role);
+  const isRestrictedWorker = ['supervisor','staff','test'].includes(currentUser.role);
   let storeOptions = isRestrictedWorker ? `<input type="text" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
     : `<select id="submit-store"><option value="">-- Select Store --</option>${STORES.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}</select>`;
 
@@ -555,7 +307,7 @@ function updateLiveTotal() {
 }
 
 function openConfirm() {
-  const isRestrictedWorker = ['supervisor','staff'].includes(currentUser.role);
+  const isRestrictedWorker = ['supervisor','staff','test'].includes(currentUser.role);
   const store = isRestrictedWorker ? currentUser.store : (document.getElementById('submit-store') ? document.getElementById('submit-store').value : '');
   const cash = parseFloat(document.getElementById('s-cash').value)||0;
   const qr   = parseFloat(document.getElementById('s-qr').value)||0;
@@ -593,14 +345,9 @@ function confirmSubmit() {
   }).catch(err => { showToast('Sync Failed: ' + err, 'error'); });
 }
 
-// ============================================================
-//  TAB 2: RECORDS ENGINE (WITH ADVANCED DATE FILTERS & REFRESH)
-// ============================================================
 function renderRecordsTab() {
   const sales = getSales();
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
-  
-  // Calculate specific filtering constraints
   const todayKey = new Date().toISOString().slice(0,10);
   let yesterdayKey = new Date(); yesterdayKey.setDate(yesterdayKey.getDate() - 1);
   yesterdayKey = yesterdayKey.toISOString().slice(0,10);
@@ -609,25 +356,19 @@ function renderRecordsTab() {
   if(selectedDateRange === 'yesterday') targetDate = yesterdayKey;
   if(selectedDateRange === 'custom_date') targetDate = customDateValue;
 
-  // Branch isolation framework logic
   let filtered = isExec ? sales : sales.filter(s=>s.store === currentUser.store);
 
-  // Apply staff specific viewing constraints
   if(!isExec && staffViewMode === 'daily') {
     filtered = filtered.filter(s => s.dateKey === todayKey);
   } else if(isExec || staffViewMode === 'daily') {
-    // Executive filters track along the active custom/selected day
     filtered = filtered.filter(s => s.dateKey === targetDate);
-  } // 'uptodate' bypasses date limitations to review everything
-
-  // Exec level cross branch selection filter mapping
+  }
   if(isExec && activeRecordStoreFilter !== 'all') {
     filtered = filtered.filter(r => r.store === activeRecordStoreFilter);
   }
 
   filtered = filtered.slice().reverse();
 
-  // Draw Header Control Grid Interface
   let filterControlsHtml = '';
   if(isExec) {
     filterControlsHtml = `
@@ -651,7 +392,6 @@ function renderRecordsTab() {
       </div>
     `;
   } else {
-    // Provide staff with toggle mechanisms to view daily shift tracking vs all historical data
     filterControlsHtml = `
       <div class="control-grid" style="grid-template-columns: 1fr;">
         <select onchange="updateStaffViewMode(this.value)">
@@ -693,9 +433,6 @@ function updateCustomDateValue(val) { customDateValue = val; renderRecordsTab();
 function setRecordStoreFilter(store) { activeRecordStoreFilter = store; renderRecordsTab(); }
 function updateStaffViewMode(val) { staffViewMode = val; renderRecordsTab(); }
 
-// ============================================================
-//  TAB 3: METRICS SUMMARY (MONTHLY TIME FILTERS ENGINE)
-// ============================================================
 function renderSummaryTab() {
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
   if(!isExec) {
@@ -710,24 +447,19 @@ function renderSummaryTab() {
   let yesterdayKey = new Date(); yesterdayKey.setDate(yesterdayKey.getDate() - 1);
   yesterdayKey = yesterdayKey.toISOString().slice(0,10);
 
-  // Synchronize targeted executive parameters
   let targetRangeDay = todayKey;
   if(selectedDateRange === 'yesterday') targetRangeDay = yesterdayKey;
   if(selectedDateRange === 'custom_date') targetRangeDay = customDateValue;
 
-  // Process operational dynamic queries
   const rangeSales = sales.filter(s=>s.dateKey === targetRangeDay);
   const monthSales = sales.filter(s=>s.month === selectedMonthValue);
-
   const rangeTotal = rangeSales.reduce((a,s)=>a+parseFloat(s.total),0);
   const monthTotal = monthSales.reduce((a,s)=>a+parseFloat(s.total),0);
 
-  // Compute store arrays matching targeted selected month parameter
   const storeMap = {}; STORES.forEach(s=>storeMap[s]=0);
   monthSales.forEach(s=>storeMap[s.store] = (storeMap[s.store]||0)+parseFloat(s.total));
   const maxStore = Math.max(...Object.values(storeMap),1);
 
-  // Generate 7-day historic trend timeline chart
   const days = [];
   for(let i=6;i>=0;i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
@@ -743,7 +475,6 @@ function renderSummaryTab() {
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
       <button class="btn refresh-btn" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
     </div>
-
     <div class="card" style="padding:14px; margin-bottom:14px; background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0;">
         <div>
@@ -761,10 +492,9 @@ function renderSummaryTab() {
         </div>
       </div>
     </div>
-
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 ${selectedDateRange.toUpperCase()} TOTAL</div>
+        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 TOTAL</div>
         <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
       </div>
       <div class="card" style="margin:0;text-align:center">
@@ -772,14 +502,12 @@ function renderSummaryTab() {
         <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(0)}</div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title">📈 ${t('daily')}</div>
       <div class="bar-chart">
         ${days.map(d=>`<div class="bar-col"><div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*80)}px"></div><div class="bar-label">${d.label}</div></div>`).join('')}
       </div>
     </div>
-
     <div class="card">
       <div class="card-title">🏪 ${t('byStore')} (${selectedMonthValue})</div>
       ${STORES.map(s=>`
@@ -798,9 +526,6 @@ function updateSummaryDateRange(val) { selectedDateRange = val; renderSummaryTab
 function updateSummaryCustomDate(val) { customDateValue = val; renderSummaryTab(); }
 function updateSummaryMonth(val) { selectedMonthValue = val; renderSummaryTab(); }
 
-// ============================================================
-//  TAB 4: PROFILE
-// ============================================================
 function renderProfileTab() {
   document.getElementById('tab-profile').innerHTML = `
     <div class="card" style="text-align:center;padding:28px">
