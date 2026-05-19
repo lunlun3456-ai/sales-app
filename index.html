@@ -20,6 +20,7 @@
   .topbar { background: var(--primary); color: #fff; padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 12px rgba(37,99,235,0.18); }
   .topbar h1 { font-size: 19px; font-weight: 800; letter-spacing: .3px; }
   .topbar .sub { font-size: 12px; opacity: .8; margin-top: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
   .lang-btn { background: rgba(255,255,255,0.18); border: none; color: #fff; border-radius: 20px; padding: 6px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
   #login-screen { align-items: center; justify-content: center; background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%); padding: 30px 24px; min-height: 100vh; }
   .login-box { background: #fff; border-radius: 28px; padding: 36px 28px 32px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
@@ -36,7 +37,8 @@
   .btn.secondary { background: var(--bg); color: var(--primary); border: 2px solid var(--border); }
   .btn.danger { background: var(--danger); }
   .btn.success { background: var(--success); }
-  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: var(--primary); display: flex; align-items: center; gap: 4px; }
+  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: var(--primary); display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(37,99,235,0.2); border: 1px solid rgba(255,255,255,0.1); }
+  .topbar .refresh-btn { background: rgba(255,255,255,0.2); box-shadow: none; color: #fff; }
   .content { padding: 18px 16px 100px; flex: 1; }
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1.5px solid var(--border); box-shadow: 0 -2px 16px rgba(0,0,0,0.07); z-index: 98; padding-bottom: env(safe-area-inset-bottom); }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; border: none; background: none; font-family: var(--font); color: var(--text2); font-size: 11px; font-weight: 700; }
@@ -95,9 +97,7 @@
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
-  .role-tag.test { background: #e2e8f0; color: #475569; border: 1px dashed #94a3b8; } /* 🧪 Test Tag style */
-  .tip-box { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 12px 16px; font-size: 13px; color: #78350f; margin-top: 10px; font-weight: 600; }
-  .tip-box .tip-title { font-weight: 800; margin-bottom: 3px; }
+  .role-tag.test { background: #e2e8f0; color: #475569; border: 1px dashed #94a3b8; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -130,7 +130,10 @@
       <h1 id="app-title">Sales Reporter</h1>
       <div class="sub" id="app-user-info"></div>
     </div>
-    <button class="lang-btn" onclick="toggleLang()">中/EN</button>
+    <div class="topbar-right">
+      <button class="btn refresh-btn" onclick="triggerSyncRefresh()">🔄</button>
+      <button class="lang-btn" onclick="toggleLang()">中/EN</button>
+    </div>
   </div>
 
   <div class="content" id="tab-submit" style="display:block"></div>
@@ -177,16 +180,24 @@ let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
 let staffViewMode = 'daily';
 
-// ⚠️ PASTE YOUR NEW DEPLOYED APPS SCRIPT URL HERE:
+// ⚠️ PASTE YOUR GOOGLE WEB APP URL HERE:
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6k6RqimoeKuTRnYjKKPGIOCyAWitXYbXyGnBpfSxfknmdC6nzxFAbfbNx3BGYuAw1/exec";
 
-// ❌ "Testing" has been deleted from this array list below:
+// 🛑 "Testing" is completely deleted from this primary layout array:
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
-function getSales() { return loadData('sales_records', []); }
-function saveSales(arr) { saveData('sales_records', arr); }
+
+// Helper logic to clear old demo or test variables referencing 'Testing' store
+function getSales() { 
+  let data = loadData('sales_records', []);
+  return data.filter(item => item.store !== 'Testing');
+}
+function saveSales(arr) { 
+  let filtered = arr.filter(item => item.store !== 'Testing');
+  saveData('sales_records', filtered); 
+}
 
 const T = {
   en: {
@@ -223,11 +234,18 @@ function updateNavLabels() {
 
 async function triggerSyncRefresh() {
   if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_GOOGLE_WEB_APP_URL")) return;
+  showToast(lang==='zh'?'正在同步云端...':'Syncing with Cloud...','pending');
   try {
     const res = await fetch(WEB_APP_URL);
     const data = await res.json();
-    if (Array.isArray(data)) { saveSales(data); renderCurrentTab(); }
-  } catch(e) {}
+    if (Array.isArray(data)) { 
+      saveSales(data); 
+      renderCurrentTab();
+      showToast(lang==='zh'?'数据已更新✓':'Data Updated ✓','success');
+    }
+  } catch(e) {
+    showToast('Sync Error','error');
+  }
 }
 
 async function fetchLiveUsers() {
