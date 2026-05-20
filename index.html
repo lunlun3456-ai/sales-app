@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1a1a2e">
 <title>Sales Reporter 日销报告</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
   :root {
     --bg: #f0f4ff; --card: #ffffff; --primary: #2563eb; --primary-dark: #1d4ed8;
     --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --text: #1e293b;
@@ -53,7 +53,7 @@
   input.amount-input { padding-left: 54px; font-size: 26px; font-weight: 900; height: 64px; background: #eff6ff; border-color: var(--primary); }
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .stat-row:last-child { border-bottom: none; }
-  .text-label { font-size: 15px; color: var(--text2); font-weight: 600; }
+  .stat-label { font-size: 15px; color: var(--text2); font-weight: 600; }
   .stat-value { font-size: 17px; font-weight: 900; color: var(--text); }
   .stat-value.big { font-size: 26px; color: var(--primary); }
   .stat-value.green { color: var(--success); }
@@ -68,7 +68,7 @@
   .record-item:last-child { border-bottom: none; }
   .record-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
   .record-info { flex: 1; }
-  .record-store font-size: 14px; font-weight: 800; color: var(--text); }
+  .record-store { font-size: 14px; font-weight: 800; color: var(--text); }
   .record-meta { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.6; }
   .record-amount { font-size: 18px; font-weight: 900; color: var(--primary); }
   .record-sub { font-size: 11px; color: var(--text2); text-align: right; }
@@ -100,6 +100,7 @@
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
+  /* ADMIN PANEL */
   .user-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .user-row:last-child { border-bottom: none; }
   .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; flex-shrink: 0; }
@@ -115,6 +116,7 @@
   .btn-sm.reject { background: #fee2e2; color: var(--danger); }
   .pending-card { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fffbeb; }
   .pending-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; margin-left: 6px; }
+  /* SPINNER */
   .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--text2); font-size:14px; font-weight:700; }
   .spin { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -152,7 +154,6 @@
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn refresh-btn" onclick="triggerSyncRefresh()">🔄 <span id="lbl-sync-btn">Sync</span></button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
@@ -291,7 +292,6 @@
 // CONFIGURATION — Default Google Apps Script URL
 // ============================================================
 const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxK0Jc7fKBfd0ciOPZE-FndV4PoShEcjzSGaCE2ph3tft2nymekwfVDRsAIDPif0Cix/exec";
-
 let WEB_APP_URL = loadData('custom_web_app_url', DEFAULT_WEB_APP_URL);
 
 // ============================================================
@@ -314,6 +314,7 @@ const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Easter
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
+// ALWAYS SANITIZE DIRT ROWS AND EMIT CLEAN DATA FROM SPREADSHEET ONLY
 function getSales() {
   return loadData('sales_records', []).filter(item => item && item.store !== 'Testing');
 }
@@ -384,7 +385,6 @@ function toggleLang() {
 function updateTopBar() {
   if(currentUser) document.getElementById('app-user-info').textContent =
     currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
-  document.getElementById('lbl-sync-btn').textContent = lang === 'zh' ? '同步数据' : 'Sync';
 }
 
 function updateNavLabels() {
@@ -396,9 +396,62 @@ function updateNavLabels() {
 }
 
 // ============================================================
-// REGISTRATION
+// ENFORCED SPREADSHEET PRIORITIZED SYNC ENGINE
 // ============================================================
-function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
+async function triggerSyncRefresh(silent = false) {
+  if (!WEB_APP_URL) return;
+  if (!silent) showToast(lang === 'zh' ? '正在连接谷歌云端同步...' : 'Connecting Spreadsheet Cloud...', 'pending');
+  
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getSales', { cache: 'no-store' });
+    const payload = await response.json();
+    const freshRecords = Array.isArray(payload) ? payload : (Array.isArray(payload.sales) ? payload.sales : []);
+    if (freshRecords.length || Array.isArray(payload.sales)) {
+      // OVERWRITE local database array with pure Google Spreadsheet contents 
+      saveSales(freshRecords.map(normalizeSheetRecord));
+      if (!silent) showToast(lang === 'zh' ? '云端同步刷新成功 ✓' : 'Spreadsheet Sync Complete ✓', 'success');
+    }
+  } catch (e) {
+    console.error("Database priority connection error:", e);
+    if (!silent) showToast(lang === 'zh' ? '离线状态下显示原有数据' : 'Offline Mode: showing last sync', 'error');
+  }
+}
+
+function normalizeSheetRecord(row) {
+  const dateKey = normalizeDateKey(row.dateKey || row.date || row.datetime);
+  return {
+    ...row,
+    cash: parseFloat(row.cash || 0),
+    qr: parseFloat(row.qr || 0),
+    card: parseFloat(row.card || 0),
+    bank: parseFloat(row.bank || 0),
+    total: parseFloat(row.total || 0),
+    dateKey,
+    month: normalizeMonthKey(row.month, dateKey),
+  };
+}
+
+function normalizeDateKey(value) {
+  if (!value) return '';
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value).slice(0, 10);
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const d = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function normalizeMonthKey(value, fallbackDateKey) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}$/.test(value)) return value;
+  const normalized = normalizeDateKey(value);
+  return normalized ? normalized.slice(0, 7) : String(fallbackDateKey || '').slice(0, 7);
+}
+
+// ============================================================
+// ACCOUNT REGISTER REQUEST
+// ============================================================
+async function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
 function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
 
 async function submitRegisterRequest() {
@@ -428,46 +481,26 @@ async function submitRegisterRequest() {
 }
 
 // ============================================================
-// SYNC — Pulls updated records from Cloud database
-// ============================================================
-async function triggerSyncRefresh() {
-  showToast(lang === 'zh' ? '正在从云端下载销售数据...' : 'Fetching live sales data...', 'pending');
-  try {
-    const response = await fetch(WEB_APP_URL + '?action=getSales');
-    const cloudSales = await response.json();
-    if (Array.isArray(cloudSales)) {
-      saveSales(cloudSales);
-      showToast(lang === 'zh' ? '销售数据同步成功！' : 'Sales records synced successfully!', 'success');
-      renderCurrentTab();
-    } else {
-      showToast(lang === 'zh' ? '同步格式错误' : 'Sync format error', 'error');
-    }
-  } catch(e) {
-    showToast(lang === 'zh' ? '同步失败: ' + e : 'Sync failed: ' + e, 'error');
-  }
-}
-
-// ============================================================
-// FETCH USERS — Pulls user profiles configuration from database
+// FETCH CONFIG USERS
 // ============================================================
 async function fetchLiveUsers() {
+  cachedUsers = loadData('cached_users', {});
+  if (!WEB_APP_URL) return cachedUsers;
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const response = await fetch(WEB_APP_URL + '?action=getUsers', { cache: 'no-store' });
     const users = await response.json();
-    if(users && typeof users === 'object' && Object.keys(users).length > 0) {
+    if (users && typeof users === 'object' && Object.keys(users).length > 0) {
       cachedUsers = users;
       saveData('cached_users', users);
-    } else {
-      cachedUsers = loadData('cached_users', {});
     }
-  } catch (e) {
-    cachedUsers = loadData('cached_users', {});
+  } catch(e) {
+    console.log("Could not load fresh users configuration.");
   }
   return cachedUsers;
 }
 
 // ============================================================
-// LOGIN
+// USER AUTHENTICATION
 // ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
@@ -490,19 +523,25 @@ async function doLogin() {
   document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
 
   updateTopBar(); updateNavLabels();
-  triggerSyncRefresh();
+  await triggerSyncRefresh(true);
+  switchTab('submit', document.getElementById('nav-submit'));
 }
 
 // ============================================================
-// TAB SWITCHING
+// CONTEXT TAB SWITCH CONTROL
 // ============================================================
-function switchTab(tab, btn) {
+async function switchTab(tab, btn) {
   currentTab = tab;
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   ['submit','records','summary','admin','profile'].forEach(tt => {
     document.getElementById('tab-' + tt).style.display = tt === tab ? 'block' : 'none';
   });
+  
+  // FORCE GOOGLE SPREADSHEET PULL WHENEVER VIEWS CHANGE (ELIMINATES MANUAL DELETION DISCREPANCIES)
+  if (['records', 'summary'].includes(tab)) {
+    await triggerSyncRefresh(true);
+  }
   renderCurrentTab();
 }
 
@@ -515,7 +554,7 @@ function renderCurrentTab() {
 }
 
 // ============================================================
-// SUBMIT TAB
+// DATA TRANSACTION VIEW (SUBMIT)
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
@@ -531,7 +570,7 @@ function renderSubmitTab() {
   document.getElementById('tab-submit').innerHTML = `
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh' ? '可随时补录、覆盖或更新历史数据，金额可填 0' : 'Update or edit any date. Amounts can be RM 0.00'}</p>
+      <p>${lang==='zh' ? '直接修改此处即可覆盖或修改目标日期的云端历史数据' : 'Editing a date with existing data will rewrite it in the spreadsheet.'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
@@ -569,7 +608,7 @@ function renderSubmitTab() {
       </div>
       <div class="divider"></div>
       <div class="stat-row">
-        <span class="text-label">🧾 ${t('totalSales')}</span>
+        <span class="stat-label">🧾 ${t('totalSales')}</span>
         <span class="stat-value big" id="live-total">RM 0.00</span>
       </div>
       <div class="input-wrap" style="margin-top:12px">
@@ -577,9 +616,6 @@ function renderSubmitTab() {
         <input type="text" id="s-remark" placeholder="...">
       </div>
       <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-    </div>
-    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${lang==='zh'?'所有金额均可填写为 0.00（表示无销售额）':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
@@ -628,14 +664,14 @@ function openConfirm() {
 
   document.getElementById('modal-title').textContent = t('confirmTitle');
   document.getElementById('modal-body').innerHTML = `
-    <div class="stat-row"><span class="text-label">🏪 Store</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="text-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
-    <div class="stat-row"><span class="text-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="text-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="text-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="text-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="text-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-    ${remark ? `<div class="stat-row"><span class="text-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>` : ''}
+    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
+    ${remark ? `<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>` : ''}
   `;
   window._pendingSubmit = { store, targetDate, cash, qr, card, bank, total, remark };
   document.getElementById('confirm-modal').classList.add('open');
@@ -653,25 +689,23 @@ function confirmSubmit() {
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
+  showToast(lang==='zh'?'正在发送云端修改...':'Writing to Spreadsheet...', 'pending');
 
   fetch(WEB_APP_URL, {
     method: 'POST', mode: 'no-cors', cache: 'no-cache',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'submitSales', ...record })
-  }).then(() => {
-    let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
-    sales.push(record);
-    saveSales(sales);
+  }).then(async () => {
     closeModal();
     showToast(t('submitted'), 'success');
-    
-    setTimeout(triggerSyncRefresh, 1000);
+    // FORCE DOWNLOAD FRESH ROW STATES DIRECTLY FROM GOOGLE SHEETS API IMMEDIATELY
+    await triggerSyncRefresh(true);
+    renderSubmitTab();
   }).catch(err => { showToast('Error: ' + err, 'error'); });
 }
 
 // ============================================================
-// RECORDS TAB
+// RECORDS DISPLAY (DRIVEN SOLELY BY SPREADSHEET ARRAY)
 // ============================================================
 function renderRecordsTab() {
   const sales   = getSales();
@@ -744,7 +778,7 @@ function renderRecordsTab() {
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
     <div class="card">${listHtml}</div>
@@ -757,7 +791,7 @@ function updateCustomMonthValue(val){ selectedMonthValue = val; renderRecordsTab
 function setRecordStoreFilter(store){ activeRecordStoreFilter = store; renderRecordsTab(); }
 
 // ============================================================
-// SUMMARY TAB
+// SUMMARY DASHBOARD (DRIVEN SOLELY BY SPREADSHEET ARRAY)
 // ============================================================
 function renderSummaryTab() {
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
@@ -804,7 +838,7 @@ function renderSummaryTab() {
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -858,7 +892,7 @@ function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryT
 function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
 // ============================================================
-// ADMIN TAB — Pending approvals + User management
+// ADMIN CONTROL
 // ============================================================
 async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
@@ -1048,7 +1082,7 @@ async function deleteUser(username) {
 }
 
 // ============================================================
-// PROFILE TAB
+// PROFILE CONFIG SETTINGS
 // ============================================================
 function renderProfileTab() {
   const settingsTitle = lang === 'zh' ? 'API 接口配置' : 'API Web App Configuration';
@@ -1074,57 +1108,39 @@ function renderProfileTab() {
     </div>
 
     <div class="card">
-      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="card-title">${lang==='zh'?'本地数据状态':'Local Data Status'}</div>
       <div class="stat-row">
-        <span class="text-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
+        <span class="stat-label">${lang==='zh'?'已同步条数':'Clean Records'}</span>
         <span class="stat-value">${getSales().length}</span>
       </div>
       <div class="stat-row">
-        <span class="text-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
-        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
+        <span class="stat-label">${lang==='zh'?'数据来源':'Data Priority'}</span>
+        <span class="stat-value" style="color:var(--success)">Google Sheet</span>
       </div>
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
 }
 
-// ============================================================
-// SAVE CUSTOM WEB APP URL
-// ============================================================
 async function saveCustomWebAppUrl() {
   const inputUrl = document.getElementById('config-web-url').value.trim();
-  
-  if (!inputUrl) {
-    showToast(lang === 'zh' ? 'URL 不能为空' : 'URL cannot be empty', 'error');
-    return;
+  if (!inputUrl || !inputUrl.startsWith("https://script.google.com/")) {
+    showToast('Invalid Google Apps Script URL', 'error'); return;
   }
-  if (!inputUrl.startsWith("https://script.google.com/")) {
-    showToast(lang === 'zh' ? '无效的 Google Apps Script 地址' : 'Invalid Google Apps Script URL', 'error');
-    return;
-  }
-
   saveData('custom_web_app_url', inputUrl);
   WEB_APP_URL = inputUrl;
-
-  showToast(lang === 'zh' ? '正在加载用户列表...' : 'Loading user list...', 'pending');
+  showToast('Loading database configurations...', 'pending');
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const response = await fetch(WEB_APP_URL + '?action=getUsers', { cache: 'no-store' });
     const users = await response.json();
-    if(users && typeof users === 'object' && Object.keys(users).length > 0) {
+    if(users && typeof users === 'object') {
       cachedUsers = users;
       saveData('cached_users', users);
-      showToast(lang === 'zh' ? '配置已保存，用户列表已更新！' : 'Config saved & users loaded!', 'success');
-    } else {
-      showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
     }
-  } catch(e) {
-    showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
-  }
+    showToast('Saved & Connected!', 'success');
+  } catch(e) { showToast('URL saved!', 'success'); }
 }
 
-// ============================================================
-// LOGOUT
-// ============================================================
 function doLogout() {
   currentUser = null;
   document.getElementById('app-screen').classList.remove('active');
@@ -1133,9 +1149,6 @@ function doLogout() {
   document.getElementById('login-name').value = '';
 }
 
-// ============================================================
-// TOAST
-// ============================================================
 function showToast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -1144,9 +1157,12 @@ function showToast(msg, type='') {
 }
 
 // ============================================================
-// INIT
+// BOOTSTRAP INITIALIZATION
 // ============================================================
-window.addEventListener('DOMContentLoaded', fetchLiveUsers);
+window.addEventListener('DOMContentLoaded', async () => {
+  await fetchLiveUsers();
+  await triggerSyncRefresh(true);
+});
 </script>
 </body>
 </html>
