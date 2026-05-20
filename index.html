@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1a1a2e">
 <title>Sales Reporter 日销报告</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
   :root {
     --bg: #f0f4ff; --card: #ffffff; --primary: #2563eb; --primary-dark: #1d4ed8;
     --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --text: #1e293b;
@@ -38,6 +38,8 @@
   .btn.danger { background: var(--danger); color: #fff; }
   .btn.success { background: var(--success); color: #fff; }
   .btn.warn { background: var(--accent); color: #fff; }
+  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: rgba(255,255,255,0.2); display: flex; align-items: center; gap: 4px; color: #fff; border: none; }
+  .btn.refresh-inline { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; margin-top: 0; background: var(--bg); color: var(--primary); border: 1px solid var(--border); }
   .content { padding: 18px 16px 100px; flex: 1; }
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1.5px solid var(--border); box-shadow: 0 -2px 16px rgba(0,0,0,0.07); z-index: 98; padding-bottom: env(safe-area-inset-bottom); }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; border: none; background: none; font-family: var(--font); color: var(--text2); font-size: 11px; font-weight: 700; }
@@ -51,7 +53,7 @@
   input.amount-input { padding-left: 54px; font-size: 26px; font-weight: 900; height: 64px; background: #eff6ff; border-color: var(--primary); }
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .stat-row:last-child { border-bottom: none; }
-  .nav-item-badge { background: var(--danger); color: white; border-radius: 10px; padding: 1px 6px; font-size: 10px; position: absolute; top: 4px; right: 15%; font-weight: 800; }
+  .stat-label { font-size: 15px; color: var(--text2); font-weight: 600; }
   .stat-value { font-size: 17px; font-weight: 900; color: var(--text); }
   .stat-value.big { font-size: 26px; color: var(--primary); }
   .stat-value.green { color: var(--success); }
@@ -114,6 +116,10 @@
   .btn-sm.reject { background: #fee2e2; color: var(--danger); }
   .pending-card { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fffbeb; }
   .pending-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; margin-left: 6px; }
+  /* SPINNER */
+  .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--text2); font-size:14px; font-weight:700; }
+  .spin { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -130,7 +136,7 @@
     </div>
     <div class="input-wrap">
       <label class="field-label" id="lbl-name">Username 用户名</label>
-      <input type="text" id="login-name" placeholder="e.g. admin" autocomplete="off" autocapitalize="none" autocorrect="off">
+      <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off">
     </div>
     <div class="input-wrap">
       <label class="field-label" id="lbl-pass">PIN (4 digits 4位密码)</label>
@@ -148,6 +154,7 @@
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
+      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn" title="Sync from Google Sheets">🔄</button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
@@ -168,9 +175,8 @@
     <button class="nav-item" onclick="switchTab('summary',this)" id="nav-summary">
       <span class="nav-icon">📊</span><span id="nav-summary-lbl">Summary</span>
     </button>
-    <button class="nav-item" style="position:relative; display:none" onclick="switchTab('admin',this)" id="nav-admin">
+    <button class="nav-item" onclick="switchTab('admin',this)"   id="nav-admin" style="display:none">
       <span class="nav-icon">⚙️</span><span id="nav-admin-lbl">Admin</span>
-      <span id="admin-badge-count" class="nav-item-badge" style="display:none">0</span>
     </button>
     <button class="nav-item" onclick="switchTab('profile',this)" id="nav-profile">
       <span class="nav-icon">👤</span><span id="nav-profile-lbl">Me</span>
@@ -284,7 +290,15 @@
 
 <script>
 // ============================================================
-// STATE & STORAGE DATA MANAGEMENT
+// CONFIGURATION — Default Google Apps Script URL
+// ============================================================
+const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxcn4CeL8QV50jfRFQf8p4xBI_xevspkbz7BbLa2L3lM19q1pBxND6pkCb81jiHGVQi/exec";
+
+// Automatically fallback to default if no user-defined URL is stored yet
+let WEB_APP_URL = loadData('custom_web_app_url', DEFAULT_WEB_APP_URL);
+
+// ============================================================
+// STATE
 // ============================================================
 let lang = 'en';
 let currentUser = null;
@@ -297,6 +311,9 @@ let activeRecordStoreFilter = 'all';
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
+// ============================================================
+// LOCAL STORAGE HELPERS
+// ============================================================
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
@@ -307,31 +324,6 @@ function saveSales(arr) {
   saveData('sales_records', arr.filter(item => item && item.store !== 'Testing'));
 }
 
-// Ensure database contains essential seed parameters locally for initialization
-function initializeDatabase() {
-  cachedUsers = loadData('cached_users', {});
-  if (!cachedUsers || Object.keys(cachedUsers).length === 0) {
-    cachedUsers = {
-      "admin": { name: "System Admin", pin: "1234", role: "admin", store: "HQ", status: "active" },
-      "boss": { name: "Company Owner", pin: "8888", role: "boss", store: "ALL", status: "active" }
-    };
-    saveData('cached_users', cachedUsers);
-  }
-  updateAdminBadge();
-}
-
-function updateAdminBadge() {
-  const badgeEl = document.getElementById('admin-badge-count');
-  if (!badgeEl) return;
-  const pendingCount = Object.values(loadData('cached_users', {})).filter(u => u.status === 'pending').length;
-  if (pendingCount > 0) {
-    badgeEl.textContent = pendingCount;
-    badgeEl.style.display = 'inline-block';
-  } else {
-    badgeEl.style.display = 'none';
-  }
-}
-
 // ============================================================
 // TRANSLATIONS
 // ============================================================
@@ -339,14 +331,14 @@ const T = {
   en: {
     appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary', admin:'Admin', me:'Me',
     submitCard:'Enter / Update Sales', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
-    totalSales:'Total Sales', submitBtn:'Submit Record', remark:'Remark (optional)',
+    totalSales:'Total Sales', submitBtn:'Submit & Sync', remark:'Remark (optional)',
     recordsTab:'Sales Records', noRecords:'No records found for this filter',
     summaryTab:'Sales Summary', accessDenied:'Access Restricted',
     accessMsg:'Only Boss, Admin & Manager can view this.',
     todayTotal:'Range Total', monthTotal:'Monthly Total',
     byStore:'Sales by Store', daily:'Daily Trend (7 Days)',
-    adminTab:'Admin Panel', logout:'Logout 退出',
-    submitted:'Saved to System Database ✓', fillAll:'Please enter sales amounts.',
+    adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
+    submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
     confirmTitle:'Confirm Submission', confirmMsg:'Submit these figures?',
     allStores:'All Stores',
     staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
@@ -362,14 +354,14 @@ const T = {
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', admin:'管理', me:'我的',
     submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
-    totalSales:'总销售额', submitBtn:'确认保存记录', remark:'备注（选填）',
+    totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
     recordsTab:'销售记录', noRecords:'无匹配记录',
     summaryTab:'销售汇总', accessDenied:'权限受限',
     accessMsg:'仅老板、管理员及经理可查看汇总数据。',
     todayTotal:'选定总额', monthTotal:'月度总额',
     byStore:'各门店月度排行', daily:'近7天趋势',
-    adminTab:'管理后台', logout:'安全退出',
-    submitted:'数据已保存至系统数据库 ✓', fillAll:'请填写销售金额。',
+    adminTab:'管理后台', logout:'安全退出', refresh:'同步',
+    submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
     confirmTitle:'确认提交', confirmMsg:'确认提交这些数据吗？',
     allStores:'所有门店',
     staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
@@ -411,7 +403,7 @@ function updateNavLabels() {
 function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
 function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
 
-function submitRegisterRequest() {
+async function submitRegisterRequest() {
   const username = document.getElementById('reg-username').value.trim().toLowerCase();
   const name     = document.getElementById('reg-name').value.trim();
   const store    = document.getElementById('reg-store').value;
@@ -421,32 +413,80 @@ function submitRegisterRequest() {
   if(!username || !name || !store || !pin) { showToast('Please fill all fields', 'error'); return; }
   if(pin.length !== 4) { showToast('PIN must be 4 digits', 'error'); return; }
 
-  let users = loadData('cached_users', {});
-  if (users[username]) {
-    showToast('Username already exists', 'error'); return;
+  showToast('Sending request...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors', cache: 'no-cache',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'registerRequest', username, name, store, role, pin })
+    });
+    showToast('Registration sent! Waiting for Admin approval.', 'success');
+    closeRegisterModal();
+    // Clear fields
+    ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('reg-store').value = '';
+  } catch(e) {
+    showToast('Error: ' + e, 'error');
   }
+}
 
-  users[username] = { name, store, role, pin, status: 'pending' };
-  saveData('cached_users', users);
-  cachedUsers = users;
-  
-  showToast('Registration sent! Waiting for Admin approval.', 'success');
-  closeRegisterModal();
-  updateAdminBadge();
-  
-  ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('reg-store').value = '';
+// ============================================================
+// SYNC / REFRESH — fetches real data FROM Google Sheets
+// ============================================================
+async function triggerSyncRefresh() {
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
+  const btn = document.getElementById('sync-btn');
+  if(btn) btn.textContent = '⏳';
+  showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
+  try {
+    const res  = await fetch(WEB_APP_URL + '?action=getSales');
+    const json = await res.json();
+
+    if(json && json.sales && Array.isArray(json.sales)) {
+      saveSales(json.sales);
+      renderCurrentTab();
+      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
+    } else if(Array.isArray(json)) {
+      saveSales(json);
+      renderCurrentTab();
+      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
+    } else {
+      showToast('Sync error: unexpected response', 'error');
+    }
+  } catch(e) {
+    showToast('Sync failed — check internet', 'error');
+  }
+  if(btn) btn.textContent = '🔄';
+}
+
+// ============================================================
+// FETCH USERS FROM SHEET
+// ============================================================
+async function fetchLiveUsers() {
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const users = await response.json();
+    if(users && typeof users === 'object') {
+      cachedUsers = users;
+      saveData('cached_users', users);
+    }
+    return cachedUsers;
+  } catch(e) {
+    cachedUsers = loadData('cached_users', {});
+    return cachedUsers;
+  }
 }
 
 // ============================================================
 // LOGIN
 // ============================================================
-function doLogin() {
+async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
   if(!username || !pin) { showToast('Enter username and PIN', 'error'); return; }
-  
-  initializeDatabase();
+  showToast(lang === 'zh' ? '正在验证...' : 'Verifying...', 'pending');
+  await fetchLiveUsers();
   const userMatch = cachedUsers[username];
   if(!userMatch || String(userMatch.pin) !== String(pin)) {
     showToast('Wrong username or PIN', 'error'); return;
@@ -461,8 +501,9 @@ function doLogin() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
 
-  updateTopBar(); updateNavLabels(); updateAdminBadge();
+  updateTopBar(); updateNavLabels();
   switchTab('submit', document.getElementById('nav-submit'));
+  triggerSyncRefresh();
 }
 
 // ============================================================
@@ -512,7 +553,7 @@ function renderSubmitTab() {
         <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 Store</label>
+        <label class="field-label">🏪 ${t('store') || 'Store'}</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -625,12 +666,20 @@ function confirmSubmit() {
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
-  let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
-  sales.push(record);
-  saveSales(sales);
-  closeModal();
-  showToast(t('submitted'), 'success');
-  renderSubmitTab();
+  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
+
+  fetch(WEB_APP_URL, {
+    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'submitSales', ...record })
+  }).then(() => {
+    let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
+    sales.push(record);
+    saveSales(sales);
+    closeModal();
+    showToast(t('submitted'), 'success');
+    renderSubmitTab();
+  }).catch(err => { showToast('Error: ' + err, 'error'); });
 }
 
 // ============================================================
@@ -672,7 +721,9 @@ function renderRecordsTab() {
       <div>
         ${selectedDateRange==='custom_date'
           ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          : selectedDateRange==='month'
+            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
         }
       </div>
     </div>
@@ -707,6 +758,7 @@ function renderRecordsTab() {
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
     <div class="card">${listHtml}</div>
@@ -766,6 +818,7 @@ function renderSummaryTab() {
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -821,14 +874,18 @@ function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryT
 // ============================================================
 // ADMIN TAB — Pending approvals + User management
 // ============================================================
-function renderAdminTab() {
+async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   if(!isAdmin) {
     document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
     return;
   }
 
-  const allUsers  = loadData('cached_users', {});
+  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
+
+  await fetchLiveUsers();
+
+  const allUsers  = cachedUsers;
   const pending   = [];
   const active    = [];
 
@@ -882,13 +939,14 @@ function renderAdminTab() {
   document.getElementById('tab-admin').innerHTML = `
     <div class="card-header-flex" style="margin-bottom:14px">
       <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
+      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
     </div>
 
     ${pendingHtml}
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
-      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none;margin-top:0;">
+      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">
         ${t('addUser')}
       </button>
     </div>
@@ -899,27 +957,37 @@ function renderAdminTab() {
 }
 
 // ---- APPROVE / REJECT ----
-function approveUser(username) {
-  let users = loadData('cached_users', {});
-  if(users[username]) {
-    users[username].status = 'active';
-    saveData('cached_users', users);
-    cachedUsers = users;
-  }
-  showToast(t('approvedMsg'), 'success');
-  updateAdminBadge();
-  renderAdminTab();
+async function approveUser(username) {
+  showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approveUser', username })
+    });
+    if(cachedUsers[username]) {
+      cachedUsers[username].status = 'active';
+      saveData('cached_users', cachedUsers);
+    }
+    showToast(t('approvedMsg'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
-function rejectUser(username) {
+async function rejectUser(username) {
   if(!confirm('Reject & delete this registration request?')) return;
-  let users = loadData('cached_users', {});
-  delete users[username];
-  saveData('cached_users', users);
-  cachedUsers = users;
-  showToast(t('rejectedMsg'), 'success');
-  updateAdminBadge();
-  renderAdminTab();
+  showToast('Rejecting...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rejectUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('rejectedMsg'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
 // ---- ADD / EDIT USER ----
@@ -951,7 +1019,7 @@ function openEditUser(username) {
 
 function closeUserEditModal() { document.getElementById('user-edit-modal').classList.remove('open'); }
 
-function saveUserEdit() {
+async function saveUserEdit() {
   const originalKey = document.getElementById('edit-user-key').value;
   const username    = document.getElementById('edit-username').value.trim().toLowerCase();
   const name        = document.getElementById('edit-name').value.trim();
@@ -963,34 +1031,46 @@ function saveUserEdit() {
     showToast('Fill all fields. PIN must be 4 digits.', 'error'); return;
   }
 
-  let users = loadData('cached_users', {});
-  if(originalKey && originalKey !== username) delete users[originalKey];
-  users[username] = { name, pin, role, store, status: 'active' };
-  
-  saveData('cached_users', users);
-  cachedUsers = users;
-  
-  showToast(t('userSaved'), 'success');
-  closeUserEditModal();
-  updateAdminBadge();
-  renderAdminTab();
+  const userData = { action: 'saveUser', originalKey, username, name, pin, role, store, status: 'active' };
+  showToast(lang==='zh'?'正在保存...':'Saving...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
+    cachedUsers[username] = { name, pin, role, store, status: 'active' };
+    saveData('cached_users', cachedUsers);
+    showToast(t('userSaved'), 'success');
+    closeUserEditModal();
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
-function deleteUser(username) {
+async function deleteUser(username) {
   if(!confirm('Delete user @' + username + '?')) return;
-  let users = loadData('cached_users', {});
-  delete users[username];
-  saveData('cached_users', users);
-  cachedUsers = users;
-  showToast(t('userDeleted'), 'success');
-  updateAdminBadge();
-  renderAdminTab();
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('userDeleted'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
 // ============================================================
 // PROFILE TAB
 // ============================================================
 function renderProfileTab() {
+  const settingsTitle = lang === 'zh' ? 'API 接口配置' : 'API Web App Configuration';
+  const settingsLabel = lang === 'zh' ? '谷歌应用脚本 URL' : 'Google Apps Script Web App URL';
+  const saveBtnText = lang === 'zh' ? '保存配置 💾' : 'Save Config 💾';
+
   document.getElementById('tab-profile').innerHTML = `
     <div class="card" style="text-align:center;padding:28px">
       <div style="font-size:54px;margin-bottom:10px">👤</div>
@@ -999,6 +1079,16 @@ function renderProfileTab() {
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
     </div>
+
+    <div class="card">
+      <div class="card-title" style="color: var(--primary);">${settingsTitle}</div>
+      <div class="input-wrap" style="margin-top: 10px; margin-bottom: 10px;">
+        <label class="field-label" style="font-size: 13px;">${settingsLabel}</label>
+        <input type="text" id="config-web-url" value="${WEB_APP_URL}" placeholder="https://script.google.com/macros/s/.../exec" style="font-size: 13px; padding: 10px;">
+      </div>
+      <button class="btn success" onclick="saveCustomWebAppUrl()" style="padding: 10px; font-size: 14px; margin-top: 0; width: auto; display: inline-block;">${saveBtnText}</button>
+    </div>
+
     <div class="card">
       <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
       <div class="stat-row">
@@ -1006,12 +1096,35 @@ function renderProfileTab() {
         <span class="stat-value">${getSales().length}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'运行环境':'Environment'}</span>
-        <span class="stat-value" style="font-size:13px">Local Storage Database</span>
+        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
+        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
       </div>
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
+}
+
+// ============================================================
+// SAVE CUSTOM WEB APP URL
+// ============================================================
+function saveCustomWebAppUrl() {
+  const inputUrl = document.getElementById('config-web-url').value.trim();
+  
+  if (!inputUrl) {
+    showToast(lang === 'zh' ? 'URL 不能为空' : 'URL cannot be empty', 'error');
+    return;
+  }
+  
+  if (!inputUrl.startsWith("https://script.google.com/")) {
+    showToast(lang === 'zh' ? '无效的 Google Apps Script 地址' : 'Invalid Google Apps Script URL', 'error');
+    return;
+  }
+
+  saveData('custom_web_app_url', inputUrl);
+  WEB_APP_URL = inputUrl;
+
+  showToast(lang === 'zh' ? '配置已保存并生效！' : 'API URL updated successfully!', 'success');
+  triggerSyncRefresh();
 }
 
 // ============================================================
@@ -1038,7 +1151,7 @@ function showToast(msg, type='') {
 // ============================================================
 // INIT
 // ============================================================
-window.addEventListener('DOMContentLoaded', initializeDatabase);
+window.addEventListener('DOMContentLoaded', fetchLiveUsers);
 </script>
 </body>
 </html>
