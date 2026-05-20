@@ -127,7 +127,6 @@
 
 <div id="toast"></div>
 
-<!-- ===================== LOGIN ===================== -->
 <div id="login-screen" class="screen active">
   <div class="login-box">
     <div class="login-logo">
@@ -148,7 +147,6 @@
   </div>
 </div>
 
-<!-- ===================== MAIN APP ===================== -->
 <div id="app-screen" class="screen">
   <div class="topbar">
     <div>
@@ -186,7 +184,6 @@
   </nav>
 </div>
 
-<!-- ===================== REGISTER MODAL ===================== -->
 <div class="modal-overlay" id="register-modal">
   <div class="modal-box">
     <div class="modal-title">📝 Account Registration Request</div>
@@ -234,7 +231,6 @@
   </div>
 </div>
 
-<!-- ===================== CONFIRM SUBMIT MODAL ===================== -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
@@ -246,7 +242,6 @@
   </div>
 </div>
 
-<!-- ===================== USER EDIT MODAL ===================== -->
 <div class="modal-overlay" id="user-edit-modal">
   <div class="modal-box">
     <div class="modal-title" id="user-edit-title">Edit User</div>
@@ -307,11 +302,22 @@ let currentUser = null;
 let currentTab = 'submit';
 let cachedUsers = {};
 let selectedDateRange  = 'today';
-let customDateValue    = new Date().toISOString().slice(0,10);
-let selectedMonthValue = new Date().toISOString().slice(0,7);
+
+// Initialize Dates to Malaysia Time Zone (UTC+8)
+const currentMYTDate = getMalaysiaDateTime();
+let customDateValue    = currentMYTDate.slice(0,10);
+let selectedMonthValue = currentMYTDate.slice(0,7);
 let activeRecordStoreFilter = 'all';
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+
+// Helper to reliably construct ISO format strings matching Malaysia Local Time (UTC+8)
+function getMalaysiaDateTime() {
+  const d = new Date();
+  // Offset localized time calculation to represent UTC+8 context regardless of source architecture
+  const mytTime = new Date(d.getTime() + (8 * 60 * 60 * 1000) + (d.getTimezoneOffset() * 60 * 1000));
+  return mytTime.toISOString();
+}
 
 // ============================================================
 // LOCAL STORAGE HELPERS
@@ -402,9 +408,6 @@ function updateNavLabels() {
 // ============================================================
 // REGISTRATION
 // ============================================================
-function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
-function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
-
 async function submitRegisterRequest() {
   const username = document.getElementById('reg-username').value.trim().toLowerCase();
   const name     = document.getElementById('reg-name').value.trim();
@@ -417,14 +420,14 @@ async function submitRegisterRequest() {
 
   showToast('Sending request...', 'pending');
   try {
+    // action matches processing logic targeting "User register" sheet
     await fetch(WEB_APP_URL, {
       method: 'POST', mode: 'no-cors', cache: 'no-cache',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'registerRequest', username, name, store, role, pin })
+      body: JSON.stringify({ action: 'registerRequest', username, name, store, role, pin, timestamp: getMalaysiaDateTime() })
     });
     showToast('Registration sent! Waiting for Admin approval.', 'success');
     closeRegisterModal();
-    // Clear fields
     ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('reg-store').value = '';
   } catch(e) {
@@ -433,7 +436,7 @@ async function submitRegisterRequest() {
 }
 
 // ============================================================
-// SYNC / REFRESH — fetches real data FROM Google Sheets
+// SYNC / REFRESH
 // ============================================================
 async function triggerSyncRefresh() {
   if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
@@ -441,17 +444,14 @@ async function triggerSyncRefresh() {
   if(btn) btn.textContent = '⏳';
   showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
   try {
-    // Fetch sales data from the sheet
     const res  = await fetch(WEB_APP_URL + '?action=getSales');
     const json = await res.json();
 
     if(json && json.sales && Array.isArray(json.sales)) {
-      // json.sales is the canonical list from the sheet — replace local cache entirely
       saveSales(json.sales);
       renderCurrentTab();
       showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
     } else if(Array.isArray(json)) {
-      // Legacy: bare array
       saveSales(json);
       renderCurrentTab();
       showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
@@ -537,7 +537,7 @@ function renderCurrentTab() {
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = getMalaysiaDateTime().slice(0,10);
 
   let storeOptions = !isManagerial
     ? `<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
@@ -558,7 +558,7 @@ function renderSubmitTab() {
         <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${t('store') || 'Store'}</label>
+        <label class="field-label">🏪 Store</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -635,7 +635,6 @@ function updateLiveTotal() {
 function openConfirm() {
   const store      = document.getElementById('submit-store').value;
   const targetDate = document.getElementById('submit-date').value;
-  // FIX: allow 0 — only block if store or date missing
   if(!store || !targetDate) { showToast(lang==='zh'?'请选择门店和日期':'Select store and date', 'error'); return; }
 
   const cash  = parseFloat(document.getElementById('s-cash').value)  || 0;
@@ -664,12 +663,21 @@ function closeModal() { document.getElementById('confirm-modal').classList.remov
 
 function confirmSubmit() {
   const s   = window._pendingSubmit;
-  const now = new Date();
+  // Format variables according to the specific layout of your Sheet columns: A=id, B=store, C=cash... K=datetime
   const record = {
-    id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
-    total: s.total, remark: s.remark, submitter: currentUser.name,
-    role: currentUser.role, datetime: now.toISOString(),
-    dateKey: s.targetDate, month: s.targetDate.slice(0,7),
+    id: Date.now(), 
+    store: s.store, 
+    cash: s.cash, 
+    qr: s.qr, 
+    card: s.card, 
+    bank: s.bank, // maps to row column F: bank transfer
+    total: s.total, 
+    remark: s.remark, 
+    submitter: currentUser.name,
+    role: currentUser.role, 
+    datetime: getMalaysiaDateTime().replace('T', ' ').slice(0, 19), // Formatted to Malaysia Time Context
+    dateKey: s.targetDate, 
+    month: s.targetDate.slice(0,7),
   };
 
   showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
@@ -679,7 +687,6 @@ function confirmSubmit() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'submitSales', ...record })
   }).then(() => {
-    // Update local cache: replace same date+store entry
     let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
     sales.push(record);
     saveSales(sales);
@@ -695,9 +702,11 @@ function confirmSubmit() {
 function renderRecordsTab() {
   const sales   = getSales();
   const isExec  = ['boss','admin','manager'].includes(currentUser.role);
-  const todayKey = new Date().toISOString().slice(0,10);
+  const todayKey = getMalaysiaDateTime().slice(0,10);
+  
   let yest = new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey = yest.toISOString().slice(0,10);
+  const yestMYT = new Date(yest.getTime() + (8 * 60 * 60 * 1000) + (yest.getTimezoneOffset() * 60 * 1000));
+  const yestKey = yestMYT.toISOString().slice(0,10);
 
   let targetDate = todayKey;
   if(selectedDateRange === 'yesterday')   targetDate = yestKey;
@@ -728,9 +737,7 @@ function renderRecordsTab() {
       <div>
         ${selectedDateRange==='custom_date'
           ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          : selectedDateRange==='month'
-            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
-            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
         }
       </div>
     </div>
@@ -792,9 +799,11 @@ function renderSummaryTab() {
   }
 
   const sales = getSales();
-  const todayKey = new Date().toISOString().slice(0,10);
+  const todayKey = getMalaysiaDateTime().slice(0,10);
+  
   let yest = new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey = yest.toISOString().slice(0,10);
+  const yestMYT = new Date(yest.getTime() + (8 * 60 * 60 * 1000) + (yest.getTimezoneOffset() * 60 * 1000));
+  const yestKey = yestMYT.toISOString().slice(0,10);
 
   let targetRangeDay = todayKey;
   if(selectedDateRange === 'yesterday')   targetRangeDay = yestKey;
@@ -815,8 +824,9 @@ function renderSummaryTab() {
   const days = [];
   for(let i=6; i>=0; i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
-    const dk = d.toISOString().slice(0,10);
-    const label = d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
+    const dMYT = new Date(d.getTime() + (8 * 60 * 60 * 1000) + (d.getTimezoneOffset() * 60 * 1000));
+    const dk = dMYT.toISOString().slice(0,10);
+    const label = dMYT.toLocaleDateString([],{weekday:'short'}).slice(0,2);
     const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
     days.push({label,val});
   }
@@ -889,12 +899,9 @@ async function renderAdminTab() {
   }
 
   document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
-
-  // Re-fetch latest users from sheet
   await fetchLiveUsers();
 
-  // Separate pending vs active
-  const allUsers  = cachedUsers; // object keyed by username
+  const allUsers  = cachedUsers;
   const pending   = [];
   const active    = [];
 
@@ -974,7 +981,6 @@ async function approveUser(username) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'approveUser', username })
     });
-    // Update local cache immediately
     if(cachedUsers[username]) {
       cachedUsers[username].status = 'active';
       saveData('cached_users', cachedUsers);
@@ -1019,7 +1025,7 @@ function openEditUser(username) {
   document.getElementById('user-edit-title').textContent  = '✏️ ' + t('editUser');
   document.getElementById('edit-user-key').value          = username;
   document.getElementById('edit-username').value          = username;
-  document.getElementById('edit-username').disabled       = true; // can't change username
+  document.getElementById('edit-username').disabled       = true;
   document.getElementById('edit-name').value              = u.name  || '';
   document.getElementById('edit-pin').value               = u.pin   || '';
   document.getElementById('edit-role').value              = u.role  || 'staff';
@@ -1049,7 +1055,6 @@ async function saveUserEdit() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
     });
-    // Update local cache
     if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
     cachedUsers[username] = { name, pin, role, store, status: 'active' };
     saveData('cached_users', cachedUsers);
@@ -1075,7 +1080,7 @@ async function deleteUser(username) {
 }
 
 // ============================================================
-// PROFILE TAB
+// PROFILE TAB ("Me")
 // ============================================================
 function renderProfileTab() {
   document.getElementById('tab-profile').innerHTML = `
@@ -1087,7 +1092,11 @@ function renderProfileTab() {
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
     </div>
     <div class="card">
-      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="card-title">${lang==='zh'?'管理审批人员信息':'Approval Staff Details'}</div>
+      <div class="stat-row">
+        <span class="stat-label">${lang==='zh'?'职位权限':'System Role'}</span>
+        <span class="stat-value" style="text-transform: capitalize;">${currentUser.role}</span>
+      </div>
       <div class="stat-row">
         <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
         <span class="stat-value">${getSales().length}</span>
