@@ -38,7 +38,6 @@
   .btn.danger { background: var(--danger); color: #fff; }
   .btn.success { background: var(--success); color: #fff; }
   .btn.warn { background: var(--accent); color: #fff; }
-  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: rgba(255,255,255,0.2); display: flex; align-items: center; gap: 4px; color: #fff; border: none; }
   .btn.refresh-inline { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; margin-top: 0; background: var(--bg); color: var(--primary); border: 1px solid var(--border); }
   .content { padding: 18px 16px 100px; flex: 1; }
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1.5px solid var(--border); box-shadow: 0 -2px 16px rgba(0,0,0,0.07); z-index: 98; padding-bottom: env(safe-area-inset-bottom); }
@@ -100,6 +99,7 @@
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
+  /* ADMIN PANEL */
   .user-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .user-row:last-child { border-bottom: none; }
   .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; flex-shrink: 0; }
@@ -115,6 +115,7 @@
   .btn-sm.reject { background: #fee2e2; color: var(--danger); }
   .pending-card { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fffbeb; }
   .pending-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; margin-left: 6px; }
+  /* SPINNER */
   .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--text2); font-size:14px; font-weight:700; }
   .spin { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -152,7 +153,6 @@
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn" title="Sync from Google Sheets">🔄</button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
@@ -288,40 +288,44 @@
 
 <script>
 // ============================================================
-// CONFIGURATION — PASTE YOUR EXACT GOOGLE WEB APP URL HERE
+// CONFIGURATION — paste your Google Apps Script URL here
 // ============================================================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxluWpc1ykQNeR-p6tuVf6XIL9a6vLEKVm8E0FyIl3rimLySBsMmQB6D6zehAHMBZgF/exec";
 
 // ============================================================
-// STATE SYSTEM
+// STATE
 // ============================================================
 let lang = 'en';
 let currentUser = null;
 let currentTab = 'submit';
 let cachedUsers = {};
 let selectedDateRange  = 'today';
-let customDateValue    = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)).toISOString().slice(0,10);
-let selectedMonthValue = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)).toISOString().slice(0,7);
+let customDateValue    = new Date().toISOString().slice(0,10);
+let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
 // ============================================================
-// LOCAL SYSTEM CACHING
+// LOCAL STORAGE HELPERS
 // ============================================================
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
-function getSales() { return loadData('sales_records', []).filter(item => item && item.store !== 'Testing'); }
-function saveSales(arr) { saveData('sales_records', arr.filter(item => item && item.store !== 'Testing')); }
+function getSales() {
+  return loadData('sales_records', []).filter(item => item && item.store !== 'Testing');
+}
+function saveSales(arr) {
+  saveData('sales_records', arr.filter(item => item && item.store !== 'Testing'));
+}
 
 // ============================================================
-// DICTIONARY DIALECT TRANSLATIONS
+// TRANSLATIONS
 // ============================================================
 const T = {
   en: {
     appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary', admin:'Admin', me:'Me',
-    submitCard:'Enter / Update Sales', store:'Store Location', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
+    submitCard:'Enter / Update Sales', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
     totalSales:'Total Sales', submitBtn:'Submit & Sync', remark:'Remark (optional)',
     recordsTab:'Sales Records', noRecords:'No records found for this filter',
     summaryTab:'Sales Summary', accessDenied:'Access Restricted',
@@ -344,7 +348,7 @@ const T = {
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', admin:'管理', me:'我的',
-    submitCard:'输入 / 更新销售额', store:'门店位置', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
+    submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
     totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
     recordsTab:'销售记录', noRecords:'无匹配记录',
     summaryTab:'销售汇总', accessDenied:'权限受限',
@@ -389,7 +393,7 @@ function updateNavLabels() {
 }
 
 // ============================================================
-// SYSTEM ACCOUNT REGISTRATIONS
+// REGISTRATION
 // ============================================================
 function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
 function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
@@ -413,38 +417,38 @@ async function submitRegisterRequest() {
     });
     showToast('Registration sent! Waiting for Admin approval.', 'success');
     closeRegisterModal();
+    // Clear fields
     ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('reg-store').value = '';
-  } catch(e) { showToast('Error: ' + e, 'error'); }
+  } catch(e) {
+    showToast('Error: ' + e, 'error');
+  }
 }
 
 // ============================================================
-// CLOUD TO LOCAL SAFE-SYNC LOGIC
+// SYNC / REFRESH — fetches real data FROM Google Sheets
 // ============================================================
 async function triggerSyncRefresh() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
-  const btn = document.getElementById('sync-btn');
-  if(btn) btn.textContent = '⏳';
-  showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { return; }
   try {
     const res  = await fetch(WEB_APP_URL + '?action=getSales');
     const json = await res.json();
 
-    if(json && json.sales && Array.isArray(json.sales) && json.sales.length > 0) {
+    if(json && json.sales && Array.isArray(json.sales)) {
       saveSales(json.sales);
       renderCurrentTab();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else if(Array.isArray(json) && json.length > 0) {
+    } else if(Array.isArray(json)) {
       saveSales(json);
       renderCurrentTab();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else {
-      showToast(lang === 'zh' ? '同步完成 (云端暂无新销售数据)' : 'Sync ready (No new sales on cloud)', 'success');
     }
-  } catch(e) { showToast('Sync failed — check internet', 'error'); }
-  if(btn) btn.textContent = '🔄';
+  } catch(e) {
+    console.error('Background sync failed', e);
+  }
 }
 
+// ============================================================
+// FETCH USERS FROM SHEET
+// ============================================================
 async function fetchLiveUsers() {
   if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
@@ -462,7 +466,7 @@ async function fetchLiveUsers() {
 }
 
 // ============================================================
-// TRANSACTIONAL ACCESS LOGINS
+// LOGIN
 // ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
@@ -489,6 +493,9 @@ async function doLogin() {
   triggerSyncRefresh();
 }
 
+// ============================================================
+// TAB SWITCHING
+// ============================================================
 function switchTab(tab, btn) {
   currentTab = tab;
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -508,11 +515,11 @@ function renderCurrentTab() {
 }
 
 // ============================================================
-// TAB: ENTER / UPDATE DAILY ENTRIES
+// SUBMIT TAB
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
-  const todayStr = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)).toISOString().slice(0,10);
+  const todayStr = new Date().toISOString().slice(0,10);
 
   let storeOptions = !isManagerial
     ? `<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
@@ -533,7 +540,7 @@ function renderSubmitTab() {
         <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${t('store')}</label>
+        <label class="field-label">🏪 ${t('store') || 'Store'}</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -570,6 +577,9 @@ function renderSubmitTab() {
         <input type="text" id="s-remark" placeholder="...">
       </div>
       <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
+    </div>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
+      💡 ${lang==='zh'?'所有金额均可填写为 0.00（表示无销售额）':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
@@ -625,7 +635,7 @@ function openConfirm() {
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-    ${remark ? `<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">${remark}</span></div>` : ''}
+    ${remark ? `<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>` : ''}
   `;
   window._pendingSubmit = { store, targetDate, cash, qr, card, bank, total, remark };
   document.getElementById('confirm-modal').classList.add('open');
@@ -633,21 +643,13 @@ function openConfirm() {
 
 function closeModal() { document.getElementById('confirm-modal').classList.remove('open'); }
 
-// ============================================================
-// FIXED SUBMISSION FUNCTION LOCKING TIME TO (UTC+08:00)
-// ============================================================
 function confirmSubmit() {
-  const s = window._pendingSubmit;
-  
-  // Create strict UTC+08:00 localized ISO string
-  const localDate = new Date();
-  const utc8Time = new Date(localDate.getTime() + (8 * 60 * 60 * 1000));
-  const utc8String = utc8Time.toISOString().replace('Z', '+08:00');
-
+  const s   = window._pendingSubmit;
+  const now = new Date();
   const record = {
     id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
     total: s.total, remark: s.remark, submitter: currentUser.name,
-    role: currentUser.role, datetime: utc8String, // <-- Timezone guaranteed payload
+    role: currentUser.role, datetime: now.toISOString(),
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
@@ -668,15 +670,13 @@ function confirmSubmit() {
 }
 
 // ============================================================
-// TAB: HISTORICAL LOG RECORDS
+// RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
-  const sales  = getSales();
-  const isExec = ['boss','admin','manager'].includes(currentUser.role);
-  
-  const todayKey = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)).toISOString().slice(0,10);
-  let yest = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)); 
-  yest.setDate(yest.getDate()-1);
+  const sales   = getSales();
+  const isExec  = ['boss','admin','manager'].includes(currentUser.role);
+  const todayKey = new Date().toISOString().slice(0,10);
+  let yest = new Date(); yest.setDate(yest.getDate()-1);
   const yestKey = yest.toISOString().slice(0,10);
 
   let targetDate = todayKey;
@@ -743,7 +743,6 @@ function renderRecordsTab() {
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
     <div class="card">${listHtml}</div>
@@ -756,7 +755,7 @@ function updateCustomMonthValue(val){ selectedMonthValue = val; renderRecordsTab
 function setRecordStoreFilter(store){ activeRecordStoreFilter = store; renderRecordsTab(); }
 
 // ============================================================
-// TAB: STATISTICAL VISUALIZATIONS
+// SUMMARY TAB
 // ============================================================
 function renderSummaryTab() {
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
@@ -770,9 +769,8 @@ function renderSummaryTab() {
   }
 
   const sales = getSales();
-  const todayKey = new Date(new Date().getTime() + (8 * 60 * 60 * 1000)).toISOString().slice(0,10);
-  let yest = new Date(new Date().getTime() + (8 * 60 * 60 * 1000));
-  yest.setDate(yest.getDate()-1);
+  const todayKey = new Date().toISOString().slice(0,10);
+  let yest = new Date(); yest.setDate(yest.getDate()-1);
   const yestKey = yest.toISOString().slice(0,10);
 
   let targetRangeDay = todayKey;
@@ -793,8 +791,7 @@ function renderSummaryTab() {
 
   const days = [];
   for(let i=6; i>=0; i--) {
-    const d = new Date(new Date().getTime() + (8 * 60 * 60 * 1000));
-    d.setDate(d.getDate()-i);
+    const d = new Date(); d.setDate(d.getDate()-i);
     const dk = d.toISOString().slice(0,10);
     const label = d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
     const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
@@ -805,7 +802,6 @@ function renderSummaryTab() {
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -817,6 +813,7 @@ function renderSummaryTab() {
             <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
             <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
           </select>
+          ${selectedDateRange==='custom_date'?`<input type="date" value="${customDateValue}" onchange="updateSummaryCustomDate(this.value)" style="padding:6px;font-size:12px;margin-top:6px">`:''}
         </div>
         <div>
           <label class="field-label" style="font-size:12px;margin-bottom:4px">🗓️ ${t('selectMonthLabel')}</label>
@@ -830,7 +827,6 @@ function renderSummaryTab() {
         <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
       </div>
       <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">🗓️ ${selectedMonthValue}</div>
         <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(2)}</div>
       </div>
     </div>
@@ -854,45 +850,60 @@ function renderSummaryTab() {
 }
 
 function updateSummaryDateRange(val)  { selectedDateRange  = val; renderSummaryTab(); }
+function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryTab(); }
 function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
 // ============================================================
-// TAB: CONTROL MANAGEMENT HOOKS
+// ADMIN TAB — Pending approvals + User management
 // ============================================================
 async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   if(!isAdmin) {
-    document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`; return;
+    document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
+    return;
   }
 
-  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
+  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
+
   await fetchLiveUsers();
 
-  const allUsers = cachedUsers; 
-  const pending  = [];
-  const active   = [];
+  const allUsers  = cachedUsers;
+  const pending   = [];
+  const active    = [];
 
   Object.entries(allUsers).forEach(([uname, u]) => {
     if(u.status === 'pending') pending.push({...u, username: uname});
     else active.push({...u, username: uname});
   });
 
-  let pendingHtml = pending.length > 0 ? `
-    <div class="pending-card">
-      <div class="card-title" style="color:#92400e">⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
-      ${pending.map(u => `
-        <div class="user-row">
-          <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
-          <div class="user-info">
-            <div class="user-name">@${u.username}</div>
-            <div class="user-meta">${u.name||''} · ${u.store||''} · ${u.role||'staff'}</div>
-          </div>
-          <div class="user-actions">
-            <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
-            <button class="btn-sm reject"  onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button>
-          </div>
-        </div>`).join('')}
-    </div>` : `<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">✅ ${t('noRequests')}</div></div>`;
+  let pendingHtml = '';
+  if(pending.length > 0) {
+    pendingHtml = `
+      <div class="pending-card">
+        <div class="card-title" style="color:#92400e">
+          ⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span>
+        </div>
+        ${pending.map(u => `
+          <div class="user-row">
+            <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+            <div class="user-info">
+              <div class="user-name">@${u.username}</div>
+              <div class="user-meta">${u.name||''} · ${u.store||''} · ${u.role||'staff'}</div>
+            </div>
+            <div class="user-actions">
+              <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
+              <button class="btn-sm reject"  onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    pendingHtml = `
+      <div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px">
+        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">
+          ✅ ${t('noRequests')}
+        </div>
+      </div>`;
+  }
 
   const activeHtml = active.map(u => `
     <div class="user-row">
@@ -908,40 +919,61 @@ async function renderAdminTab() {
     </div>`).join('');
 
   document.getElementById('tab-admin').innerHTML = `
-    <div class="card-header-flex">
+    <div class="card-header-flex" style="margin-bottom:14px">
       <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
-      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
     </div>
+
     ${pendingHtml}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 10px">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
-      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button>
+      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">
+        ${t('addUser')}
+      </button>
     </div>
-    <div class="card">${activeHtml || '<div class="empty-state"><p>No active users</p></div>'}</div>
+    <div class="card">
+      ${activeHtml || `<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}
+    </div>
   `;
 }
 
+// ---- APPROVE / REJECT ----
 async function approveUser(username) {
-  showToast('Approving...', 'pending');
+  showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
   try {
-    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'approveUser', username })});
-    if(cachedUsers[username]) cachedUsers[username].status = 'active';
-    saveData('cached_users', cachedUsers);
-    showToast(t('approvedMsg'), 'success'); renderAdminTab();
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approveUser', username })
+    });
+    if(cachedUsers[username]) {
+      cachedUsers[username].status = 'active';
+      saveData('cached_users', cachedUsers);
+    }
+    showToast(t('approvedMsg'), 'success');
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
 async function rejectUser(username) {
-  if(!confirm('Reject request?')) return;
+  if(!confirm('Reject & delete this registration request?')) return;
+  showToast('Rejecting...', 'pending');
   try {
-    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'rejectUser', username })});
-    delete cachedUsers[username]; saveData('cached_users', cachedUsers);
-    showToast(t('rejectedMsg'), 'success'); renderAdminTab();
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rejectUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('rejectedMsg'), 'success');
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
+// ---- ADD / EDIT USER ----
 function openAddUser() {
-  document.getElementById('user-edit-title').textContent = '+ ' + t('addUser');
+  document.getElementById('user-edit-title').textContent = '➕ ' + t('addUser');
   document.getElementById('edit-user-key').value  = '';
   document.getElementById('edit-username').value  = '';
   document.getElementById('edit-username').disabled = false;
@@ -953,11 +985,12 @@ function openAddUser() {
 }
 
 function openEditUser(username) {
-  const u = cachedUsers[username]; if(!u) return;
+  const u = cachedUsers[username];
+  if(!u) return;
   document.getElementById('user-edit-title').textContent  = '✏️ ' + t('editUser');
   document.getElementById('edit-user-key').value          = username;
   document.getElementById('edit-username').value          = username;
-  document.getElementById('edit-username').disabled       = true; 
+  document.getElementById('edit-username').disabled       = true;
   document.getElementById('edit-name').value              = u.name  || '';
   document.getElementById('edit-pin').value               = u.pin   || '';
   document.getElementById('edit-role').value              = u.role  || 'staff';
@@ -975,29 +1008,44 @@ async function saveUserEdit() {
   const role        = document.getElementById('edit-role').value;
   const store       = document.getElementById('edit-store').value;
 
-  if(!username || !name || !pin || pin.length !== 4) { showToast('PIN must be 4 digits.', 'error'); return; }
+  if(!username || !name || !pin || pin.length !== 4) {
+    showToast('Fill all fields. PIN must be 4 digits.', 'error'); return;
+  }
 
-  showToast('Saving...', 'pending');
+  const userData = { action: 'saveUser', originalKey, username, name, pin, role, store, status: 'active' };
+  showToast(lang==='zh'?'正在保存...':'Saving...', 'pending');
   try {
-    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'saveUser', originalKey, username, name, pin, role, store, status: 'active' })});
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
     if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
     cachedUsers[username] = { name, pin, role, store, status: 'active' };
     saveData('cached_users', cachedUsers);
-    showToast(t('userSaved'), 'success'); closeUserEditModal(); renderAdminTab();
+    showToast(t('userSaved'), 'success');
+    closeUserEditModal();
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
 async function deleteUser(username) {
   if(!confirm('Delete user @' + username + '?')) return;
   try {
-    await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'deleteUser', username })});
-    delete cachedUsers[username]; saveData('cached_users', cachedUsers);
-    showToast(t('userDeleted'), 'success'); renderAdminTab();
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('userDeleted'), 'success');
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
 // ============================================================
-// TAB: CURRENT IDENTITY PROFILES
+// PROFILE TAB
 // ============================================================
 function renderProfileTab() {
   document.getElementById('tab-profile').innerHTML = `
@@ -1009,26 +1057,44 @@ function renderProfileTab() {
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
     </div>
     <div class="card">
-      <div class="card-title">Cache Status</div>
-      <div class="stat-row"><span class="stat-label">Local Logs</span><span class="stat-value">${getSales().length}</span></div>
+      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="stat-row">
+        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
+        <span class="stat-value">${getSales().length}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
+        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
+      </div>
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
 }
 
+// ============================================================
+// LOGOUT
+// ============================================================
 function doLogout() {
   currentUser = null;
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
-  document.getElementById('login-pin').value = ''; document.getElementById('login-name').value = '';
+  document.getElementById('login-pin').value  = '';
+  document.getElementById('login-name').value = '';
 }
 
+// ============================================================
+// TOAST
+// ============================================================
 function showToast(msg, type='') {
-  const el = document.getElementById('toast'); el.textContent = msg;
+  const el = document.getElementById('toast');
+  el.textContent = msg;
   el.className = 'show ' + (type ? type + '-toast' : '');
   setTimeout(() => el.className = '', 3000);
 }
 
+// ============================================================
+// INIT
+// ============================================================
 window.addEventListener('DOMContentLoaded', fetchLiveUsers);
 </script>
 </body>
