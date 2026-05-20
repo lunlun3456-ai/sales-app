@@ -32,14 +32,14 @@
   .input-wrap { margin-bottom: 16px; }
   select, input[type=text], input[type=password], input[type=number], input[type=date], input[type=month] { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: var(--font); color: var(--text); background: var(--bg); outline: none; transition: border .2s; }
   select:focus, input:focus { border-color: var(--primary); }
-  .btn { display: block; width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 6px; }
+  .btn { display: block; width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 6px; font-family: var(--font); }
   .btn:active { background: var(--primary-dark); transform: scale(.98); }
   .btn.secondary { background: var(--bg); color: var(--primary); border: 2px solid var(--border); }
-  .btn.danger { background: var(--danger); }
-  .btn.success { background: var(--success); }
-  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: var(--primary); display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(37,99,235,0.2); border: 1px solid rgba(255,255,255,0.1); }
-  .topbar .refresh-btn { background: rgba(255,255,255,0.2); box-shadow: none; color: #fff; }
-  .btn.refresh-inline { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; display: flex; align-items: center; gap: 4px; font-weight: 700; margin-top: 0; background: var(--bg); color: var(--primary); border: 1px solid var(--border); box-shadow: none; }
+  .btn.danger { background: var(--danger); color: #fff; }
+  .btn.success { background: var(--success); color: #fff; }
+  .btn.warn { background: var(--accent); color: #fff; }
+  .btn.refresh-btn { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; margin-top: 0; background: rgba(255,255,255,0.2); display: flex; align-items: center; gap: 4px; color: #fff; border: none; }
+  .btn.refresh-inline { width: auto; padding: 6px 14px; font-size: 13px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; margin-top: 0; background: var(--bg); color: var(--primary); border: 1px solid var(--border); }
   .content { padding: 18px 16px 100px; flex: 1; }
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1.5px solid var(--border); box-shadow: 0 -2px 16px rgba(0,0,0,0.07); z-index: 98; padding-bottom: env(safe-area-inset-bottom); }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; cursor: pointer; border: none; background: none; font-family: var(--font); color: var(--text2); font-size: 11px; font-weight: 700; }
@@ -58,6 +58,7 @@
   .stat-value.big { font-size: 26px; color: var(--primary); }
   .stat-value.green { color: var(--success); }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; background: #eff6ff; color: var(--primary); margin-left: 6px; }
+  .badge.amber { background: #fef3c7; color: #92400e; }
   .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; }
   .filter-scroll::-webkit-scrollbar { display: none; }
   .filter-chip { white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: #fff; color: var(--text2); cursor: pointer; flex-shrink: 0; }
@@ -68,7 +69,7 @@
   .record-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
   .record-info { flex: 1; }
   .record-store { font-size: 14px; font-weight: 800; color: var(--text); }
-  .record-meta { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+  .record-meta { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.6; }
   .record-amount { font-size: 18px; font-weight: 900; color: var(--primary); }
   .record-sub { font-size: 11px; color: var(--text2); text-align: right; }
   #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 999; white-space: nowrap; max-width: 85vw; text-align: center; }
@@ -78,7 +79,7 @@
   #toast.pending-toast { background: var(--accent); }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal-box { background: #fff; border-radius: 24px 24px 0 0; padding: 28px 24px 40px; width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto; animation: slideUp .25s; }
+  .modal-box { background: #fff; border-radius: 24px 24px 0 0; padding: 28px 24px 40px; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; animation: slideUp .25s; }
   @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
   .modal-title { font-size: 18px; font-weight: 900; color: var(--text); margin-bottom: 18px; }
   .progress-bar-wrap { background: var(--border); border-radius: 8px; height: 10px; overflow: hidden; margin-top: 6px; }
@@ -89,6 +90,7 @@
   .bar-label { font-size: 10px; color: var(--text2); margin-top: 4px; font-weight: 700; }
   .welcome-banner { background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%); border-radius: var(--radius); padding: 20px; color: #fff; margin-bottom: 14px; position: relative; overflow: hidden; }
   .welcome-banner h2 { font-size: 20px; font-weight: 900; }
+  .welcome-banner p { font-size: 13px; opacity: .85; margin-top: 4px; }
   .divider { height: 1px; background: var(--border); margin: 16px 0; }
   .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
   .empty-state .e-icon { font-size: 48px; margin-bottom: 12px; }
@@ -98,7 +100,26 @@
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
-  .role-tag.test { background: #e2e8f0; color: #475569; border: 1px dashed #94a3b8; }
+  /* ADMIN PANEL */
+  .user-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .user-row:last-child { border-bottom: none; }
+  .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; flex-shrink: 0; }
+  .user-avatar.pending-av { background: var(--accent); }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .user-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; font-family: var(--font); }
+  .btn-sm.edit { background: #eff6ff; color: var(--primary); }
+  .btn-sm.del { background: #fee2e2; color: var(--danger); }
+  .btn-sm.approve { background: #d1fae5; color: var(--success); }
+  .btn-sm.reject { background: #fee2e2; color: var(--danger); }
+  .pending-card { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fffbeb; }
+  .pending-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; margin-left: 6px; }
+  /* SPINNER */
+  .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--text2); font-size:14px; font-weight:700; }
+  .spin { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -106,45 +127,48 @@
 
 <div id="toast"></div>
 
+<!-- ===================== LOGIN ===================== -->
 <div id="login-screen" class="screen active">
   <div class="login-box">
     <div class="login-logo">
       <div class="icon">🏪</div>
-      <h2>Sales Reporter</h2>
-      <p>Cloud Synchronized Login</p>
+      <h2>SALES REPORT</h2>
+      <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:800">by KI</p>
     </div>
     <div class="input-wrap">
-      <label class="field-label" id="lbl-name">Username / Staff ID (Lower Case)</label>
-      <input type="text" id="login-name" placeholder="e.g. tester01, bonia_ali" autocomplete="off">
+      <label class="field-label" id="lbl-name">Username 用户名</label>
+      <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off">
     </div>
     <div class="input-wrap">
-      <label class="field-label" id="lbl-pass">PIN (4 digits)</label>
+      <label class="field-label" id="lbl-pass">PIN (4 digits 4位密码)</label>
       <input type="password" id="login-pin" maxlength="4" placeholder="••••" inputmode="numeric">
     </div>
     <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
-    <button class="btn secondary" onclick="openRegisterModal()" id="register-intent-btn" style="margin-top:10px;">Register Account 注册申请</button>
+    <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
   </div>
 </div>
 
+<!-- ===================== MAIN APP ===================== -->
 <div id="app-screen" class="screen">
   <div class="topbar">
     <div>
-      <h1 id="app-title">Sales Reporter</h1>
+      <h1 id="app-title">SALES REPORT</h1>
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn refresh-btn" onclick="triggerSyncRefresh()">🔄</button>
+      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn" title="Sync from Google Sheets">🔄</button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
 
-  <div class="content" id="tab-submit" style="display:block"></div>
+  <div class="content" id="tab-submit"  style="display:block"></div>
   <div class="content" id="tab-records" style="display:none"></div>
   <div class="content" id="tab-summary" style="display:none"></div>
+  <div class="content" id="tab-admin"   style="display:none"></div>
   <div class="content" id="tab-profile" style="display:none"></div>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('submit',this)" id="nav-submit">
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('submit',this)"  id="nav-submit">
       <span class="nav-icon">📤</span><span id="nav-submit-lbl">Submit</span>
     </button>
     <button class="nav-item" onclick="switchTab('records',this)" id="nav-records">
@@ -153,17 +177,29 @@
     <button class="nav-item" onclick="switchTab('summary',this)" id="nav-summary">
       <span class="nav-icon">📊</span><span id="nav-summary-lbl">Summary</span>
     </button>
+    <button class="nav-item" onclick="switchTab('admin',this)"   id="nav-admin" style="display:none">
+      <span class="nav-icon">⚙️</span><span id="nav-admin-lbl">Admin</span>
+    </button>
     <button class="nav-item" onclick="switchTab('profile',this)" id="nav-profile">
       <span class="nav-icon">👤</span><span id="nav-profile-lbl">Me</span>
     </button>
   </nav>
 </div>
 
+<!-- ===================== REGISTER MODAL ===================== -->
 <div class="modal-overlay" id="register-modal">
   <div class="modal-box">
-    <div class="modal-title">Account Registration Request</div>
+    <div class="modal-title">📝 Account Registration Request</div>
     <div class="input-wrap">
-      <label class="field-label">Target Store Location</label>
+      <label class="field-label">Preferred Username 用户名</label>
+      <input type="text" id="reg-username" placeholder="e.g. bonia_ali (lowercase)" autocapitalize="none">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Full Name / Staff Name 姓名</label>
+      <input type="text" id="reg-name" placeholder="e.g. Ali Ahmad">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Target Store Location 门店</label>
       <select id="reg-store">
         <option value="">-- Select Store --</option>
         <option value="HQ">HQ</option>
@@ -176,7 +212,7 @@
       </select>
     </div>
     <div class="input-wrap">
-      <label class="field-label">Requested Work Role</label>
+      <label class="field-label">Work Role 职位</label>
       <select id="reg-role">
         <option value="staff">Staff 员工</option>
         <option value="supervisor">Supervisor 主管</option>
@@ -184,441 +220,639 @@
       </select>
     </div>
     <div class="input-wrap">
-      <label class="field-label">Full Name / Staff ID</label>
-      <input type="text" id="reg-name" placeholder="e.g. John Doe">
-    </div>
-    <div class="input-wrap">
-      <label class="field-label">Preferred Login PIN (4 Digits)</label>
+      <label class="field-label">Preferred PIN (4 digits) 密码</label>
       <input type="password" id="reg-pin" maxlength="4" placeholder="••••" inputmode="numeric">
     </div>
-    <p style="font-size:12px;color:var(--accent);margin-bottom:15px;font-weight:600;">⚠️ Registration requests require approval by an Admin or Boss before login activation.</p>
+    <div style="background:#fff8e1;border:1.5px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#78350f;font-weight:600;">
+      ⚠️ Your request will be sent to Admin for approval. You can login only after Admin approves it.<br>
+      <span style="font-size:12px;opacity:.8">管理员审批后方可登录。</span>
+    </div>
     <div style="display:flex;gap:10px;">
       <button class="btn secondary" style="flex:1" onclick="closeRegisterModal()">Cancel 取消</button>
-      <button class="btn success" style="flex:1" onclick="submitRegisterRequest()">Request 申请</button>
+      <button class="btn success"   style="flex:1" onclick="submitRegisterRequest()">Submit Request 提交</button>
     </div>
   </div>
 </div>
 
+<!-- ===================== CONFIRM SUBMIT MODAL ===================== -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
     <div id="modal-body"></div>
     <div style="display:flex;gap:10px;margin-top:20px;">
       <button class="btn secondary" style="flex:1" onclick="closeModal()">Cancel 取消</button>
-      <button class="btn success" style="flex:1" onclick="confirmSubmit()">Submit ✓</button>
+      <button class="btn success"   style="flex:1" onclick="confirmSubmit()">Confirm & Submit ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== USER EDIT MODAL ===================== -->
+<div class="modal-overlay" id="user-edit-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="user-edit-title">Edit User</div>
+    <input type="hidden" id="edit-user-key">
+    <div class="input-wrap">
+      <label class="field-label">Username (login ID)</label>
+      <input type="text" id="edit-username" autocapitalize="none">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Display Name 姓名</label>
+      <input type="text" id="edit-name">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">PIN (4 digits)</label>
+      <input type="password" id="edit-pin" maxlength="4" inputmode="numeric" placeholder="••••">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Role 职位</label>
+      <select id="edit-role">
+        <option value="staff">Staff</option>
+        <option value="supervisor">Supervisor</option>
+        <option value="manager">Manager</option>
+        <option value="boss">Boss</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Assigned Store 门店</label>
+      <select id="edit-store">
+        <option value="ALL">ALL (Boss/Admin/Manager)</option>
+        <option value="HQ">HQ</option>
+        <option value="Bonia Sabindo">Bonia Sabindo</option>
+        <option value="Bonia Eastern">Bonia Eastern</option>
+        <option value="Polo Sabindo">Polo Sabindo</option>
+        <option value="Polo Eastern">Polo Eastern</option>
+        <option value="Gm Sabindo">Gm Sabindo</option>
+        <option value="Gm Eastern">Gm Eastern</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">Cancel</button>
+      <button class="btn success"   style="flex:1" onclick="saveUserEdit()">Save 保存</button>
     </div>
   </div>
 </div>
 
 <script>
+// ============================================================
+// CONFIGURATION — paste your Google Apps Script URL here
+// ============================================================
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6k6RqimoeKuTRnYjKKPGIOCyAWitXYbXyGnBpfSxfknmdC6nzxFAbfbNx3BGYuAw1/exec";
+
+// ============================================================
+// STATE
+// ============================================================
 let lang = 'en';
 let currentUser = null;
 let currentTab = 'submit';
-let cachedUsers = {}; 
-
-let selectedDateRange = 'today';
-let customDateValue = new Date().toISOString().slice(0,10);
+let cachedUsers = {};
+let selectedDateRange  = 'today';
+let customDateValue    = new Date().toISOString().slice(0,10);
 let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
-let staffViewMode = 'daily';
-
-// ⚠️ PASTE YOUR GOOGLE WEB APP URL HERE:
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6k6RqimoeKuTRnYjKKPGIOCyAWitXYbXyGnBpfSxfknmdC6nzxFAbfbNx3BGYuAw1/exec";
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
+// ============================================================
+// LOCAL STORAGE HELPERS
+// ============================================================
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
-function loadData(key, def) { try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
-function getSales() { 
-  let data = loadData('sales_records', []);
-  return data.filter(item => item.store !== 'Testing');
+function getSales() {
+  return loadData('sales_records', []).filter(item => item && item.store !== 'Testing');
 }
-function saveSales(arr) { 
-  let filtered = arr.filter(item => item.store !== 'Testing');
-  saveData('sales_records', filtered); 
+function saveSales(arr) {
+  saveData('sales_records', arr.filter(item => item && item.store !== 'Testing'));
 }
 
+// ============================================================
+// TRANSLATIONS
+// ============================================================
 const T = {
   en: {
-    store:'Store', role:'Role', pin:'PIN', refresh:'Refresh Data', appTitle:'Sales Reporter', submit:'Submit', records:'Records', summary:'Summary', me:'Me',
-    submitCard:'Enter / Edit Target Sales', cash:'Cash Sales 现金销额', qr:'QR Sales 扫码销额', card:'Credit Card 刷卡销额', bank:'Bank Transfer 银行转账', totalSales:'Total Sales 总计额', submitBtn:'Submit & Sync 提交报表', remark:'Remark 备注', 
-    recordsTab:'Sales Records', noRecords:'No records match this selection filter', summaryTab:'Sales Summary', accessDenied:'Access Restricted', accessMsg: 'Only Boss, Admin & Manager can view metrics.',
-    todayTotal:'Range Total 选定内总计', monthTotal:'Selected Month Total 选定月度总计', byStore:'Sales by Store', daily:'Daily Trend (Last 7 Days)',
-    profileTab:'My Profile', logout:'Logout 退出', advice:'💡 Tips & Advice', tip1:'Submit and adjust store sales anytime.', tip2:'Double-check amounts before syncing.',
-    submitted:'Submitted successfully to Cloud Sheet! ✓', fillAll:'Please fill in sales amounts.', confirmTitle:'Confirm Submission', confirmMsg:'Are you sure you want to submit?',
-    alreadySubmitted:'Today\'s sales for this branch are already registered.', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin', test:'Test User', filterRange:'Date Selection Range', customDateLabel:'Pick Custom Date',
-    selectMonthLabel:'Filter Monthly Sales', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期', staffDailyOpt:'My Daily Sales Only', staffUptodateOpt:'Everyday Up To Date Sales'
+    appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary', admin:'Admin', me:'Me',
+    submitCard:'Enter / Update Sales', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
+    totalSales:'Total Sales', submitBtn:'Submit & Sync', remark:'Remark (optional)',
+    recordsTab:'Sales Records', noRecords:'No records found for this filter',
+    summaryTab:'Sales Summary', accessDenied:'Access Restricted',
+    accessMsg:'Only Boss, Admin & Manager can view this.',
+    todayTotal:'Range Total', monthTotal:'Monthly Total',
+    byStore:'Sales by Store', daily:'Daily Trend (7 Days)',
+    adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
+    submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
+    confirmTitle:'Confirm Submission', confirmMsg:'Submit these figures?',
+    allStores:'All Stores',
+    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
+    filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
+    selectMonthLabel:'Month Filter',
+    pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
+    approveBtn:'Approve ✓', rejectBtn:'Reject ✗',
+    addUser:'+ Add User', editUser:'Edit', deleteUser:'Delete',
+    userMgmt:'User Management',
+    approvedMsg:'User approved & activated!', rejectedMsg:'Request rejected.',
+    userSaved:'User saved!', userDeleted:'User deleted.',
   },
   zh: {
-    store:'门店', role:'职位', pin:'密码', refresh:'刷新数据', appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', me:'我的',
-    submitCard:'输入 / 调整指定销售额', cash:'现金销额 (Cash)', qr:'扫码销额 (QR Pay)', card:'刷卡销额 (Card)', bank:'银行转账 (Bank Trans)', totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）', 
-    recordsTab:'销售记录', noRecords:'在此日期或门店筛选下暂无匹配记录', summaryTab:'销售汇总', accessDenied:'权限受限', accessMsg: '仅老板、管理员及经理可查看汇总数据。',
-    todayTotal:'指定日期总销额', monthTotal:'指定月份总销额', byStore:'各门店月度排行', daily:'每日近七天趋势',
-    profileTab:'我的基本资料', logout:'安全退出登录', advice:'💡 日常维护小贴士', tip1:'门店可随时补录、或覆盖更新任何历史日期段数据。', tip2:'提交数据前，请务必仔细核对账目金额。',
-    submitted:'数据已成功云同步至谷歌表格！✓', fillAll:'请务必填写销售金额。', confirmTitle:'确认核对数据', confirmMsg:'确认数据无误并提交系统吗？',
-    alreadySubmitted:'该门店今日的销售额已经提交，请勿重复操作。', allStores:'所有门店',
-    staff:'店员', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员', test:'测试账户', filterRange:'日期过滤范围', customDateLabel:'选择自定义日期',
-    selectMonthLabel:'按指定月份筛选排行', todayOpt:'Today 今天', yestOpt:'Yesterday 昨天', customOpt:'Custom Date 自选日期', staffDailyOpt:'仅查看我今日的账单', staffUptodateOpt:'查看所有累积历史明细'
+    appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', admin:'管理', me:'我的',
+    submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
+    totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
+    recordsTab:'销售记录', noRecords:'无匹配记录',
+    summaryTab:'销售汇总', accessDenied:'权限受限',
+    accessMsg:'仅老板、管理员及经理可查看汇总数据。',
+    todayTotal:'选定总额', monthTotal:'月度总额',
+    byStore:'各门店月度排行', daily:'近7天趋势',
+    adminTab:'管理后台', logout:'安全退出', refresh:'同步',
+    submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
+    confirmTitle:'确认提交', confirmMsg:'确认提交这些数据吗？',
+    allStores:'所有门店',
+    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
+    filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期',
+    selectMonthLabel:'月份筛选',
+    pendingApprovals:'待审批申请', noRequests:'暂无待审批申请',
+    approveBtn:'批准 ✓', rejectBtn:'拒绝 ✗',
+    addUser:'+ 添加用户', editUser:'编辑', deleteUser:'删除',
+    userMgmt:'用户管理',
+    approvedMsg:'已批准并激活账号！', rejectedMsg:'已拒绝申请。',
+    userSaved:'用户已保存！', userDeleted:'用户已删除。',
   }
 };
+function t(k) { return T[lang][k] || k; }
 
-function t(key) { return T[lang][key] || key; }
-function toggleLang() { lang = lang === 'en' ? 'zh' : 'en'; renderCurrentTab(); updateTopBar(); updateNavLabels(); }
-function updateTopBar() { if(currentUser) document.getElementById('app-user-info').textContent = currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role); }
-function updateNavLabels() {
-  document.getElementById('nav-submit-lbl').textContent = t('submit'); document.getElementById('nav-records-lbl').textContent = t('records');
-  document.getElementById('nav-summary-lbl').textContent = t('summary'); document.getElementById('nav-profile-lbl').textContent = t('me');
+function toggleLang() {
+  lang = lang === 'en' ? 'zh' : 'en';
+  renderCurrentTab();
+  updateTopBar();
+  updateNavLabels();
 }
 
-function openRegisterModal() { document.getElementById('register-modal').classList.add('open'); }
+function updateTopBar() {
+  if(currentUser) document.getElementById('app-user-info').textContent =
+    currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
+}
+
+function updateNavLabels() {
+  document.getElementById('nav-submit-lbl').textContent  = t('submit');
+  document.getElementById('nav-records-lbl').textContent = t('records');
+  document.getElementById('nav-summary-lbl').textContent = t('summary');
+  document.getElementById('nav-admin-lbl').textContent   = t('admin');
+  document.getElementById('nav-profile-lbl').textContent = t('me');
+}
+
+// ============================================================
+// REGISTRATION
+// ============================================================
+function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
 function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
 
-function submitRegisterRequest() {
-  const store = document.getElementById('reg-store').value;
-  const role = document.getElementById('reg-role').value;
-  const name = document.getElementById('reg-name').value.trim();
-  const pin = document.getElementById('reg-pin').value.trim();
-  if(!store || !name || !pin) { showToast('Please fill all fields', 'error'); return; }
-  
-  showToast(lang==='zh'?'申请已向后台提交，请等待Admin审批！':'Registration Request Sent! Pending Admin approval.', 'success');
-  closeRegisterModal();
+async function submitRegisterRequest() {
+  const username = document.getElementById('reg-username').value.trim().toLowerCase();
+  const name     = document.getElementById('reg-name').value.trim();
+  const store    = document.getElementById('reg-store').value;
+  const role     = document.getElementById('reg-role').value;
+  const pin      = document.getElementById('reg-pin').value.trim();
+
+  if(!username || !name || !store || !pin) { showToast('Please fill all fields', 'error'); return; }
+  if(pin.length !== 4) { showToast('PIN must be 4 digits', 'error'); return; }
+
+  showToast('Sending request...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors', cache: 'no-cache',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'registerRequest', username, name, store, role, pin })
+    });
+    showToast('Registration sent! Waiting for Admin approval.', 'success');
+    closeRegisterModal();
+    // Clear fields
+    ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('reg-store').value = '';
+  } catch(e) {
+    showToast('Error: ' + e, 'error');
+  }
 }
 
+// ============================================================
+// SYNC / REFRESH — fetches real data FROM Google Sheets
+// ============================================================
 async function triggerSyncRefresh() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_GOOGLE_WEB_APP_URL")) return;
-  showToast(lang==='zh'?'正在同步云端...':'Syncing with Cloud...','pending');
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
+  const btn = document.getElementById('sync-btn');
+  if(btn) btn.textContent = '⏳';
+  showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
   try {
-    const res = await fetch(WEB_APP_URL);
-    const data = await res.json();
-    if (Array.isArray(data)) { 
-      saveSales(data); 
+    // Fetch sales data from the sheet
+    const res  = await fetch(WEB_APP_URL + '?action=getSales');
+    const json = await res.json();
+
+    if(json && json.sales && Array.isArray(json.sales)) {
+      // json.sales is the canonical list from the sheet — replace local cache entirely
+      saveSales(json.sales);
       renderCurrentTab();
-      showToast(lang==='zh'?'数据已更新✓':'Data Updated ✓','success');
+      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
+    } else if(Array.isArray(json)) {
+      // Legacy: bare array
+      saveSales(json);
+      renderCurrentTab();
+      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
+    } else {
+      showToast('Sync error: unexpected response', 'error');
     }
-  } catch(e) { showToast('Sync Error','error'); }
+  } catch(e) {
+    showToast('Sync failed — check internet', 'error');
+  }
+  if(btn) btn.textContent = '🔄';
 }
 
+// ============================================================
+// FETCH USERS FROM SHEET
+// ============================================================
 async function fetchLiveUsers() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR_GOOGLE_WEB_APP_URL")) return null;
+  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
-    const response = await fetch(`${WEB_APP_URL}?action=getUsers`);
+    const response = await fetch(WEB_APP_URL + '?action=getUsers');
     const users = await response.json();
-    cachedUsers = users; saveData('cached_users', users);
-    return users;
-  } catch (e) { cachedUsers = loadData('cached_users', {}); return cachedUsers; }
+    if(users && typeof users === 'object') {
+      cachedUsers = users;
+      saveData('cached_users', users);
+    }
+    return cachedUsers;
+  } catch(e) {
+    cachedUsers = loadData('cached_users', {});
+    return cachedUsers;
+  }
 }
 
+// ============================================================
+// LOGIN
+// ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
-  const pin = document.getElementById('login-pin').value.trim();
-  if(!username || !pin) { showToast('Please enter username and PIN','error'); return; }
-  
-  showToast(lang==='zh'?'正在验证...':'Verifying Account...','pending');
+  const pin      = document.getElementById('login-pin').value.trim();
+  if(!username || !pin) { showToast('Enter username and PIN', 'error'); return; }
+  showToast(lang === 'zh' ? '正在验证...' : 'Verifying...', 'pending');
   await fetchLiveUsers();
-  
   const userMatch = cachedUsers[username];
-  if(!userMatch || userMatch.pin !== pin) { showToast('Invalid Username or PIN','error'); return; }
-  
-  currentUser = userMatch; currentUser.username = username;
+  if(!userMatch || String(userMatch.pin) !== String(pin)) {
+    showToast('Wrong username or PIN', 'error'); return;
+  }
+  if(userMatch.status && userMatch.status !== 'active') {
+    showToast('Account pending approval. Contact Admin.', 'error'); return;
+  }
+  currentUser = { ...userMatch, username };
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
+
+  const isAdmin = ['admin','boss'].includes(currentUser.role);
+  document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
+
   updateTopBar(); updateNavLabels();
   switchTab('submit', document.getElementById('nav-submit'));
   triggerSyncRefresh();
 }
 
+// ============================================================
+// TAB SWITCHING
+// ============================================================
 function switchTab(tab, btn) {
   currentTab = tab;
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  ['submit','records','summary','profile'].forEach(t=>{ document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none'; });
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  ['submit','records','summary','admin','profile'].forEach(tt => {
+    document.getElementById('tab-' + tt).style.display = tt === tab ? 'block' : 'none';
+  });
   renderCurrentTab();
 }
 
 function renderCurrentTab() {
-  if(currentTab==='submit')  renderSubmitTab();
-  if(currentTab==='records') renderRecordsTab();
-  if(currentTab==='summary') renderSummaryTab();
-  if(currentTab==='profile') renderProfileTab();
+  if(currentTab === 'submit')  renderSubmitTab();
+  if(currentTab === 'records') renderRecordsTab();
+  if(currentTab === 'summary') renderSummaryTab();
+  if(currentTab === 'admin')   renderAdminTab();
+  if(currentTab === 'profile') renderProfileTab();
 }
 
+// ============================================================
+// SUBMIT TAB
+// ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
   const todayStr = new Date().toISOString().slice(0,10);
 
-  let storeOptions = !isManagerial 
+  let storeOptions = !isManagerial
     ? `<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
-    : `<select id="submit-store" onchange="checkAndLoadExistingSales()"><option value="">-- Select Store --</option>${STORES.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}</select>`;
+    : `<select id="submit-store" onchange="checkAndLoadExistingSales()">
+         <option value="">-- Select Store --</option>
+         ${STORES.map(s => `<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
+       </select>`;
 
   document.getElementById('tab-submit').innerHTML = `
     <div class="welcome-banner">
-      <h2>TIME TO TIME UPDATES</h2>
-      <p>${lang==='zh'?'可随时补录、覆盖或更新分段数据':'Update or edit sales entries at any time'}</p>
+      <h2>📤 ${t('submitCard')}</h2>
+      <p>${lang==='zh' ? '可随时补录、覆盖或更新历史数据，金额可填 0' : 'Update or edit any date. Amounts can be RM 0.00'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
       <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'选择目标日期':'Target Entry Date'}</label>
+        <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
         <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
       </div>
-      <div class="input-wrap"><label class="field-label">${t('store')}</label>${storeOptions}</div>
-      
-      <div class="input-wrap"><label class="field-label">💵 ${t('cash')}</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" class="amount-input" id="s-cash" placeholder="0" min="0" step="0.01" inputmode="decimal"></div></div>
-      <div class="input-wrap"><label class="field-label">📱 ${t('qr')}</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" class="amount-input" id="s-qr" placeholder="0" min="0" step="0.01" inputmode="decimal"></div></div>
-      <div class="input-wrap"><label class="field-label">💳 ${t('card')}</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" class="amount-input" id="s-card" placeholder="0" min="0" step="0.01" inputmode="decimal"></div></div>
-      <div class="input-wrap"><label class="field-label">🏦 ${t('bank')}</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" class="amount-input" id="s-bank" placeholder="0" min="0" step="0.01" inputmode="decimal"></div></div>
-      
+      <div class="input-wrap">
+        <label class="field-label">🏪 ${t('store') || 'Store'}</label>
+        ${storeOptions}
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">💵 ${t('cash')}</label>
+        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+          <input type="number" class="amount-input" id="s-cash" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">📱 ${t('qr')}</label>
+        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+          <input type="number" class="amount-input" id="s-qr" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">💳 ${t('card')}</label>
+        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+          <input type="number" class="amount-input" id="s-card" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">🏦 ${t('bank')}</label>
+        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+          <input type="number" class="amount-input" id="s-bank" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+      </div>
       <div class="divider"></div>
-      <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big" id="live-total">RM 0.00</span></div>
-      <div class="input-wrap" style="margin-top:12px"><label class="field-label">📝 ${t('remark')}</label><input type="text" id="s-remark" placeholder="..."></div>
-      <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:19px;">${t('submitBtn')}</button>
+      <div class="stat-row">
+        <span class="stat-label">🧾 ${t('totalSales')}</span>
+        <span class="stat-value big" id="live-total">RM 0.00</span>
+      </div>
+      <div class="input-wrap" style="margin-top:12px">
+        <label class="field-label">📝 ${t('remark')}</label>
+        <input type="text" id="s-remark" placeholder="...">
+      </div>
+      <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
+    </div>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
+      💡 ${lang==='zh'?'所有金额均可填写为 0.00（表示无销售额）':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
   `;
-  ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{ document.getElementById(id).addEventListener('input', updateLiveTotal); });
+  ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateLiveTotal);
+  });
   checkAndLoadExistingSales();
 }
 
 function checkAndLoadExistingSales() {
-  const dateVal = document.getElementById('submit-date').value;
-  const storeVal = document.getElementById('submit-store').value;
+  const dateVal  = document.getElementById('submit-date') ? document.getElementById('submit-date').value : '';
+  const storeVal = document.getElementById('submit-store') ? document.getElementById('submit-store').value : '';
   if(!dateVal || !storeVal) return;
-
-  const sales = getSales();
-  const existing = sales.find(s => s.dateKey === dateVal && s.store === storeVal);
-
+  const existing = getSales().find(s => s.dateKey === dateVal && s.store === storeVal);
   if(existing) {
-    document.getElementById('s-cash').value = existing.cash || 0;
-    document.getElementById('s-qr').value = existing.qr || 0;
-    document.getElementById('s-card').value = existing.card || 0;
-    document.getElementById('s-bank').value = existing.bank || 0;
+    document.getElementById('s-cash').value  = existing.cash  !== undefined ? existing.cash  : '';
+    document.getElementById('s-qr').value    = existing.qr    !== undefined ? existing.qr    : '';
+    document.getElementById('s-card').value  = existing.card  !== undefined ? existing.card  : '';
+    document.getElementById('s-bank').value  = existing.bank  !== undefined ? existing.bank  : '';
     document.getElementById('s-remark').value = existing.remark || '';
   } else {
-    document.getElementById('s-cash').value = '';
-    document.getElementById('s-qr').value = '';
-    document.getElementById('s-card').value = '';
-    document.getElementById('s-bank').value = '';
+    ['s-cash','s-qr','s-card','s-bank'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('s-remark').value = '';
   }
   updateLiveTotal();
 }
 
 function updateLiveTotal() {
-  const c = parseFloat(document.getElementById('s-cash').value)||0;
-  const q = parseFloat(document.getElementById('s-qr').value)||0;
-  const k = parseFloat(document.getElementById('s-card').value)||0;
-  const b = parseFloat(document.getElementById('s-bank').value)||0;
+  const c = parseFloat(document.getElementById('s-cash').value)  || 0;
+  const q = parseFloat(document.getElementById('s-qr').value)    || 0;
+  const k = parseFloat(document.getElementById('s-card').value)  || 0;
+  const b = parseFloat(document.getElementById('s-bank').value)  || 0;
   document.getElementById('live-total').textContent = 'RM ' + (c+q+k+b).toFixed(2);
 }
 
 function openConfirm() {
-  const store = document.getElementById('submit-store').value;
+  const store      = document.getElementById('submit-store').value;
   const targetDate = document.getElementById('submit-date').value;
-  const cash = parseFloat(document.getElementById('s-cash').value)||0;
-  const qr   = parseFloat(document.getElementById('s-qr').value)||0;
-  const card = parseFloat(document.getElementById('s-card').value)||0;
-  const bank = parseFloat(document.getElementById('s-bank').value)||0;
-  if(!store || !targetDate || (cash===0 && qr===0 && card===0 && bank===0)) { showToast(t('fillAll'),'error'); return; }
+  // FIX: allow 0 — only block if store or date missing
+  if(!store || !targetDate) { showToast(lang==='zh'?'请选择门店和日期':'Select store and date', 'error'); return; }
 
-  const total = cash+qr+card+bank;
+  const cash  = parseFloat(document.getElementById('s-cash').value)  || 0;
+  const qr    = parseFloat(document.getElementById('s-qr').value)    || 0;
+  const card  = parseFloat(document.getElementById('s-card').value)  || 0;
+  const bank  = parseFloat(document.getElementById('s-bank').value)  || 0;
+  const total = cash + qr + card + bank;
+  const remark = document.getElementById('s-remark').value;
+
   document.getElementById('modal-title').textContent = t('confirmTitle');
   document.getElementById('modal-body').innerHTML = `
-    <div class="stat-row"><span class="stat-label">🏪 ${t('store')}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
     <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
+    ${remark ? `<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>` : ''}
   `;
-  window._pendingSubmit = { store, targetDate, cash, qr, card, bank, total, remark: document.getElementById('s-remark').value };
+  window._pendingSubmit = { store, targetDate, cash, qr, card, bank, total, remark };
   document.getElementById('confirm-modal').classList.add('open');
 }
 
 function closeModal() { document.getElementById('confirm-modal').classList.remove('open'); }
 
 function confirmSubmit() {
-  const s = window._pendingSubmit; 
+  const s   = window._pendingSubmit;
   const now = new Date();
-  
   const record = {
-    id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank, total: s.total, remark: s.remark,
-    submitter: currentUser.name, role: currentUser.role, datetime: now.toISOString(),
+    id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
+    total: s.total, remark: s.remark, submitter: currentUser.name,
+    role: currentUser.role, datetime: now.toISOString(),
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
-  showToast(lang === 'zh' ? '正在同步至云端...' : 'Uploading & Syncing...', 'pending');
-  fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", cache: "no-cache", headers: { "Content-Type": "application/json" }, body: JSON.stringify(record) })
-  .then(() => {
-    // Replace locally if item already existed for that date/store to maintain view synchronization
+  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
+
+  fetch(WEB_APP_URL, {
+    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'submitSales', ...record })
+  }).then(() => {
+    // Update local cache: replace same date+store entry
     let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
-    sales.push(record); 
+    sales.push(record);
     saveSales(sales);
-    closeModal(); 
-    showToast(t('submitted'), 'success'); 
+    closeModal();
+    showToast(t('submitted'), 'success');
     renderSubmitTab();
-  }).catch(err => { showToast('Sync Failed: ' + err, 'error'); });
+  }).catch(err => { showToast('Error: ' + err, 'error'); });
 }
 
+// ============================================================
+// RECORDS TAB
+// ============================================================
 function renderRecordsTab() {
-  const sales = getSales();
-  const isExec = ['boss','admin','manager'].includes(currentUser.role);
+  const sales   = getSales();
+  const isExec  = ['boss','admin','manager'].includes(currentUser.role);
   const todayKey = new Date().toISOString().slice(0,10);
-  let yesterdayKey = new Date(); yesterdayKey.setDate(yesterdayKey.getDate() - 1);
-  yesterdayKey = yesterdayKey.toISOString().slice(0,10);
+  let yest = new Date(); yest.setDate(yest.getDate()-1);
+  const yestKey = yest.toISOString().slice(0,10);
 
   let targetDate = todayKey;
-  if(selectedDateRange === 'yesterday') targetDate = yesterdayKey;
+  if(selectedDateRange === 'yesterday')   targetDate = yestKey;
   if(selectedDateRange === 'custom_date') targetDate = customDateValue;
 
-  let filtered = isExec ? sales : sales.filter(s=>s.store === currentUser.store);
-
-  // Apply Date and Month options
+  let filtered = isExec ? sales : sales.filter(s => s.store === currentUser.store);
   if(selectedDateRange === 'month') {
     filtered = filtered.filter(s => s.month === selectedMonthValue);
   } else {
     filtered = filtered.filter(s => s.dateKey === targetDate);
   }
-
   if(isExec && activeRecordStoreFilter !== 'all') {
     filtered = filtered.filter(r => r.store === activeRecordStoreFilter);
   }
+  filtered = filtered.slice().sort((a,b) => String(b.dateKey).localeCompare(String(a.dateKey)));
 
-  filtered = filtered.slice().reverse();
-
-  let filterControlsHtml = `
+  let filterHtml = `
     <div class="control-grid">
       <div>
         <label class="field-label" style="font-size:11px;">${t('filterRange')}</label>
-        <select id="rec-range-select" onchange="updateRecordDateRange(this.value)">
-          <option value="today" ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
-          <option value="yesterday" ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
+        <select onchange="updateRecordDateRange(this.value)">
+          <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
+          <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
           <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-          <option value="month" ${selectedDateRange==='month'?'selected':''}>Month Range 月度</option>
+          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
         </select>
       </div>
-      <div id="custom-date-box" style="display:${selectedDateRange==='custom_date'?'block':'none'}">
-        <label class="field-label" style="font-size:11px;">${t('customDateLabel')}</label>
-        <input type="date" id="rec-custom-date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">
-      </div>
-      <div id="custom-month-box" style="display:${selectedDateRange==='month'?'block':'none'}">
-        <label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label>
-        <input type="month" id="rec-custom-month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">
+      <div>
+        ${selectedDateRange==='custom_date'
+          ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
+          : selectedDateRange==='month'
+            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+        }
       </div>
     </div>
   `;
 
   if(isExec) {
-    filterControlsHtml += `
-      <div class="filter-scroll">
-        <div class="filter-chip ${activeRecordStoreFilter==='all'?'active':''}" onclick="setRecordStoreFilter('all')">${t('allStores')}</div>
-        ${STORES.map(s=>`<div class="filter-chip ${activeRecordStoreFilter===s?'active':''}" onclick="setRecordStoreFilter('${s}')">${s}</div>`).join('')}
-      </div>
-    `;
+    filterHtml += `<div class="filter-scroll">
+      <div class="filter-chip ${activeRecordStoreFilter==='all'?'active':''}" onclick="setRecordStoreFilter('all')">${t('allStores')}</div>
+      ${STORES.map(s=>`<div class="filter-chip ${activeRecordStoreFilter===s?'active':''}" onclick="setRecordStoreFilter('${s}')">${s}</div>`).join('')}
+    </div>`;
   }
 
-  let listHtml = filtered.length === 0 ? `<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
-    : filtered.map(r=>`
+  const listHtml = filtered.length === 0
+    ? `<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
+    : filtered.map(r => `
       <div class="record-item">
         <div class="record-icon">🏪</div>
         <div class="record-info">
-          <div class="record-store">${r.store} <span class="badge">${r.submitter}</span></div>
+          <div class="record-store">${r.store} <span class="badge">${r.submitter||''}</span></div>
           <div class="record-meta">
-            💵 RM${parseFloat(r.cash||0).toFixed(2)} | 📱 RM${parseFloat(r.qr||0).toFixed(2)} | 💳 RM${parseFloat(r.card||0).toFixed(2)}<br>
-            🏦 RM${parseFloat(r.bank||0).toFixed(2)}
+            💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
+            💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
           </div>
-          ${r.remark ? `<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>` : ''}
+          ${r.remark ? `<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div class="record-amount">RM ${parseFloat(r.total).toFixed(2)}</div>
-          <div class="record-sub">${r.dateKey}</div>
+          <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
+          <div class="record-sub">${r.dateKey||''}</div>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('');
 
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
-    ${filterControlsHtml}
+    ${filterHtml}
     <div class="card">${listHtml}</div>
   `;
 }
 
 function updateRecordDateRange(val) { selectedDateRange = val; renderRecordsTab(); }
-function updateCustomDateValue(val) { customDateValue = val; renderRecordsTab(); }
-function updateCustomMonthValue(val) { selectedMonthValue = val; renderRecordsTab(); }
-function setRecordStoreFilter(store) { activeRecordStoreFilter = store; renderRecordsTab(); }
+function updateCustomDateValue(val) { customDateValue   = val; renderRecordsTab(); }
+function updateCustomMonthValue(val){ selectedMonthValue = val; renderRecordsTab(); }
+function setRecordStoreFilter(store){ activeRecordStoreFilter = store; renderRecordsTab(); }
 
+// ============================================================
+// SUMMARY TAB
+// ============================================================
 function renderSummaryTab() {
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
   if(!isExec) {
     document.getElementById('tab-summary').innerHTML = `
       <div class="card" style="text-align:center;padding:40px 20px">
-        <div style="font-size:52px;">🔒</div><h3>${t('accessDenied')}</h3><p>${t('accessMsg')}</p>
+        <div style="font-size:52px;">🔒</div>
+        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
+        <p style="color:var(--text2)">${t('accessMsg')}</p>
       </div>`; return;
   }
 
   const sales = getSales();
   const todayKey = new Date().toISOString().slice(0,10);
-  let yesterdayKey = new Date(); yesterdayKey.setDate(yesterdayKey.getDate() - 1);
-  yesterdayKey = yesterdayKey.toISOString().slice(0,10);
+  let yest = new Date(); yest.setDate(yest.getDate()-1);
+  const yestKey = yest.toISOString().slice(0,10);
 
   let targetRangeDay = todayKey;
-  if(selectedDateRange === 'yesterday') targetRangeDay = yesterdayKey;
+  if(selectedDateRange === 'yesterday')   targetRangeDay = yestKey;
   if(selectedDateRange === 'custom_date') targetRangeDay = customDateValue;
 
-  const rangeSales = (selectedDateRange === 'month') 
-    ? sales.filter(s=>s.month === selectedMonthValue)
-    : sales.filter(s=>s.dateKey === targetRangeDay);
-    
-  const monthSales = sales.filter(s=>s.month === selectedMonthValue);
-  const rangeTotal = rangeSales.reduce((a,s)=>a+parseFloat(s.total),0);
-  const monthTotal = monthSales.reduce((a,s)=>a+parseFloat(s.total),0);
+  const rangeSales = selectedDateRange === 'month'
+    ? sales.filter(s => s.month === selectedMonthValue)
+    : sales.filter(s => s.dateKey === targetRangeDay);
 
-  const storeMap = {}; STORES.forEach(s=>storeMap[s]=0);
-  monthSales.forEach(s=>storeMap[s.store] = (storeMap[s.store]||0)+parseFloat(s.total));
-  const maxStore = Math.max(...Object.values(storeMap),1);
+  const monthSales = sales.filter(s => s.month === selectedMonthValue);
+  const rangeTotal = rangeSales.reduce((a,s) => a + parseFloat(s.total||0), 0);
+  const monthTotal = monthSales.reduce((a,s) => a + parseFloat(s.total||0), 0);
+
+  const storeMap = {}; STORES.forEach(s => storeMap[s] = 0);
+  monthSales.forEach(s => storeMap[s.store] = (storeMap[s.store]||0) + parseFloat(s.total||0));
+  const maxStore = Math.max(...Object.values(storeMap), 1);
 
   const days = [];
-  for(let i=6;i>=0;i--) {
+  for(let i=6; i>=0; i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
     const dk = d.toISOString().slice(0,10);
     const label = d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
-    const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total),0);
+    const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
     days.push({label,val});
   }
-  const maxDay = Math.max(...days.map(d=>d.val),1);
+  const maxDay = Math.max(...days.map(d=>d.val), 1);
 
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
-    <div class="card" style="padding:14px; margin-bottom:14px; background:#eff6ff;">
-      <div class="control-grid" style="margin-bottom:0;">
+    <div class="card" style="padding:14px;background:#eff6ff;">
+      <div class="control-grid" style="margin-bottom:0">
         <div>
-          <label class="field-label" style="font-size:12px;margin-bottom:4px;">📅 ${t('filterRange')}</label>
-          <select onchange="updateSummaryDateRange(this.value)" style="padding:8px 10px; font-size:14px;">
-            <option value="today" ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
-            <option value="yesterday" ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
+          <label class="field-label" style="font-size:12px;margin-bottom:4px">📅 ${t('filterRange')}</label>
+          <select onchange="updateSummaryDateRange(this.value)" style="padding:8px 10px;font-size:14px">
+            <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
+            <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
             <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-            <option value="month" ${selectedDateRange==='month'?'selected':''}>Month Range 月度</option>
+            <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
           </select>
-          ${selectedDateRange==='custom_date' ? `<input type="date" value="${customDateValue}" onchange="updateSummaryCustomDate(this.value)" style="padding:6px;font-size:12px;margin-top:6px;">`:''}
+          ${selectedDateRange==='custom_date'?`<input type="date" value="${customDateValue}" onchange="updateSummaryCustomDate(this.value)" style="padding:6px;font-size:12px;margin-top:6px">`:''}
         </div>
         <div>
-          <label class="field-label" style="font-size:12px;margin-bottom:4px;">🗓️ ${t('selectMonthLabel')}</label>
-          <input type="month" value="${selectedMonthValue}" onchange="updateSummaryMonth(this.value)" style="padding:8px 10px; font-size:14px;">
+          <label class="field-label" style="font-size:12px;margin-bottom:4px">🗓️ ${t('selectMonthLabel')}</label>
+          <input type="month" value="${selectedMonthValue}" onchange="updateSummaryMonth(this.value)" style="padding:8px 10px;font-size:14px">
         </div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 RANGE TOTAL</div>
+        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 ${t('todayTotal')}</div>
         <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
       </div>
       <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">🗓️ MONTH [${selectedMonthValue}]</div>
-        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(0)}</div>
+        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">🗓️ ${selectedMonthValue}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(2)}</div>
       </div>
     </div>
     <div class="card">
@@ -635,16 +869,214 @@ function renderSummaryTab() {
             <span>${s}</span><span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
           </div>
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${((storeMap[s]||0)/maxStore*100).toFixed(1)}%"></div></div>
-        </div>
-      `).join('')}
+        </div>`).join('')}
     </div>
   `;
 }
 
-function updateSummaryDateRange(val) { selectedDateRange = val; renderSummaryTab(); }
-function updateSummaryCustomDate(val) { customDateValue = val; renderSummaryTab(); }
-function updateSummaryMonth(val) { selectedMonthValue = val; renderSummaryTab(); }
+function updateSummaryDateRange(val)  { selectedDateRange  = val; renderSummaryTab(); }
+function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryTab(); }
+function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
+// ============================================================
+// ADMIN TAB — Pending approvals + User management
+// ============================================================
+async function renderAdminTab() {
+  const isAdmin = ['admin','boss'].includes(currentUser.role);
+  if(!isAdmin) {
+    document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
+    return;
+  }
+
+  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
+
+  // Re-fetch latest users from sheet
+  await fetchLiveUsers();
+
+  // Separate pending vs active
+  const allUsers  = cachedUsers; // object keyed by username
+  const pending   = [];
+  const active    = [];
+
+  Object.entries(allUsers).forEach(([uname, u]) => {
+    if(u.status === 'pending') pending.push({...u, username: uname});
+    else active.push({...u, username: uname});
+  });
+
+  let pendingHtml = '';
+  if(pending.length > 0) {
+    pendingHtml = `
+      <div class="pending-card">
+        <div class="card-title" style="color:#92400e">
+          ⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span>
+        </div>
+        ${pending.map(u => `
+          <div class="user-row">
+            <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+            <div class="user-info">
+              <div class="user-name">@${u.username}</div>
+              <div class="user-meta">${u.name||''} · ${u.store||''} · ${u.role||'staff'}</div>
+            </div>
+            <div class="user-actions">
+              <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
+              <button class="btn-sm reject"  onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    pendingHtml = `
+      <div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px">
+        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">
+          ✅ ${t('noRequests')}
+        </div>
+      </div>`;
+  }
+
+  const activeHtml = active.map(u => `
+    <div class="user-row">
+      <div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div>
+        <div class="user-meta">@${u.username} · ${u.store||''}</div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>
+        ${u.username !== 'admin' ? `<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>` : ''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('tab-admin').innerHTML = `
+    <div class="card-header-flex" style="margin-bottom:14px">
+      <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
+      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
+    </div>
+
+    ${pendingHtml}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
+      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">
+        ${t('addUser')}
+      </button>
+    </div>
+    <div class="card">
+      ${activeHtml || `<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}
+    </div>
+  `;
+}
+
+// ---- APPROVE / REJECT ----
+async function approveUser(username) {
+  showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approveUser', username })
+    });
+    // Update local cache immediately
+    if(cachedUsers[username]) {
+      cachedUsers[username].status = 'active';
+      saveData('cached_users', cachedUsers);
+    }
+    showToast(t('approvedMsg'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
+}
+
+async function rejectUser(username) {
+  if(!confirm('Reject & delete this registration request?')) return;
+  showToast('Rejecting...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rejectUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('rejectedMsg'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
+}
+
+// ---- ADD / EDIT USER ----
+function openAddUser() {
+  document.getElementById('user-edit-title').textContent = '➕ ' + t('addUser');
+  document.getElementById('edit-user-key').value  = '';
+  document.getElementById('edit-username').value  = '';
+  document.getElementById('edit-username').disabled = false;
+  document.getElementById('edit-name').value      = '';
+  document.getElementById('edit-pin').value       = '';
+  document.getElementById('edit-role').value      = 'staff';
+  document.getElementById('edit-store').value     = 'HQ';
+  document.getElementById('user-edit-modal').classList.add('open');
+}
+
+function openEditUser(username) {
+  const u = cachedUsers[username];
+  if(!u) return;
+  document.getElementById('user-edit-title').textContent  = '✏️ ' + t('editUser');
+  document.getElementById('edit-user-key').value          = username;
+  document.getElementById('edit-username').value          = username;
+  document.getElementById('edit-username').disabled       = true; // can't change username
+  document.getElementById('edit-name').value              = u.name  || '';
+  document.getElementById('edit-pin').value               = u.pin   || '';
+  document.getElementById('edit-role').value              = u.role  || 'staff';
+  document.getElementById('edit-store').value             = u.store || 'HQ';
+  document.getElementById('user-edit-modal').classList.add('open');
+}
+
+function closeUserEditModal() { document.getElementById('user-edit-modal').classList.remove('open'); }
+
+async function saveUserEdit() {
+  const originalKey = document.getElementById('edit-user-key').value;
+  const username    = document.getElementById('edit-username').value.trim().toLowerCase();
+  const name        = document.getElementById('edit-name').value.trim();
+  const pin         = document.getElementById('edit-pin').value.trim();
+  const role        = document.getElementById('edit-role').value;
+  const store       = document.getElementById('edit-store').value;
+
+  if(!username || !name || !pin || pin.length !== 4) {
+    showToast('Fill all fields. PIN must be 4 digits.', 'error'); return;
+  }
+
+  const userData = { action: 'saveUser', originalKey, username, name, pin, role, store, status: 'active' };
+  showToast(lang==='zh'?'正在保存...':'Saving...', 'pending');
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    // Update local cache
+    if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
+    cachedUsers[username] = { name, pin, role, store, status: 'active' };
+    saveData('cached_users', cachedUsers);
+    showToast(t('userSaved'), 'success');
+    closeUserEditModal();
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
+}
+
+async function deleteUser(username) {
+  if(!confirm('Delete user @' + username + '?')) return;
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteUser', username })
+    });
+    delete cachedUsers[username];
+    saveData('cached_users', cachedUsers);
+    showToast(t('userDeleted'), 'success');
+    renderAdminTab();
+  } catch(e) { showToast('Error: '+e, 'error'); }
+}
+
+// ============================================================
+// PROFILE TAB
+// ============================================================
 function renderProfileTab() {
   document.getElementById('tab-profile').innerHTML = `
     <div class="card" style="text-align:center;padding:28px">
@@ -652,27 +1084,47 @@ function renderProfileTab() {
       <h2 style="font-size:22px;font-weight:900">${currentUser.name}</h2>
       <div style="margin-top:8px"><span class="role-tag ${currentUser.role}">${t(currentUser.role)}</span></div>
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
+      <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="stat-row">
+        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
+        <span class="stat-value">${getSales().length}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
+        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
+      </div>
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
 }
 
+// ============================================================
+// LOGOUT
+// ============================================================
 function doLogout() {
-  currentUser = null; document.getElementById('app-screen').classList.remove('active');
+  currentUser = null;
+  document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
-  document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
+  document.getElementById('login-pin').value  = '';
+  document.getElementById('login-name').value = '';
 }
 
-function fmtDate(iso) {
-  if(!iso) return "..."; const d = new Date(iso);
-  return d.toLocaleDateString(lang==='zh'?'zh-CN':'en-MY',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
-
+// ============================================================
+// TOAST
+// ============================================================
 function showToast(msg, type='') {
-  const el = document.getElementById('toast'); el.textContent = msg;
-  el.className = 'show ' + (type? type+'-toast' : ''); setTimeout(()=>el.className='',3000);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type ? type + '-toast' : '');
+  setTimeout(() => el.className = '', 3000);
 }
 
+// ============================================================
+// INIT
+// ============================================================
 window.addEventListener('DOMContentLoaded', fetchLiveUsers);
 </script>
 </body>
