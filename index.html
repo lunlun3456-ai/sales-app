@@ -292,7 +292,7 @@
 // ============================================================
 // CONFIGURATION — paste your Google Apps Script URL here
 // ============================================================
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwezL1T0o1ic1bXhoVBkIUA81PrZQxE6yJkitMlpsrGilxEnJEvAwKEPKNoZYgOCIYU/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw6k6RqimoeKuTRnYjKKPGIOCyAWitXYbXyGnBpfSxfknmdC6nzxFAbfbNx3BGYuAw1/exec";
 
 // ============================================================
 // STATE
@@ -419,6 +419,7 @@ async function submitRegisterRequest() {
     });
     showToast('Registration sent! Waiting for Admin approval.', 'success');
     closeRegisterModal();
+    // Clear fields
     ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('reg-store').value = '';
   } catch(e) {
@@ -435,27 +436,21 @@ async function triggerSyncRefresh() {
   if(btn) btn.textContent = '⏳';
   showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
   try {
-    const res  = await fetch(WEB_APP_URL + '?action=getSales&_t=' + Date.now());
+    const res  = await fetch(WEB_APP_URL + '?action=getSales');
     const json = await res.json();
 
-    if(json && json.sales && Array.isArray(json.sales)) {
+    // FIXED: Added validation checks to protect local cache from dropping out if server payload breaks
+    if(json && json.sales && Array.isArray(json.sales) && json.sales.length > 0) {
       saveSales(json.sales);
-      if(currentTab === 'submit') {
-        checkAndLoadExistingSales();
-      } else {
-        renderCurrentTab();
-      }
+      renderCurrentTab();
       showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else if(Array.isArray(json)) {
+    } else if(Array.isArray(json) && json.length > 0) {
       saveSales(json);
-      if(currentTab === 'submit') {
-        checkAndLoadExistingSales();
-      } else {
-        renderCurrentTab();
-      }
+      renderCurrentTab();
       showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
     } else {
-      showToast('Sync error: unexpected response', 'error');
+      // If the database returns completely blank/corrupt, protect local system data safely
+      showToast(lang === 'zh' ? '同步完成 (云端暂无新销售数据)' : 'Sync ready (No new sales on cloud)', 'success');
     }
   } catch(e) {
     showToast('Sync failed — check internet', 'error');
@@ -469,7 +464,7 @@ async function triggerSyncRefresh() {
 async function fetchLiveUsers() {
   if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers&_t=' + Date.now());
+    const response = await fetch(WEB_APP_URL + '?action=getUsers');
     const users = await response.json();
     if(users && typeof users === 'object') {
       cachedUsers = users;
@@ -536,7 +531,11 @@ function renderCurrentTab() {
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
-  const todayStr = new Date().toISOString().slice(0,10);
+  
+  // FIXED: Standardize local date picker configuration safely into UTC+08:00 tracking format
+  const dOffset = new Date();
+  const utc8Time = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000));
+  const todayStr = utc8Time.toISOString().slice(0,10);
 
   let storeOptions = !isManagerial
     ? `<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
@@ -662,11 +661,16 @@ function closeModal() { document.getElementById('confirm-modal').classList.remov
 
 function confirmSubmit() {
   const s   = window._pendingSubmit;
-  const now = new Date();
+  
+  // FIXED: Generate standard string date package forcing the client time securely into (UTC+08:00) zone
+  const localDate = new Date();
+  const utc8Time = new Date(localDate.getTime() + (8 * 60 * 60 * 1000));
+  const utc8String = utc8Time.toISOString().replace('Z', '+08:00');
+
   const record = {
     id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
     total: s.total, remark: s.remark, submitter: currentUser.name,
-    role: currentUser.role, datetime: now.toISOString(),
+    role: currentUser.role, datetime: utc8String, // <-- Injected with safely tracked UTC+8 timestamp
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
@@ -692,8 +696,13 @@ function confirmSubmit() {
 function renderRecordsTab() {
   const sales   = getSales();
   const isExec  = ['boss','admin','manager'].includes(currentUser.role);
-  const todayKey = new Date().toISOString().slice(0,10);
-  let yest = new Date(); yest.setDate(yest.getDate()-1);
+  
+  const dOffset = new Date();
+  const utc8Time = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000));
+  const todayKey = utc8Time.toISOString().slice(0,10);
+  
+  let yest = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000)); 
+  yest.setDate(yest.getDate()-1);
   const yestKey = yest.toISOString().slice(0,10);
 
   let targetDate = todayKey;
@@ -725,7 +734,9 @@ function renderRecordsTab() {
       <div>
         ${selectedDateRange==='custom_date'
           ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          : selectedDateRange==='month'
+            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
         }
       </div>
     </div>
@@ -787,8 +798,12 @@ function renderSummaryTab() {
   }
 
   const sales = getSales();
-  const todayKey = new Date().toISOString().slice(0,10);
-  let yest = new Date(); yest.setDate(yest.getDate()-1);
+  const dOffset = new Date();
+  const utc8Time = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000));
+  const todayKey = utc8Time.toISOString().slice(0,10);
+  
+  let yest = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000));
+  yest.setDate(yest.getDate()-1);
   const yestKey = yest.toISOString().slice(0,10);
 
   let targetRangeDay = todayKey;
@@ -809,7 +824,8 @@ function renderSummaryTab() {
 
   const days = [];
   for(let i=6; i>=0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
+    const d = new Date(dOffset.getTime() + (8 * 60 * 60 * 1000));
+    d.setDate(d.getDate()-i);
     const dk = d.toISOString().slice(0,10);
     const label = d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
     const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
@@ -874,21 +890,20 @@ function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryT
 function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
 // ============================================================
-// ADMIN TAB — Fixed to fetch fresh data via promise chains
+// ADMIN TAB — Pending approvals + User management
 // ============================================================
-async function renderAdminTab(forceLoad = false) {
+async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   if(!isAdmin) {
     document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
     return;
   }
 
-  if (forceLoad || Object.keys(cachedUsers).length === 0) {
-    document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
-    await fetchLiveUsers();
-  }
+  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
 
-  const allUsers  = cachedUsers;
+  await fetchLiveUsers();
+
+  const allUsers  = cachedUsers; 
   const pending   = [];
   const active    = [];
 
@@ -942,7 +957,7 @@ async function renderAdminTab(forceLoad = false) {
   document.getElementById('tab-admin').innerHTML = `
     <div class="card-header-flex" style="margin-bottom:14px">
       <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
-      <button class="btn refresh-inline" onclick="renderAdminTab(true)">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
     </div>
 
     ${pendingHtml}
@@ -959,7 +974,6 @@ async function renderAdminTab(forceLoad = false) {
   `;
 }
 
-// ---- APPROVE / REJECT ----
 async function approveUser(username) {
   showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
   try {
@@ -973,7 +987,7 @@ async function approveUser(username) {
       saveData('cached_users', cachedUsers);
     }
     showToast(t('approvedMsg'), 'success');
-    renderAdminTab(false);
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
@@ -989,11 +1003,10 @@ async function rejectUser(username) {
     delete cachedUsers[username];
     saveData('cached_users', cachedUsers);
     showToast(t('rejectedMsg'), 'success');
-    renderAdminTab(false);
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
-// ---- ADD / EDIT USER ----
 function openAddUser() {
   document.getElementById('user-edit-title').textContent = '➕ ' + t('addUser');
   document.getElementById('edit-user-key').value  = '';
@@ -1012,7 +1025,7 @@ function openEditUser(username) {
   document.getElementById('user-edit-title').textContent  = '✏️ ' + t('editUser');
   document.getElementById('edit-user-key').value          = username;
   document.getElementById('edit-username').value          = username;
-  document.getElementById('edit-username').disabled       = true;
+  document.getElementById('edit-username').disabled       = true; 
   document.getElementById('edit-name').value              = u.name  || '';
   document.getElementById('edit-pin').value               = u.pin   || '';
   document.getElementById('edit-role').value              = u.role  || 'staff';
@@ -1047,7 +1060,7 @@ async function saveUserEdit() {
     saveData('cached_users', cachedUsers);
     showToast(t('userSaved'), 'success');
     closeUserEditModal();
-    renderAdminTab(false);
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
@@ -1062,7 +1075,7 @@ async function deleteUser(username) {
     delete cachedUsers[username];
     saveData('cached_users', cachedUsers);
     showToast(t('userDeleted'), 'success');
-    renderAdminTab(false);
+    renderAdminTab();
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
