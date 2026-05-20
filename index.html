@@ -7,18 +7,19 @@
   <title>KI Sales Report</title>
   <style>
     :root {
-      --bg: #eef4fb;
+      --bg: #edf4ff;
       --panel: #ffffff;
       --ink: #172033;
       --muted: #667085;
       --line: #d8e2ef;
       --blue: #1f6feb;
       --blue-dark: #174ea6;
+      --cyan: #0ea5e9;
       --green: #11875d;
       --red: #d92d20;
       --amber: #b7791f;
-      --shadow: 0 8px 28px rgba(31, 111, 235, .12);
-      --radius: 14px;
+      --shadow: 0 10px 30px rgba(31, 111, 235, .13);
+      --radius: 18px;
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
@@ -47,7 +48,7 @@
     .login-box, .card {
       background: var(--panel);
       border: 1px solid rgba(255,255,255,.7);
-      border-radius: var(--radius);
+      border-radius: 22px;
       box-shadow: var(--shadow);
     }
 
@@ -68,9 +69,9 @@
       display: grid;
       place-items: center;
       margin: 0 auto 10px;
-      border-radius: 16px;
-      background: #eaf2ff;
-      color: var(--blue);
+      border-radius: 18px;
+      background: linear-gradient(135deg, #eaf2ff, #d8f3ff);
+      color: var(--blue-dark);
       font-weight: 900;
       font-size: 24px;
     }
@@ -108,7 +109,7 @@
       border: 0;
       border-radius: 10px;
       padding: 13px 14px;
-      background: var(--blue);
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
       color: #fff;
       font-weight: 900;
       cursor: pointer;
@@ -138,7 +139,7 @@
       top: 0;
       z-index: 20;
       padding: 15px 16px 12px;
-      background: var(--blue);
+      background: linear-gradient(135deg, #123a70, #1f6feb);
       color: #fff;
       display: flex;
       align-items: center;
@@ -148,6 +149,21 @@
 
     .topbar h2 { margin: 0; font-size: 18px; }
     .topbar p { margin: 2px 0 0; font-size: 12px; opacity: .86; }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lang-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
     .status {
       display: inline-flex;
       align-items: center;
@@ -180,7 +196,9 @@
       padding: 16px;
       margin-bottom: 13px;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, #1f6feb, #58a6ff);
+      background:
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.22), transparent 32%),
+        linear-gradient(135deg, #123a70, #1f6feb 68%, #58a6ff);
       color: #fff;
       box-shadow: var(--shadow);
     }
@@ -257,16 +275,17 @@
     .metric {
       background: #fff;
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 13px;
       text-align: center;
+      box-shadow: 0 6px 18px rgba(23, 32, 51, .05);
     }
     .metric b { display: block; color: var(--blue); font-size: 20px; margin-top: 5px; }
 
     .bar-row { margin: 13px 0; }
     .bar-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; }
     .bar-track { height: 9px; background: #e6edf7; border-radius: 999px; overflow: hidden; margin-top: 6px; }
-    .bar-fill { height: 100%; background: var(--blue); border-radius: 999px; min-width: 2px; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); border-radius: 999px; min-width: 2px; }
 
     .bottom-nav {
       position: fixed;
@@ -354,16 +373,16 @@
         <p>Google Spreadsheet Sync</p>
       </div>
       <div class="field">
-        <label for="login-user">Username</label>
+        <label for="login-user" data-i18n="loginUsername">Username</label>
         <input id="login-user" autocomplete="username" autocapitalize="none" placeholder="kiki">
       </div>
       <div class="field">
         <label for="login-pin">PIN</label>
         <input id="login-pin" type="password" maxlength="4" inputmode="numeric" autocomplete="current-password" placeholder="4 digits">
       </div>
-      <button class="btn" id="login-btn">Login</button>
-      <button class="btn secondary" id="open-register" style="margin-top:10px">Register Account</button>
-      <p class="muted" style="font-size:12px;text-align:center;margin:16px 0 0">Data is read from Google Sheets. Local cache is used only when offline.</p>
+      <button class="btn" id="login-btn" data-i18n="login">Login</button>
+      <button class="btn secondary" id="open-register" style="margin-top:10px" data-i18n="registerAccount">Register Account</button>
+      <p class="muted" style="font-size:12px;text-align:center;margin:16px 0 0" data-i18n="loginHint">Data is read from Google Sheets. Local cache is used only when offline.</p>
     </div>
   </section>
 
@@ -373,7 +392,10 @@
         <h2>SALES REPORT</h2>
         <p id="user-line"></p>
       </div>
-      <div id="sync-status" class="status"><span class="dot"></span><span>Syncing</span></div>
+      <div class="top-actions">
+        <button class="lang-btn" id="lang-toggle">中文</button>
+        <div id="sync-status" class="status"><span class="dot"></span><span>Syncing</span></div>
+      </div>
     </header>
 
     <main>
@@ -385,36 +407,36 @@
     </main>
 
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-tab="submit"><b>+</b>Submit</button>
-      <button class="nav-btn" data-tab="records"><b>=</b>Records</button>
-      <button class="nav-btn" data-tab="summary"><b>%</b>Summary</button>
-      <button class="nav-btn" data-tab="admin" id="admin-nav"><b>*</b>Admin</button>
-      <button class="nav-btn" data-tab="profile"><b>@</b>Me</button>
+      <button class="nav-btn active" data-tab="submit"><b>+</b><span data-i18n="navSubmit">Submit</span></button>
+      <button class="nav-btn" data-tab="records"><b>=</b><span data-i18n="navRecords">Records</span></button>
+      <button class="nav-btn" data-tab="summary"><b>%</b><span data-i18n="navSummary">Summary</span></button>
+      <button class="nav-btn" data-tab="admin" id="admin-nav"><b>*</b><span data-i18n="navAdmin">Admin</span></button>
+      <button class="nav-btn" data-tab="profile"><b>@</b><span data-i18n="navMe">Me</span></button>
     </nav>
   </section>
 
   <div id="confirm-modal" class="modal">
     <div class="modal-box">
-      <h3 style="margin-top:0">Confirm Submission</h3>
+      <h3 style="margin-top:0" data-i18n="confirmSubmission">Confirm Submission</h3>
       <div id="confirm-body"></div>
       <div class="grid" style="margin-top:14px">
-        <button class="btn secondary" data-close="confirm-modal">Cancel</button>
-        <button class="btn success" id="confirm-submit">Submit & Sync</button>
+        <button class="btn secondary" data-close="confirm-modal" data-i18n="cancel">Cancel</button>
+        <button class="btn success" id="confirm-submit" data-i18n="submitSync">Submit & Sync</button>
       </div>
     </div>
   </div>
 
   <div id="register-modal" class="modal">
     <div class="modal-box">
-      <h3 style="margin-top:0">Register Account</h3>
-      <div class="field"><label>Username</label><input id="reg-username" autocapitalize="none"></div>
-      <div class="field"><label>Full Name</label><input id="reg-name"></div>
-      <div class="field"><label>Store</label><select id="reg-store"></select></div>
-      <div class="field"><label>Role</label><select id="reg-role"><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option></select></div>
+      <h3 style="margin-top:0" data-i18n="registerAccount">Register Account</h3>
+      <div class="field"><label data-i18n="loginUsername">Username</label><input id="reg-username" autocapitalize="none"></div>
+      <div class="field"><label data-i18n="fullName">Full Name</label><input id="reg-name"></div>
+      <div class="field"><label data-i18n="store">Store</label><select id="reg-store"></select></div>
+      <div class="field"><label data-i18n="role">Role</label><select id="reg-role"><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option></select></div>
       <div class="field"><label>PIN</label><input id="reg-pin" type="password" maxlength="4" inputmode="numeric"></div>
       <div class="grid">
-        <button class="btn secondary" data-close="register-modal">Cancel</button>
-        <button class="btn success" id="register-submit">Send Request</button>
+        <button class="btn secondary" data-close="register-modal" data-i18n="cancel">Cancel</button>
+        <button class="btn success" id="register-submit" data-i18n="sendRequest">Send Request</button>
       </div>
     </div>
   </div>
@@ -423,29 +445,84 @@
     <div class="modal-box">
       <h3 style="margin-top:0" id="user-modal-title">User</h3>
       <input type="hidden" id="edit-original">
-      <div class="field"><label>Username</label><input id="edit-username" autocapitalize="none"></div>
-      <div class="field"><label>Name</label><input id="edit-name"></div>
+      <div class="field"><label data-i18n="loginUsername">Username</label><input id="edit-username" autocapitalize="none"></div>
+      <div class="field"><label data-i18n="fullName">Name</label><input id="edit-name"></div>
       <div class="field"><label>PIN</label><input id="edit-pin" type="password" maxlength="4" inputmode="numeric"></div>
-      <div class="field"><label>Role</label><select id="edit-role"><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option><option value="boss">Boss</option><option value="admin">Admin</option></select></div>
-      <div class="field"><label>Store</label><select id="edit-store"></select></div>
+      <div class="field"><label data-i18n="role">Role</label><select id="edit-role"><option value="staff">Staff</option><option value="supervisor">Supervisor</option><option value="manager">Manager</option><option value="boss">Boss</option><option value="admin">Admin</option></select></div>
+      <div class="field"><label data-i18n="store">Store</label><select id="edit-store"></select></div>
       <div class="grid">
-        <button class="btn secondary" data-close="user-modal">Cancel</button>
-        <button class="btn success" id="save-user">Save</button>
+        <button class="btn secondary" data-close="user-modal" data-i18n="cancel">Cancel</button>
+        <button class="btn success" id="save-user" data-i18n="save">Save</button>
       </div>
     </div>
   </div>
 
   <script>
-    const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDvgwVEZgdXZuNgH4eGaRo4LlXF4wtH3NMGIpShcT2ngC3CqgF9XhOyPqAwLsdjoDl/exec';
+    const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw3d1UoVsdY2ifb_HECM9-frLFf8ol3uIofMqA6YeoGXdS2ZBSNItuybJ2FAzbd_hFM/exec';
     const STORES = ['HQ', 'Bonia Sabindo', 'Bonia Eastern', 'Polo Sabindo', 'Polo Eastern', 'Gm Sabindo', 'Gm Eastern'];
     const STORE_OPTIONS = ['ALL', ...STORES];
     const LS = {
       url: 'ki_web_app_url',
       users: 'ki_users',
       sales: 'ki_sales',
+      lang: 'ki_lang',
+    };
+
+    const T = {
+      en: {
+        navSubmit: 'Submit', navRecords: 'Records', navSummary: 'Summary', navAdmin: 'Admin', navMe: 'Me',
+        loginUsername: 'Username', login: 'Login', registerAccount: 'Register Account',
+        loginHint: 'Data is read from Google Sheets. Local cache is used only when offline.',
+        fullName: 'Full Name', role: 'Role', sendRequest: 'Send Request', save: 'Save',
+        live: 'Live', offline: 'Offline', syncing: 'Syncing', ready: 'Ready', writing: 'Writing',
+        enterLogin: 'Enter username and PIN', checking: 'Checking Google Sheet...', cacheUsers: 'Using saved user cache',
+        wrongLogin: 'Wrong username or PIN', pendingAccount: 'Account is pending approval',
+        synced: 'Spreadsheet synced', liveError: 'Live sync error', writeError: 'Write error',
+        submitTitle: 'Enter / Update Sales', submitHint: 'Submitting the same store and date updates the spreadsheet row.',
+        date: 'Date', store: 'Store', cash: 'Cash', qr: 'QR Pay', card: 'Credit Card', bank: 'Bank Transfer',
+        totalSales: 'Total Sales', remark: 'Remark', optional: 'Optional', submitSync: 'Submit & Sync',
+        chooseStoreDate: 'Choose store and date', writingSheet: 'Writing to spreadsheet...', savedRefresh: 'Saved. Refreshing spreadsheet...',
+        confirmSubmission: 'Confirm Submission', total: 'Total', cancel: 'Cancel',
+        recordsTitle: 'Sales Records', summaryTitle: 'Sales Summary', sync: 'Sync',
+        dateRange: 'Date Range', today: 'Today', yesterday: 'Yesterday', pickDate: 'Pick Date', monthly: 'Monthly',
+        month: 'Month', allStores: 'All Stores', noRecords: 'No records found.', rangeTotal: 'Range Total',
+        selectedMonth: 'Selected Month', salesByStore: 'Sales by Store', accessRestricted: 'Access Restricted',
+        accessMsg: 'Only manager, boss, and admin users can view summary.',
+        admin: 'Admin', addUser: 'Add User', edit: 'Edit', delete: 'Delete', noAccess: 'No access',
+        webAppUrl: 'Google Apps Script Web App URL', saveUrl: 'Save URL & Sync', cachedRecords: 'Cached records',
+        dataSource: 'Data source', logout: 'Logout', googleSheets: 'Google Sheets',
+        registerSent: 'Registration sent for approval', completeFields: 'Complete all fields. PIN must be 4 digits.',
+        userSaved: 'User saved', userDeleted: 'User deleted',
+      },
+      zh: {
+        navSubmit: '提交', navRecords: '记录', navSummary: '汇总', navAdmin: '管理', navMe: '我的',
+        loginUsername: '用户名', login: '登录', registerAccount: '注册账号',
+        loginHint: '数据读取自 Google 表格。离线时才使用本地缓存。',
+        fullName: '姓名', role: '职位', sendRequest: '发送申请', save: '保存',
+        live: '在线', offline: '离线', syncing: '同步中', ready: '就绪', writing: '写入中',
+        enterLogin: '请输入用户名和 PIN', checking: '正在检查 Google 表格...', cacheUsers: '使用已保存用户资料',
+        wrongLogin: '用户名或 PIN 错误', pendingAccount: '账号等待管理员批准',
+        synced: '表格已同步', liveError: '实时同步错误', writeError: '写入错误',
+        submitTitle: '输入 / 更新销售额', submitHint: '同一门店和日期再次提交会更新表格里的同一行。',
+        date: '日期', store: '门店', cash: '现金', qr: '扫码支付', card: '刷卡', bank: '银行转账',
+        totalSales: '总销售额', remark: '备注', optional: '选填', submitSync: '提交并同步',
+        chooseStoreDate: '请选择门店和日期', writingSheet: '正在写入表格...', savedRefresh: '已保存，正在刷新表格...',
+        confirmSubmission: '确认提交', total: '总计', cancel: '取消',
+        recordsTitle: '销售记录', summaryTitle: '销售汇总', sync: '同步',
+        dateRange: '日期范围', today: '今天', yesterday: '昨天', pickDate: '选择日期', monthly: '按月',
+        month: '月份', allStores: '全部门店', noRecords: '没有找到记录。', rangeTotal: '所选范围总额',
+        selectedMonth: '所选月份', salesByStore: '各门店销售', accessRestricted: '权限受限',
+        accessMsg: '只有经理、老板和管理员可以查看汇总。',
+        admin: '管理', addUser: '添加用户', edit: '编辑', delete: '删除', noAccess: '无权限',
+        webAppUrl: 'Google Apps Script 网页应用 URL', saveUrl: '保存 URL 并同步', cachedRecords: '已缓存记录',
+        dataSource: '数据来源', logout: '退出登录', googleSheets: 'Google 表格',
+        registerSent: '注册申请已发送，等待批准', completeFields: '请填写所有资料。PIN 必须是 4 位数字。',
+        userSaved: '用户已保存', userDeleted: '用户已删除',
+      },
     };
 
     let webAppUrl = load(LS.url, DEFAULT_WEB_APP_URL);
+    let lang = load(LS.lang, 'en');
     let currentUser = null;
     let cachedUsers = {};
     let salesRecords = [];
@@ -461,6 +538,29 @@
     const money = (n) => `RM ${num(n).toFixed(2)}`;
     const privileged = () => currentUser && ['boss', 'admin', 'manager'].includes(currentUser.role);
     const isAdmin = () => currentUser && ['boss', 'admin'].includes(currentUser.role);
+    const tr = (key) => (T[lang] && T[lang][key]) || T.en[key] || key;
+
+    function applyLanguage() {
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      $('lang-toggle').textContent = lang === 'zh' ? 'EN' : '中文';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = tr(el.dataset.i18n);
+      });
+      if (currentUser) {
+        $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${roleLabel(currentUser.role)}`;
+      }
+    }
+
+    function roleLabel(role) {
+      const map = {
+        staff: lang === 'zh' ? '员工' : 'Staff',
+        supervisor: lang === 'zh' ? '主管' : 'Supervisor',
+        manager: lang === 'zh' ? '经理' : 'Manager',
+        boss: lang === 'zh' ? '老板' : 'Boss',
+        admin: lang === 'zh' ? '管理员' : 'Admin',
+      };
+      return map[role] || role;
+    }
 
     function save(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
@@ -522,7 +622,7 @@
     function setStatus(text, type = '') {
       const el = $('sync-status');
       el.className = `status ${type}`;
-      el.querySelector('span:last-child').textContent = text;
+      el.querySelector('span:last-child').textContent = tr(text) || text;
     }
 
     function toast(message, type = '') {
@@ -563,7 +663,7 @@
     }
 
     async function syncSales({ silent = false } = {}) {
-      if (!silent) setStatus('Syncing', 'warn');
+      if (!silent) setStatus('syncing', 'warn');
       try {
         let payload;
         try {
@@ -574,14 +674,14 @@
         const rows = Array.isArray(payload) ? payload : (payload.sales || payload.records || []);
         salesRecords = rows.map(normalizeSale).filter(r => r.store && r.dateKey);
         save(LS.sales, salesRecords);
-        setStatus('Live', 'ok');
-        if (!silent) toast('Spreadsheet synced', 'ok');
+        setStatus('live', 'ok');
+        if (!silent) toast(tr('synced'), 'ok');
         renderActiveTab();
         return salesRecords;
       } catch (err) {
         salesRecords = load(LS.sales, []);
-        setStatus('Offline', 'bad');
-        if (!silent) toast(`Live sync error: ${err.message}`, 'bad');
+        setStatus('offline', 'bad');
+        if (!silent) toast(`${tr('liveError')}: ${err.message}`, 'bad');
         renderActiveTab();
         return salesRecords;
       }
@@ -606,6 +706,12 @@
       $('register-submit').addEventListener('click', registerUser);
       $('confirm-submit').addEventListener('click', confirmSubmit);
       $('save-user').addEventListener('click', saveUser);
+      $('lang-toggle').addEventListener('click', () => {
+        lang = lang === 'en' ? 'zh' : 'en';
+        save(LS.lang, lang);
+        applyLanguage();
+        renderActiveTab();
+      });
 
       document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', () => closeModal(btn.dataset.close));
@@ -617,27 +723,28 @@
 
       cachedUsers = load(LS.users, {});
       salesRecords = load(LS.sales, []);
-      setStatus('Ready', 'warn');
+      applyLanguage();
+      setStatus('ready', 'warn');
     }
 
     async function doLogin() {
       const username = $('login-user').value.trim().toLowerCase();
       const pin = $('login-pin').value.trim();
-      if (!username || !pin) return toast('Enter username and PIN', 'bad');
+      if (!username || !pin) return toast(tr('enterLogin'), 'bad');
 
-      toast('Checking Google Sheet...', 'warn');
+      toast(tr('checking'), 'warn');
       try {
         await syncUsers();
       } catch (err) {
-        toast('Using saved user cache', 'warn');
+        toast(tr('cacheUsers'), 'warn');
       }
 
       const user = cachedUsers[username];
-      if (!user || String(user.pin) !== String(pin)) return toast('Wrong username or PIN', 'bad');
-      if (user.status && user.status !== 'active') return toast('Account is pending approval', 'bad');
+      if (!user || String(user.pin) !== String(pin)) return toast(tr('wrongLogin'), 'bad');
+      if (user.status && user.status !== 'active') return toast(tr('pendingAccount'), 'bad');
 
       currentUser = { ...user, username };
-      $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${currentUser.role}`;
+      $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${roleLabel(currentUser.role)}`;
       $('admin-nav').style.display = isAdmin() ? 'block' : 'none';
       $('login-screen').classList.remove('active');
       $('app-screen').classList.add('active');
@@ -654,14 +761,14 @@
       $('app-screen').classList.remove('active');
       $('login-screen').classList.add('active');
       $('login-pin').value = '';
-      setStatus('Ready', 'warn');
+      setStatus('ready', 'warn');
     }
 
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.id === `tab-${tab}`));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
-      if (['records', 'summary', 'admin'].includes(tab)) syncSales({ silent: true });
+      if (['records', 'summary'].includes(tab)) syncSales({ silent: true });
       renderActiveTab();
     }
 
@@ -677,17 +784,17 @@
     function renderSubmit() {
       const selectedStore = privileged() ? (currentUser.store === 'ALL' ? STORES[0] : currentUser.store) : currentUser.store;
       $('tab-submit').innerHTML = `
-        <div class="banner"><h3>Enter / Update Sales</h3><p>Submitting the same store and date updates the spreadsheet row.</p></div>
+        <div class="banner"><h3>${tr('submitTitle')}</h3><p>${tr('submitHint')}</p></div>
         <div class="card">
-          <div class="field"><label>Date</label><input type="date" id="sale-date" value="${todayKey()}"></div>
-          <div class="field"><label>Store</label>${privileged() ? `<select id="sale-store">${STORES.map(s => `<option value="${s}" ${s === selectedStore ? 'selected' : ''}>${s}</option>`).join('')}</select>` : `<input id="sale-store" value="${currentUser.store}" disabled>`}</div>
-          <div class="field"><label>Cash</label><div class="money-wrap"><span>RM</span><input id="sale-cash" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
-          <div class="field"><label>QR Pay</label><div class="money-wrap"><span>RM</span><input id="sale-qr" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
-          <div class="field"><label>Credit Card</label><div class="money-wrap"><span>RM</span><input id="sale-card" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
-          <div class="field"><label>Bank Transfer</label><div class="money-wrap"><span>RM</span><input id="sale-bank" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
-          <div class="row"><span class="muted">Total Sales</span><span class="amount" id="sale-total">RM 0.00</span></div>
-          <div class="field" style="margin-top:14px"><label>Remark</label><input id="sale-remark" placeholder="Optional"></div>
-          <button class="btn" id="open-confirm">Submit & Sync</button>
+          <div class="field"><label>${tr('date')}</label><input type="date" id="sale-date" value="${todayKey()}"></div>
+          <div class="field"><label>${tr('store')}</label>${privileged() ? `<select id="sale-store">${STORES.map(s => `<option value="${s}" ${s === selectedStore ? 'selected' : ''}>${s}</option>`).join('')}</select>` : `<input id="sale-store" value="${currentUser.store}" disabled>`}</div>
+          <div class="field"><label>${tr('cash')}</label><div class="money-wrap"><span>RM</span><input id="sale-cash" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
+          <div class="field"><label>${tr('qr')}</label><div class="money-wrap"><span>RM</span><input id="sale-qr" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
+          <div class="field"><label>${tr('card')}</label><div class="money-wrap"><span>RM</span><input id="sale-card" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
+          <div class="field"><label>${tr('bank')}</label><div class="money-wrap"><span>RM</span><input id="sale-bank" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
+          <div class="row"><span class="muted">${tr('totalSales')}</span><span class="amount" id="sale-total">RM 0.00</span></div>
+          <div class="field" style="margin-top:14px"><label>${tr('remark')}</label><input id="sale-remark" placeholder="${tr('optional')}"></div>
+          <button class="btn" id="open-confirm">${tr('submitSync')}</button>
         </div>`;
 
       ['sale-date', 'sale-store'].forEach(id => $(id).addEventListener('change', loadExistingSale));
@@ -716,7 +823,7 @@
     function openConfirm() {
       const store = $('sale-store').value;
       const dk = $('sale-date').value;
-      if (!store || !dk) return toast('Choose store and date', 'bad');
+      if (!store || !dk) return toast(tr('chooseStoreDate'), 'bad');
 
       pendingSale = {
         id: Date.now(),
@@ -735,29 +842,29 @@
       pendingSale.total = pendingSale.cash + pendingSale.qr + pendingSale.card + pendingSale.bank;
 
       $('confirm-body').innerHTML = `
-        <div class="row"><span>Store</span><b>${pendingSale.store}</b></div>
-        <div class="row"><span>Date</span><b>${pendingSale.dateKey}</b></div>
-        <div class="row"><span>Cash</span><b>${money(pendingSale.cash)}</b></div>
-        <div class="row"><span>QR Pay</span><b>${money(pendingSale.qr)}</b></div>
-        <div class="row"><span>Credit Card</span><b>${money(pendingSale.card)}</b></div>
-        <div class="row"><span>Bank Transfer</span><b>${money(pendingSale.bank)}</b></div>
-        <div class="row"><span>Total</span><b class="amount">${money(pendingSale.total)}</b></div>`;
+        <div class="row"><span>${tr('store')}</span><b>${pendingSale.store}</b></div>
+        <div class="row"><span>${tr('date')}</span><b>${pendingSale.dateKey}</b></div>
+        <div class="row"><span>${tr('cash')}</span><b>${money(pendingSale.cash)}</b></div>
+        <div class="row"><span>${tr('qr')}</span><b>${money(pendingSale.qr)}</b></div>
+        <div class="row"><span>${tr('card')}</span><b>${money(pendingSale.card)}</b></div>
+        <div class="row"><span>${tr('bank')}</span><b>${money(pendingSale.bank)}</b></div>
+        <div class="row"><span>${tr('total')}</span><b class="amount">${money(pendingSale.total)}</b></div>`;
       openModal('confirm-modal');
     }
 
     async function confirmSubmit() {
       if (!pendingSale) return;
       closeModal('confirm-modal');
-      setStatus('Writing', 'warn');
-      toast('Writing to spreadsheet...', 'warn');
+      setStatus('writing', 'warn');
+      toast(tr('writingSheet'), 'warn');
       try {
         await apiPost({ action: 'submitSales', ...pendingSale });
         upsertLocalSale(pendingSale);
-        toast('Saved. Refreshing spreadsheet...', 'ok');
+        toast(tr('savedRefresh'), 'ok');
         window.setTimeout(() => syncSales({ silent: false }), 1400);
       } catch (err) {
-        setStatus('Offline', 'bad');
-        toast(`Write error: ${err.message}`, 'bad');
+        setStatus('offline', 'bad');
+        toast(`${tr('writeError')}: ${err.message}`, 'bad');
       }
     }
 
@@ -768,9 +875,20 @@
       renderActiveTab();
     }
 
-    function filteredSales() {
-      let rows = privileged() ? [...salesRecords] : salesRecords.filter(r => r.store === currentUser.store);
-      if (activeStore !== 'all') rows = rows.filter(r => r.store === activeStore);
+    function baseVisibleSales() {
+      return privileged() ? [...salesRecords] : salesRecords.filter(r => r.store === currentUser.store);
+    }
+
+    function selectedRangeLabel() {
+      if (filterRange === 'today') return tr('today');
+      if (filterRange === 'yesterday') return tr('yesterday');
+      if (filterRange === 'date') return filterDate;
+      return filterMonth;
+    }
+
+    function filteredSales({ applyStore = true } = {}) {
+      let rows = baseVisibleSales();
+      if (applyStore && activeStore !== 'all') rows = rows.filter(r => r.store === activeStore);
       if (filterRange === 'today') rows = rows.filter(r => r.dateKey === todayKey());
       if (filterRange === 'yesterday') rows = rows.filter(r => r.dateKey === todayKey(-1));
       if (filterRange === 'date') rows = rows.filter(r => r.dateKey === filterDate);
@@ -782,22 +900,31 @@
       target.innerHTML += `
         <div class="card">
           <div class="grid">
-            <div><label>Date Range</label><select id="filter-range"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="date">Pick Date</option><option value="month">Monthly</option></select></div>
+            <div><label>${tr('dateRange')}</label><select id="filter-range"><option value="today">${tr('today')}</option><option value="yesterday">${tr('yesterday')}</option><option value="date">${tr('pickDate')}</option><option value="month">${tr('monthly')}</option></select></div>
             <div id="filter-extra"></div>
           </div>
         </div>`;
       $('filter-range').value = filterRange;
-      $('filter-range').addEventListener('change', e => {
-        filterRange = e.target.value;
-        renderActiveTab();
-      });
       renderFilterExtra();
     }
 
     function renderFilterExtra() {
       $('filter-extra').innerHTML = filterRange === 'date'
-        ? `<label>Date</label><input id="filter-date" type="date" value="${filterDate}">`
-        : `<label>Month</label><input id="filter-month" type="month" value="${filterMonth}">`;
+        ? `<label>${tr('date')}</label><input id="filter-date" type="date" value="${filterDate}">`
+        : `<label>${tr('month')}</label><input id="filter-month" type="month" value="${filterMonth}">`;
+      const dateInput = $('filter-date');
+      const monthInput = $('filter-month');
+    }
+
+    function bindFilterControls() {
+      const rangeInput = $('filter-range');
+      if (rangeInput) {
+        rangeInput.value = filterRange;
+        rangeInput.addEventListener('change', e => {
+          filterRange = e.target.value;
+          renderActiveTab();
+        });
+      }
       const dateInput = $('filter-date');
       const monthInput = $('filter-month');
       if (dateInput) dateInput.addEventListener('change', e => { filterDate = e.target.value; renderActiveTab(); });
@@ -806,7 +933,7 @@
 
     function renderStoreChips() {
       if (!privileged()) return '';
-      return `<div class="chips"><button class="chip ${activeStore === 'all' ? 'active' : ''}" data-store="all">All Stores</button>${STORES.map(s => `<button class="chip ${activeStore === s ? 'active' : ''}" data-store="${s}">${s}</button>`).join('')}</div>`;
+      return `<div class="chips"><button class="chip ${activeStore === 'all' ? 'active' : ''}" data-store="all">${tr('allStores')}</button>${STORES.map(s => `<button class="chip ${activeStore === s ? 'active' : ''}" data-store="${s}">${s}</button>`).join('')}</div>`;
     }
 
     function bindStoreChips() {
@@ -818,52 +945,57 @@
 
     function renderRecords() {
       const rows = filteredSales();
-      $('tab-records').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">Sales Records</h3><button class="btn small secondary" id="manual-sync">Sync</button></div>`;
+      $('tab-records').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">${tr('recordsTitle')}</h3><button class="btn small secondary" id="manual-sync">${tr('sync')}</button></div>`;
       renderFilterControls($('tab-records'));
       $('tab-records').innerHTML += renderStoreChips();
-      $('tab-records').innerHTML += `<div class="card">${rows.length ? rows.map(recordHtml).join('') : '<p class="muted" style="text-align:center">No records found.</p>'}</div>`;
+      $('tab-records').innerHTML += `<div class="card">${rows.length ? rows.map(recordHtml).join('') : `<p class="muted" style="text-align:center">${tr('noRecords')}</p>`}</div>`;
       $('manual-sync').addEventListener('click', () => syncSales({ silent: false }));
+      bindFilterControls();
       bindStoreChips();
     }
 
     function recordHtml(r) {
       return `<div class="record">
-        <div><strong>${r.store}</strong> <span class="muted">${r.submitter || ''}</span><div class="meta">Cash ${money(r.cash)} | QR ${money(r.qr)}<br>Card ${money(r.card)} | Bank ${money(r.bank)}${r.remark ? `<br>${r.remark}` : ''}</div></div>
+        <div><strong>${r.store}</strong> <span class="muted">${r.submitter || ''}</span><div class="meta">${tr('cash')} ${money(r.cash)} | ${tr('qr')} ${money(r.qr)}<br>${tr('card')} ${money(r.card)} | ${tr('bank')} ${money(r.bank)}${r.remark ? `<br>${r.remark}` : ''}</div></div>
         <div><div class="total">${money(r.total)}</div><div class="meta">${r.dateKey}</div></div>
       </div>`;
     }
 
     function renderSummary() {
       if (!privileged()) {
-        $('tab-summary').innerHTML = '<div class="card"><h3>Access Restricted</h3><p class="muted">Only manager, boss, and admin users can view summary.</p></div>';
+        $('tab-summary').innerHTML = `<div class="card"><h3>${tr('accessRestricted')}</h3><p class="muted">${tr('accessMsg')}</p></div>`;
         return;
       }
       const rows = filteredSales();
-      const monthRows = salesRecords.filter(r => r.month === filterMonth);
+      const rangeAllStores = filteredSales({ applyStore: false });
+      const monthRows = baseVisibleSales().filter(r => r.month === filterMonth);
       const rangeTotal = rows.reduce((sum, r) => sum + r.total, 0);
       const monthTotal = monthRows.reduce((sum, r) => sum + r.total, 0);
       const storeTotals = Object.fromEntries(STORES.map(s => [s, 0]));
-      monthRows.forEach(r => storeTotals[r.store] = (storeTotals[r.store] || 0) + r.total);
+      rangeAllStores.forEach(r => storeTotals[r.store] = (storeTotals[r.store] || 0) + r.total);
       const max = Math.max(1, ...Object.values(storeTotals));
-      $('tab-summary').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">Sales Summary</h3><button class="btn small secondary" id="summary-sync">Sync</button></div>`;
+      $('tab-summary').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">${tr('summaryTitle')}</h3><button class="btn small secondary" id="summary-sync">${tr('sync')}</button></div>`;
       renderFilterControls($('tab-summary'));
+      $('tab-summary').innerHTML += renderStoreChips();
       $('tab-summary').innerHTML += `
         <div class="grid" style="margin-bottom:13px">
-          <div class="metric"><span class="muted">Range Total</span><b>${money(rangeTotal)}</b></div>
-          <div class="metric"><span class="muted">${filterMonth}</span><b>${money(monthTotal)}</b></div>
+          <div class="metric"><span class="muted">${tr('rangeTotal')} (${selectedRangeLabel()})</span><b>${money(rangeTotal)}</b></div>
+          <div class="metric"><span class="muted">${tr('selectedMonth')} ${filterMonth}</span><b>${money(monthTotal)}</b></div>
         </div>
-        <div class="card"><h3 style="margin-top:0">Sales by Store</h3>${STORES.map(store => `<div class="bar-row"><div class="bar-head"><span>${store}</span><span>${money(storeTotals[store] || 0)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${((storeTotals[store] || 0) / max * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>`;
+        <div class="card"><h3 style="margin-top:0">${tr('salesByStore')} (${selectedRangeLabel()})</h3>${STORES.map(store => `<div class="bar-row"><div class="bar-head"><span>${store}</span><span>${money(storeTotals[store] || 0)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${((storeTotals[store] || 0) / max * 100).toFixed(1)}%"></div></div></div>`).join('')}</div>`;
       $('summary-sync').addEventListener('click', () => syncSales({ silent: false }));
+      bindFilterControls();
+      bindStoreChips();
     }
 
     function renderAdmin() {
       if (!isAdmin()) {
-        $('tab-admin').innerHTML = '<div class="card"><h3>No access</h3></div>';
+        $('tab-admin').innerHTML = `<div class="card"><h3>${tr('noAccess')}</h3></div>`;
         return;
       }
       const users = Object.entries(cachedUsers).map(([username, u]) => ({ username, ...u }));
-      $('tab-admin').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">Admin</h3><button class="btn small success" id="add-user">Add User</button></div>
-        <div class="card">${users.map(u => `<div class="row"><div><b>${u.name || u.username}</b><div class="muted" style="font-size:12px">@${u.username} | ${u.role} | ${u.store} | ${u.status || 'active'}</div></div><div style="display:flex;gap:6px"><button class="btn small secondary" data-edit="${u.username}">Edit</button>${u.username !== currentUser.username ? `<button class="btn small danger" data-delete="${u.username}">Delete</button>` : ''}</div></div>`).join('')}</div>`;
+      $('tab-admin').innerHTML = `<div class="row" style="border:0;padding-top:0"><h3 style="margin:0">${tr('admin')}</h3><button class="btn small success" id="add-user">${tr('addUser')}</button></div>
+        <div class="card">${users.map(u => `<div class="row"><div><b>${u.name || u.username}</b><div class="muted" style="font-size:12px">@${u.username} | ${roleLabel(u.role)} | ${u.store} | ${u.status || 'active'}</div></div><div style="display:flex;gap:6px"><button class="btn small secondary" data-edit="${u.username}">${tr('edit')}</button>${u.username !== currentUser.username ? `<button class="btn small danger" data-delete="${u.username}">${tr('delete')}</button>` : ''}</div></div>`).join('')}</div>`;
       $('add-user').addEventListener('click', () => openUserEditor());
       document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openUserEditor(btn.dataset.edit)));
       document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteUser(btn.dataset.delete)));
@@ -873,18 +1005,18 @@
       $('tab-profile').innerHTML = `
         <div class="card">
           <h3 style="margin-top:0">${currentUser.name}</h3>
-          <p class="muted">@${currentUser.username} | ${currentUser.role} | ${currentUser.store}</p>
+          <p class="muted">@${currentUser.username} | ${roleLabel(currentUser.role)} | ${currentUser.store}</p>
         </div>
         <div class="card">
-          <label>Google Apps Script Web App URL</label>
+          <label>${tr('webAppUrl')}</label>
           <input id="url-input" value="${webAppUrl}">
-          <button class="btn success" id="save-url" style="margin-top:10px">Save URL & Sync</button>
+          <button class="btn success" id="save-url" style="margin-top:10px">${tr('saveUrl')}</button>
         </div>
         <div class="card">
-          <div class="row"><span class="muted">Cached records</span><b>${salesRecords.length}</b></div>
-          <div class="row"><span class="muted">Data source</span><b>Google Sheets</b></div>
+          <div class="row"><span class="muted">${tr('cachedRecords')}</span><b>${salesRecords.length}</b></div>
+          <div class="row"><span class="muted">${tr('dataSource')}</span><b>${tr('googleSheets')}</b></div>
         </div>
-        <button class="btn danger" id="logout">Logout</button>`;
+        <button class="btn danger" id="logout">${tr('logout')}</button>`;
       $('save-url').addEventListener('click', async () => {
         webAppUrl = $('url-input').value.trim();
         save(LS.url, webAppUrl);
@@ -911,15 +1043,15 @@
         role: $('reg-role').value,
         pin: $('reg-pin').value.trim(),
       };
-      if (!payload.username || !payload.name || !payload.pin || payload.pin.length !== 4) return toast('Complete all fields. PIN must be 4 digits.', 'bad');
+      if (!payload.username || !payload.name || !payload.pin || payload.pin.length !== 4) return toast(tr('completeFields'), 'bad');
       await apiPost(payload);
       closeModal('register-modal');
-      toast('Registration sent for approval', 'ok');
+      toast(tr('registerSent'), 'ok');
     }
 
     function openUserEditor(username = '') {
       const user = username ? cachedUsers[username] : {};
-      $('user-modal-title').textContent = username ? 'Edit User' : 'Add User';
+      $('user-modal-title').textContent = username ? tr('edit') : tr('addUser');
       $('edit-original').value = username;
       $('edit-username').value = username;
       $('edit-username').disabled = Boolean(username);
@@ -941,13 +1073,13 @@
         store: $('edit-store').value,
         status: 'active',
       };
-      if (!payload.username || !payload.name || !payload.pin || payload.pin.length !== 4) return toast('Complete all fields. PIN must be 4 digits.', 'bad');
+      if (!payload.username || !payload.name || !payload.pin || payload.pin.length !== 4) return toast(tr('completeFields'), 'bad');
       await apiPost(payload);
       cachedUsers[payload.username] = { name: payload.name, pin: payload.pin, role: payload.role, store: payload.store, status: 'active' };
       if (payload.originalKey && payload.originalKey !== payload.username) delete cachedUsers[payload.originalKey];
       save(LS.users, cachedUsers);
       closeModal('user-modal');
-      toast('User saved', 'ok');
+      toast(tr('userSaved'), 'ok');
       renderAdmin();
       window.setTimeout(() => syncUsers().then(renderAdmin), 1200);
     }
@@ -957,7 +1089,7 @@
       await apiPost({ action: 'deleteUser', username });
       delete cachedUsers[username];
       save(LS.users, cachedUsers);
-      toast('User deleted', 'ok');
+      toast(tr('userDeleted'), 'ok');
       renderAdmin();
     }
 
