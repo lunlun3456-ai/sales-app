@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1a1a2e">
 <title>Sales Reporter 日销报告</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
   :root {
     --bg: #f0f4ff; --card: #ffffff; --primary: #2563eb; --primary-dark: #1d4ed8;
     --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --text: #1e293b;
@@ -421,7 +421,6 @@ async function submitRegisterRequest() {
     });
     showToast('Registration sent! Waiting for Admin approval.', 'success');
     closeRegisterModal();
-    // Clear fields
     ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('reg-store').value = '';
   } catch(e) {
@@ -430,18 +429,41 @@ async function submitRegisterRequest() {
 }
 
 // ============================================================
-// SYNC — POST only. Apps cannot pull data from the database.
-// Records and Summary are built from locally submitted data only.
+// SYNC — Pulls active real-time records from Google Sheet
 // ============================================================
-async function triggerSyncRefresh() {
-  renderCurrentTab(); // just re-render from localStorage
+async function triggerSyncRefresh(silent = false) {
+  if (!WEB_APP_URL) return;
+  if (!silent) showToast(lang === 'zh' ? '正在刷新同步数据库...' : 'Refreshing database sync...', 'pending');
+  
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getRecords');
+    const freshRecords = await response.json();
+    if (freshRecords && Array.isArray(freshRecords)) {
+      saveSales(freshRecords);
+      if (!silent) showToast(lang === 'zh' ? '同步成功 ✓' : 'Sync Successful ✓', 'success');
+    }
+  } catch (e) {
+    console.error("Failed to fetch current database updates:", e);
+    if (!silent) showToast(lang === 'zh' ? '网络错误，显示离线数据' : 'Network error, showing offline data', 'error');
+  }
 }
 
 // ============================================================
-// FETCH USERS — local cache only, no GET from database
+// FETCH USERS
 // ============================================================
 async function fetchLiveUsers() {
   cachedUsers = loadData('cached_users', {});
+  if (!WEB_APP_URL) return cachedUsers;
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const users = await response.json();
+    if (users && typeof users === 'object' && Object.keys(users).length > 0) {
+      cachedUsers = users;
+      saveData('cached_users', users);
+    }
+  } catch(e) {
+    console.log("Could not refresh configuration users, using fallback.");
+  }
   return cachedUsers;
 }
 
@@ -469,19 +491,27 @@ async function doLogin() {
   document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
 
   updateTopBar(); updateNavLabels();
+  
+  // Force clean sheet fetch on successful login screen bypass
+  await triggerSyncRefresh(true);
   switchTab('submit', document.getElementById('nav-submit'));
 }
 
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-function switchTab(tab, btn) {
+async function switchTab(tab, btn) {
   currentTab = tab;
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   ['submit','records','summary','admin','profile'].forEach(tt => {
     document.getElementById('tab-' + tt).style.display = tt === tab ? 'block' : 'none';
   });
+  
+  // Dynamic sync whenever user switches contexts to find deleted rows
+  if (['records', 'summary'].includes(tab)) {
+    await triggerSyncRefresh(true);
+  }
   renderCurrentTab();
 }
 
@@ -638,12 +668,11 @@ function confirmSubmit() {
     method: 'POST', mode: 'no-cors', cache: 'no-cache',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'submitSales', ...record })
-  }).then(() => {
-    let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
-    sales.push(record);
-    saveSales(sales);
+  }).then(async () => {
     closeModal();
     showToast(t('submitted'), 'success');
+    // Force direct cloud refresh to keep arrays perfectly matched
+    await triggerSyncRefresh(true);
     renderSubmitTab();
   }).catch(err => { showToast('Error: ' + err, 'error'); });
 }
@@ -687,9 +716,7 @@ function renderRecordsTab() {
       <div>
         ${selectedDateRange==='custom_date'
           ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          : selectedDateRange==='month'
-            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
-            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
         }
       </div>
     </div>
@@ -724,6 +751,7 @@ function renderRecordsTab() {
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
     <div class="card">${listHtml}</div>
@@ -783,6 +811,7 @@ function renderSummaryTab() {
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -836,7 +865,7 @@ function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryT
 function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
 // ============================================================
-// ADMIN TAB — Pending approvals + User management
+// ADMIN TAB
 // ============================================================
 async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
@@ -920,7 +949,6 @@ async function renderAdminTab() {
   `;
 }
 
-// ---- APPROVE / REJECT ----
 async function approveUser(username) {
   showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
   try {
@@ -954,7 +982,6 @@ async function rejectUser(username) {
   } catch(e) { showToast('Error: '+e, 'error'); }
 }
 
-// ---- ADD / EDIT USER ----
 function openAddUser() {
   document.getElementById('user-edit-title').textContent = '➕ ' + t('addUser');
   document.getElementById('edit-user-key').value  = '';
@@ -1069,7 +1096,7 @@ function renderProfileTab() {
 }
 
 // ============================================================
-// SAVE CUSTOM WEB APP URL — on first save, seed user list from cloud
+// SAVE CUSTOM WEB APP URL
 // ============================================================
 async function saveCustomWebAppUrl() {
   const inputUrl = document.getElementById('config-web-url').value.trim();
@@ -1087,8 +1114,7 @@ async function saveCustomWebAppUrl() {
   saveData('custom_web_app_url', inputUrl);
   WEB_APP_URL = inputUrl;
 
-  // One-time user seed from cloud so login works on new devices
-  showToast(lang === 'zh' ? '正在加载用户列表...' : 'Loading user list...', 'pending');
+  showToast(lang === 'zh' ? '正在加载配置列表...' : 'Loading config updates...', 'pending');
   try {
     const response = await fetch(WEB_APP_URL + '?action=getUsers');
     const users = await response.json();
@@ -1128,7 +1154,10 @@ function showToast(msg, type='') {
 // ============================================================
 // INIT
 // ============================================================
-window.addEventListener('DOMContentLoaded', fetchLiveUsers);
+window.addEventListener('DOMContentLoaded', async () => {
+  await fetchLiveUsers();
+  await triggerSyncRefresh(true);
+});
 </script>
 </body>
 </html>
