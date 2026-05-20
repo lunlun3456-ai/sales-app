@@ -30,6 +30,7 @@
       background: var(--bg);
       color: var(--ink);
       font-size: 16px;
+      overscroll-behavior-y: contain;
     }
 
     button, input, select {
@@ -129,16 +130,22 @@
 
     #app-screen {
       flex-direction: column;
+      width: 100%;
       max-width: 520px;
+      min-height: 100dvh;
       margin: 0 auto;
-      background: var(--bg);
+      background:
+        linear-gradient(180deg, rgba(31,111,235,.12), transparent 210px),
+        var(--bg);
+      position: relative;
+      overflow-x: hidden;
     }
 
     .topbar {
       position: sticky;
       top: 0;
       z-index: 20;
-      padding: 15px 16px 12px;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
       background: linear-gradient(135deg, #123a70, #1f6feb);
       color: #fff;
       display: flex;
@@ -182,7 +189,31 @@
 
     main {
       flex: 1;
-      padding: 16px 14px 86px;
+      width: 100%;
+      padding: 16px 14px calc(92px + env(safe-area-inset-bottom));
+    }
+
+    .pull-refresh {
+      position: absolute;
+      left: 50%;
+      top: calc(58px + env(safe-area-inset-top));
+      z-index: 19;
+      transform: translate(-50%, -120%);
+      opacity: 0;
+      transition: .18s;
+      background: #fff;
+      color: var(--blue);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 13px;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      font-weight: 900;
+      pointer-events: none;
+    }
+    .pull-refresh.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
     .tab { display: none; }
@@ -299,6 +330,8 @@
       background: #fff;
       border-top: 1px solid var(--line);
       box-shadow: 0 -5px 20px rgba(0,0,0,.08);
+      padding-bottom: env(safe-area-inset-bottom);
+      border-radius: 18px 18px 0 0;
     }
     .nav-btn {
       flex: 1;
@@ -387,6 +420,7 @@
   </section>
 
   <section id="app-screen" class="screen">
+    <div id="pull-refresh" class="pull-refresh">Release to sync</div>
     <header class="topbar">
       <div>
         <h2>SALES REPORT</h2>
@@ -466,6 +500,7 @@
       users: 'ki_users',
       sales: 'ki_sales',
       lang: 'ki_lang',
+      session: 'ki_session_user',
     };
 
     const T = {
@@ -493,6 +528,8 @@
         dataSource: 'Data source', logout: 'Logout', googleSheets: 'Google Sheets',
         registerSent: 'Registration sent for approval', completeFields: 'Complete all fields. PIN must be 4 digits.',
         userSaved: 'User saved', userDeleted: 'User deleted',
+        backdateDenied: 'Only Admin, Boss, and Manager can key sales before today.',
+        releaseSync: 'Release to sync', pulling: 'Pull to sync', urlAdminOnly: 'Only Admin can edit the Apps Script URL.',
       },
       zh: {
         navSubmit: '提交', navRecords: '记录', navSummary: '汇总', navAdmin: '管理', navMe: '我的',
@@ -518,6 +555,8 @@
         dataSource: '数据来源', logout: '退出登录', googleSheets: 'Google 表格',
         registerSent: '注册申请已发送，等待批准', completeFields: '请填写所有资料。PIN 必须是 4 位数字。',
         userSaved: '用户已保存', userDeleted: '用户已删除',
+        backdateDenied: '只有管理员、老板和经理可以填写今天以前的销售。',
+        releaseSync: '松开同步', pulling: '下拉同步', urlAdminOnly: '只有管理员可以修改 Apps Script URL。',
       },
     };
 
@@ -538,6 +577,8 @@
     const money = (n) => `RM ${num(n).toFixed(2)}`;
     const privileged = () => currentUser && ['boss', 'admin', 'manager'].includes(currentUser.role);
     const isAdmin = () => currentUser && ['boss', 'admin'].includes(currentUser.role);
+    const isUrlAdmin = () => currentUser && currentUser.role === 'admin';
+    const canBackdateSales = () => currentUser && ['boss', 'admin', 'manager'].includes(currentUser.role);
     const tr = (key) => (T[lang] && T[lang][key]) || T.en[key] || key;
 
     function applyLanguage() {
@@ -549,6 +590,7 @@
       if (currentUser) {
         $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${roleLabel(currentUser.role)}`;
       }
+      if ($('pull-refresh')) $('pull-refresh').textContent = tr('releaseSync');
     }
 
     function roleLabel(role) {
@@ -725,6 +767,51 @@
       salesRecords = load(LS.sales, []);
       applyLanguage();
       setStatus('ready', 'warn');
+      installPullToRefresh();
+      restoreSession();
+    }
+
+    async function restoreSession() {
+      const savedUser = load(LS.session, null);
+      if (!savedUser || !savedUser.username) return;
+      currentUser = savedUser;
+      $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${roleLabel(currentUser.role)}`;
+      $('admin-nav').style.display = isAdmin() ? 'block' : 'none';
+      $('login-screen').classList.remove('active');
+      $('app-screen').classList.add('active');
+      renderSubmit();
+      await syncSales({ silent: true });
+      startLiveSync();
+      switchTab(activeTab || 'submit');
+    }
+
+    function installPullToRefresh() {
+      let startY = 0;
+      let pulling = false;
+      const indicator = $('pull-refresh');
+
+      window.addEventListener('touchstart', (e) => {
+        if (!currentUser || window.scrollY > 0) return;
+        startY = e.touches[0].clientY;
+        pulling = true;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!pulling || !currentUser || window.scrollY > 0) return;
+        const distance = e.touches[0].clientY - startY;
+        if (distance > 45) {
+          indicator.textContent = distance > 92 ? tr('releaseSync') : tr('pulling');
+          indicator.classList.add('show');
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', async (e) => {
+        if (!pulling) return;
+        const distance = e.changedTouches[0].clientY - startY;
+        pulling = false;
+        indicator.classList.remove('show');
+        if (currentUser && distance > 92) await syncSales({ silent: false });
+      }, { passive: true });
     }
 
     async function doLogin() {
@@ -744,6 +831,7 @@
       if (user.status && user.status !== 'active') return toast(tr('pendingAccount'), 'bad');
 
       currentUser = { ...user, username };
+      save(LS.session, currentUser);
       $('user-line').textContent = `${currentUser.name} | ${currentUser.store} | ${roleLabel(currentUser.role)}`;
       $('admin-nav').style.display = isAdmin() ? 'block' : 'none';
       $('login-screen').classList.remove('active');
@@ -757,6 +845,7 @@
 
     function logout() {
       currentUser = null;
+      localStorage.removeItem(LS.session);
       window.clearInterval(syncTimer);
       $('app-screen').classList.remove('active');
       $('login-screen').classList.add('active');
@@ -783,10 +872,11 @@
 
     function renderSubmit() {
       const selectedStore = privileged() ? (currentUser.store === 'ALL' ? STORES[0] : currentUser.store) : currentUser.store;
+      const dateLimit = canBackdateSales() ? '' : `min="${todayKey()}" max="${todayKey()}"`;
       $('tab-submit').innerHTML = `
         <div class="banner"><h3>${tr('submitTitle')}</h3><p>${tr('submitHint')}</p></div>
         <div class="card">
-          <div class="field"><label>${tr('date')}</label><input type="date" id="sale-date" value="${todayKey()}"></div>
+          <div class="field"><label>${tr('date')}</label><input type="date" id="sale-date" value="${todayKey()}" ${dateLimit}></div>
           <div class="field"><label>${tr('store')}</label>${privileged() ? `<select id="sale-store">${STORES.map(s => `<option value="${s}" ${s === selectedStore ? 'selected' : ''}>${s}</option>`).join('')}</select>` : `<input id="sale-store" value="${currentUser.store}" disabled>`}</div>
           <div class="field"><label>${tr('cash')}</label><div class="money-wrap"><span>RM</span><input id="sale-cash" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
           <div class="field"><label>${tr('qr')}</label><div class="money-wrap"><span>RM</span><input id="sale-qr" type="number" min="0" step="0.01" inputmode="decimal"></div></div>
@@ -824,6 +914,10 @@
       const store = $('sale-store').value;
       const dk = $('sale-date').value;
       if (!store || !dk) return toast(tr('chooseStoreDate'), 'bad');
+      if (!canBackdateSales() && dk !== todayKey()) {
+        $('sale-date').value = todayKey();
+        return toast(tr('backdateDenied'), 'bad');
+      }
 
       pendingSale = {
         id: Date.now(),
@@ -1002,27 +1096,32 @@
     }
 
     function renderProfile() {
+      const urlCard = isUrlAdmin()
+        ? `<div class="card">
+          <label>${tr('webAppUrl')}</label>
+          <input id="url-input" value="${webAppUrl}">
+          <button class="btn success" id="save-url" style="margin-top:10px">${tr('saveUrl')}</button>
+        </div>`
+        : `<div class="card"><div class="row"><span class="muted">${tr('webAppUrl')}</span><b>${tr('admin')}</b></div><p class="muted" style="margin:8px 0 0;font-size:13px">${tr('urlAdminOnly')}</p></div>`;
       $('tab-profile').innerHTML = `
         <div class="card">
           <h3 style="margin-top:0">${currentUser.name}</h3>
           <p class="muted">@${currentUser.username} | ${roleLabel(currentUser.role)} | ${currentUser.store}</p>
         </div>
-        <div class="card">
-          <label>${tr('webAppUrl')}</label>
-          <input id="url-input" value="${webAppUrl}">
-          <button class="btn success" id="save-url" style="margin-top:10px">${tr('saveUrl')}</button>
-        </div>
+        ${urlCard}
         <div class="card">
           <div class="row"><span class="muted">${tr('cachedRecords')}</span><b>${salesRecords.length}</b></div>
           <div class="row"><span class="muted">${tr('dataSource')}</span><b>${tr('googleSheets')}</b></div>
         </div>
         <button class="btn danger" id="logout">${tr('logout')}</button>`;
-      $('save-url').addEventListener('click', async () => {
-        webAppUrl = $('url-input').value.trim();
-        save(LS.url, webAppUrl);
-        await syncUsers();
-        await syncSales({ silent: false });
-      });
+      if (isUrlAdmin()) {
+        $('save-url').addEventListener('click', async () => {
+          webAppUrl = $('url-input').value.trim();
+          save(LS.url, webAppUrl);
+          await syncUsers();
+          await syncSales({ silent: false });
+        });
+      }
       $('logout').addEventListener('click', logout);
     }
 
