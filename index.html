@@ -292,8 +292,6 @@
 // CONFIGURATION — Default Google Apps Script URL
 // ============================================================
 const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxK0Jc7fKBfd0ciOPZE-FndV4PoShEcjzSGaCE2ph3tft2nymekwfVDRsAIDPif0Cix/exec";
-
-// Automatically fallback to default if no user-defined URL is stored yet
 let WEB_APP_URL = loadData('custom_web_app_url', DEFAULT_WEB_APP_URL);
 
 // ============================================================
@@ -316,6 +314,7 @@ const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Easter
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
+// ALWAYS SANITIZE DIRT ROWS AND EMIT CLEAN DATA FROM SPREADSHEET ONLY
 function getSales() {
   return loadData('sales_records', []).filter(item => item && item.store !== 'Testing');
 }
@@ -397,9 +396,30 @@ function updateNavLabels() {
 }
 
 // ============================================================
-// REGISTRATION
+// ENFORCED SPREADSHEET PRIORITIZED SYNC ENGINE
 // ============================================================
-function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
+async function triggerSyncRefresh(silent = false) {
+  if (!WEB_APP_URL) return;
+  if (!silent) showToast(lang === 'zh' ? '正在连接谷歌云端同步...' : 'Connecting Spreadsheet Cloud...', 'pending');
+  
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getRecords', { cache: 'no-store' });
+    const freshRecords = await response.json();
+    if (freshRecords && Array.isArray(freshRecords)) {
+      // OVERWRITE local database array with pure Google Spreadsheet contents 
+      saveSales(freshRecords);
+      if (!silent) showToast(lang === 'zh' ? '云端同步刷新成功 ✓' : 'Spreadsheet Sync Complete ✓', 'success');
+    }
+  } catch (e) {
+    console.error("Database priority connection error:", e);
+    if (!silent) showToast(lang === 'zh' ? '离线状态下显示原有数据' : 'Offline Mode: showing last sync', 'error');
+  }
+}
+
+// ============================================================
+// ACCOUNT REGISTER REQUEST
+// ============================================================
+async function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
 function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
 
 async function submitRegisterRequest() {
@@ -429,46 +449,26 @@ async function submitRegisterRequest() {
 }
 
 // ============================================================
-// SYNC — Pulls active real-time records from Google Sheet
-// ============================================================
-async function triggerSyncRefresh(silent = false) {
-  if (!WEB_APP_URL) return;
-  if (!silent) showToast(lang === 'zh' ? '正在刷新同步数据库...' : 'Refreshing database sync...', 'pending');
-  
-  try {
-    const response = await fetch(WEB_APP_URL + '?action=getRecords');
-    const freshRecords = await response.json();
-    if (freshRecords && Array.isArray(freshRecords)) {
-      saveSales(freshRecords);
-      if (!silent) showToast(lang === 'zh' ? '同步成功 ✓' : 'Sync Successful ✓', 'success');
-    }
-  } catch (e) {
-    console.error("Failed to fetch current database updates:", e);
-    if (!silent) showToast(lang === 'zh' ? '网络错误，显示离线数据' : 'Network error, showing offline data', 'error');
-  }
-}
-
-// ============================================================
-// FETCH USERS
+// FETCH CONFIG USERS
 // ============================================================
 async function fetchLiveUsers() {
   cachedUsers = loadData('cached_users', {});
   if (!WEB_APP_URL) return cachedUsers;
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const response = await fetch(WEB_APP_URL + '?action=getUsers', { cache: 'no-store' });
     const users = await response.json();
     if (users && typeof users === 'object' && Object.keys(users).length > 0) {
       cachedUsers = users;
       saveData('cached_users', users);
     }
   } catch(e) {
-    console.log("Could not refresh configuration users, using fallback.");
+    console.log("Could not load fresh users configuration.");
   }
   return cachedUsers;
 }
 
 // ============================================================
-// LOGIN
+// USER AUTHENTICATION
 // ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
@@ -491,14 +491,12 @@ async function doLogin() {
   document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
 
   updateTopBar(); updateNavLabels();
-  
-  // Force clean sheet fetch on successful login screen bypass
   await triggerSyncRefresh(true);
   switchTab('submit', document.getElementById('nav-submit'));
 }
 
 // ============================================================
-// TAB SWITCHING
+// CONTEXT TAB SWITCH CONTROL
 // ============================================================
 async function switchTab(tab, btn) {
   currentTab = tab;
@@ -508,7 +506,7 @@ async function switchTab(tab, btn) {
     document.getElementById('tab-' + tt).style.display = tt === tab ? 'block' : 'none';
   });
   
-  // Dynamic sync whenever user switches contexts to find deleted rows
+  // FORCE GOOGLE SPREADSHEET PULL WHENEVER VIEWS CHANGE (ELIMINATES MANUAL DELETION DISCREPANCIES)
   if (['records', 'summary'].includes(tab)) {
     await triggerSyncRefresh(true);
   }
@@ -524,7 +522,7 @@ function renderCurrentTab() {
 }
 
 // ============================================================
-// SUBMIT TAB
+// DATA TRANSACTION VIEW (SUBMIT)
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
@@ -540,7 +538,7 @@ function renderSubmitTab() {
   document.getElementById('tab-submit').innerHTML = `
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh' ? '可随时补录、覆盖或更新历史数据，金额可填 0' : 'Update or edit any date. Amounts can be RM 0.00'}</p>
+      <p>${lang==='zh' ? '直接修改此处即可覆盖或修改目标日期的云端历史数据' : 'Editing a date with existing data will rewrite it in the spreadsheet.'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
@@ -586,9 +584,6 @@ function renderSubmitTab() {
         <input type="text" id="s-remark" placeholder="...">
       </div>
       <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-    </div>
-    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${lang==='zh'?'所有金额均可填写为 0.00（表示无销售额）':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
@@ -662,7 +657,7 @@ function confirmSubmit() {
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
   };
 
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
+  showToast(lang==='zh'?'正在发送云端修改...':'Writing to Spreadsheet...', 'pending');
 
   fetch(WEB_APP_URL, {
     method: 'POST', mode: 'no-cors', cache: 'no-cache',
@@ -671,14 +666,14 @@ function confirmSubmit() {
   }).then(async () => {
     closeModal();
     showToast(t('submitted'), 'success');
-    // Force direct cloud refresh to keep arrays perfectly matched
+    // FORCE DOWNLOAD FRESH ROW STATES DIRECTLY FROM GOOGLE SHEETS API IMMEDIATELY
     await triggerSyncRefresh(true);
     renderSubmitTab();
   }).catch(err => { showToast('Error: ' + err, 'error'); });
 }
 
 // ============================================================
-// RECORDS TAB
+// RECORDS DISPLAY (DRIVEN SOLELY BY SPREADSHEET ARRAY)
 // ============================================================
 function renderRecordsTab() {
   const sales   = getSales();
@@ -764,7 +759,7 @@ function updateCustomMonthValue(val){ selectedMonthValue = val; renderRecordsTab
 function setRecordStoreFilter(store){ activeRecordStoreFilter = store; renderRecordsTab(); }
 
 // ============================================================
-// SUMMARY TAB
+// SUMMARY DASHBOARD (DRIVEN SOLELY BY SPREADSHEET ARRAY)
 // ============================================================
 function renderSummaryTab() {
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
@@ -865,7 +860,7 @@ function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryT
 function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
 
 // ============================================================
-// ADMIN TAB
+// ADMIN CONTROL
 // ============================================================
 async function renderAdminTab() {
   const isAdmin = ['admin','boss'].includes(currentUser.role);
@@ -1055,7 +1050,7 @@ async function deleteUser(username) {
 }
 
 // ============================================================
-// PROFILE TAB
+// PROFILE CONFIG SETTINGS
 // ============================================================
 function renderProfileTab() {
   const settingsTitle = lang === 'zh' ? 'API 接口配置' : 'API Web App Configuration';
@@ -1081,58 +1076,39 @@ function renderProfileTab() {
     </div>
 
     <div class="card">
-      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="card-title">${lang==='zh'?'本地数据状态':'Local Data Status'}</div>
       <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
+        <span class="stat-label">${lang==='zh'?'已同步条数':'Clean Records'}</span>
         <span class="stat-value">${getSales().length}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
-        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
+        <span class="stat-label">${lang==='zh'?'数据来源':'Data Priority'}</span>
+        <span class="stat-value" style="color:var(--success)">Google Sheet</span>
       </div>
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
 }
 
-// ============================================================
-// SAVE CUSTOM WEB APP URL
-// ============================================================
 async function saveCustomWebAppUrl() {
   const inputUrl = document.getElementById('config-web-url').value.trim();
-  
-  if (!inputUrl) {
-    showToast(lang === 'zh' ? 'URL 不能为空' : 'URL cannot be empty', 'error');
-    return;
+  if (!inputUrl || !inputUrl.startsWith("https://script.google.com/")) {
+    showToast('Invalid Google Apps Script URL', 'error'); return;
   }
-  
-  if (!inputUrl.startsWith("https://script.google.com/")) {
-    showToast(lang === 'zh' ? '无效的 Google Apps Script 地址' : 'Invalid Google Apps Script URL', 'error');
-    return;
-  }
-
   saveData('custom_web_app_url', inputUrl);
   WEB_APP_URL = inputUrl;
-
-  showToast(lang === 'zh' ? '正在加载配置列表...' : 'Loading config updates...', 'pending');
+  showToast('Loading database configurations...', 'pending');
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const response = await fetch(WEB_APP_URL + '?action=getUsers', { cache: 'no-store' });
     const users = await response.json();
-    if(users && typeof users === 'object' && Object.keys(users).length > 0) {
+    if(users && typeof users === 'object') {
       cachedUsers = users;
       saveData('cached_users', users);
-      showToast(lang === 'zh' ? '配置已保存，用户列表已更新！' : 'Config saved & users loaded!', 'success');
-    } else {
-      showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
     }
-  } catch(e) {
-    showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
-  }
+    showToast('Saved & Connected!', 'success');
+  } catch(e) { showToast('URL saved!', 'success'); }
 }
 
-// ============================================================
-// LOGOUT
-// ============================================================
 function doLogout() {
   currentUser = null;
   document.getElementById('app-screen').classList.remove('active');
@@ -1141,9 +1117,6 @@ function doLogout() {
   document.getElementById('login-name').value = '';
 }
 
-// ============================================================
-// TOAST
-// ============================================================
 function showToast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -1152,7 +1125,7 @@ function showToast(msg, type='') {
 }
 
 // ============================================================
-// INIT
+// BOOTSTRAP INITIALIZATION
 // ============================================================
 window.addEventListener('DOMContentLoaded', async () => {
   await fetchLiveUsers();
