@@ -154,7 +154,6 @@
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn" title="Sync from Google Sheets">🔄</button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
@@ -431,51 +430,19 @@ async function submitRegisterRequest() {
 }
 
 // ============================================================
-// SYNC / REFRESH — fetches real data FROM Google Sheets
+// SYNC — POST only. Apps cannot pull data from the database.
+// Records and Summary are built from locally submitted data only.
 // ============================================================
 async function triggerSyncRefresh() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
-  const btn = document.getElementById('sync-btn');
-  if(btn) btn.textContent = '⏳';
-  showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
-  try {
-    const res  = await fetch(WEB_APP_URL + '?action=getSales');
-    const json = await res.json();
-
-    if(json && json.sales && Array.isArray(json.sales)) {
-      saveSales(json.sales);
-      renderCurrentTab();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else if(Array.isArray(json)) {
-      saveSales(json);
-      renderCurrentTab();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else {
-      showToast('Sync error: unexpected response', 'error');
-    }
-  } catch(e) {
-    showToast('Sync failed — check internet', 'error');
-  }
-  if(btn) btn.textContent = '🔄';
+  renderCurrentTab(); // just re-render from localStorage
 }
 
 // ============================================================
-// FETCH USERS FROM SHEET
+// FETCH USERS — local cache only, no GET from database
 // ============================================================
 async function fetchLiveUsers() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
-  try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
-    const users = await response.json();
-    if(users && typeof users === 'object') {
-      cachedUsers = users;
-      saveData('cached_users', users);
-    }
-    return cachedUsers;
-  } catch(e) {
-    cachedUsers = loadData('cached_users', {});
-    return cachedUsers;
-  }
+  cachedUsers = loadData('cached_users', {});
+  return cachedUsers;
 }
 
 // ============================================================
@@ -503,7 +470,6 @@ async function doLogin() {
 
   updateTopBar(); updateNavLabels();
   switchTab('submit', document.getElementById('nav-submit'));
-  triggerSyncRefresh();
 }
 
 // ============================================================
@@ -758,7 +724,6 @@ function renderRecordsTab() {
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
     <div class="card">${listHtml}</div>
@@ -818,7 +783,6 @@ function renderSummaryTab() {
   document.getElementById('tab-summary').innerHTML = `
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -1105,9 +1069,9 @@ function renderProfileTab() {
 }
 
 // ============================================================
-// SAVE CUSTOM WEB APP URL
+// SAVE CUSTOM WEB APP URL — on first save, seed user list from cloud
 // ============================================================
-function saveCustomWebAppUrl() {
+async function saveCustomWebAppUrl() {
   const inputUrl = document.getElementById('config-web-url').value.trim();
   
   if (!inputUrl) {
@@ -1123,8 +1087,21 @@ function saveCustomWebAppUrl() {
   saveData('custom_web_app_url', inputUrl);
   WEB_APP_URL = inputUrl;
 
-  showToast(lang === 'zh' ? '配置已保存并生效！' : 'API URL updated successfully!', 'success');
-  triggerSyncRefresh();
+  // One-time user seed from cloud so login works on new devices
+  showToast(lang === 'zh' ? '正在加载用户列表...' : 'Loading user list...', 'pending');
+  try {
+    const response = await fetch(WEB_APP_URL + '?action=getUsers');
+    const users = await response.json();
+    if(users && typeof users === 'object' && Object.keys(users).length > 0) {
+      cachedUsers = users;
+      saveData('cached_users', users);
+      showToast(lang === 'zh' ? '配置已保存，用户列表已更新！' : 'Config saved & users loaded!', 'success');
+    } else {
+      showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
+    }
+  } catch(e) {
+    showToast(lang === 'zh' ? '配置已保存！' : 'API URL saved!', 'success');
+  }
 }
 
 // ============================================================
