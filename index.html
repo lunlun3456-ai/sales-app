@@ -131,7 +131,6 @@
 
 <div id="toast"></div>
 
-<!-- ===================== LOGIN ===================== -->
 <div id="login-screen" class="screen active">
   <div class="login-box">
     <div class="login-logo">
@@ -152,7 +151,7 @@
         <text x="180" y="84" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="20" fill="#1e3a8a" text-anchor="middle" letter-spacing="6">SALES REPORT</text>
         <rect x="70" y="98" width="220" height="4" rx="2" fill="url(#gAccent)"/>
         <text x="260" y="118" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="14" fill="#f59e0b" font-style="italic">by ki</text>
-        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 2.0</text>
+        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 3.0</text>
         <text x="20" y="25" font-size="18" fill="#f59e0b" opacity="0.8">✦</text>
         <text x="335" y="65" font-size="14" fill="#60a5fa" opacity="0.9">✦</text>
         <text x="100" y="125" font-size="10" fill="#93c5fd" opacity="0.7">✦</text>
@@ -171,7 +170,6 @@
   </div>
 </div>
 
-<!-- ===================== MAIN APP ===================== -->
 <div id="app-screen" class="screen">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:10px">
@@ -188,7 +186,7 @@
         <text x="0" y="31" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="10" fill="url(#tgWhite)" opacity="0.9" letter-spacing="2">SALES REPORT</text>
         <rect x="0" y="35" width="105" height="2.5" rx="1.25" fill="url(#tgGold)"/>
         <text x="112" y="32" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="11" fill="url(#tgGold)" font-style="italic">by ki</text>
-        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v2.0</text>
+        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v3.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -227,7 +225,6 @@
   </nav>
 </div>
 
-<!-- ===================== REGISTER MODAL ===================== -->
 <div class="modal-overlay" id="register-modal">
   <div class="modal-box">
     <div class="modal-title">📝 Account Registration Request</div>
@@ -278,7 +275,6 @@
   </div>
 </div>
 
-<!-- ===================== CONFIRM SUBMIT MODAL ===================== -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
@@ -290,7 +286,6 @@
   </div>
 </div>
 
-<!-- ===================== USER EDIT MODAL ===================== -->
 <div class="modal-overlay" id="user-edit-modal">
   <div class="modal-box">
     <div class="modal-title" id="user-edit-title">Edit User</div>
@@ -308,24 +303,9 @@
       <input type="text" id="edit-phone" placeholder="e.g. 60123456789" inputmode="tel">
     </div>
     <div class="input-wrap">
-      <label class="field-label">PIN (4 digits)</label>
-      <input type="password" id="edit-pin" maxlength="4" inputmode="numeric" placeholder="••••">
-    </div>
-    <div class="input-wrap">
-      <label class="field-label">Role 职位</label>
-      <select id="edit-role">
-        <option value="staff">Staff</option>
-        <option value="supervisor">Supervisor</option>
-        <option value="manager">Manager</option>
-        <option value="boss">Boss</option>
-        <option value="admin">Admin</option>
-      </select>
-    </div>
-    <div class="input-wrap">
-      <label class="field-label">Assigned Store 门店</label>
+      <label class="field-label">Store Assigned 门店</label>
       <select id="edit-store">
-        <option value="ALL">ALL (Boss/Admin/Manager)</option>
-        <option value="HQ">HQ</option>
+        <option value="HQ">HQ / All Branches</option>
         <option value="Bonia Sabindo">Bonia Sabindo</option>
         <option value="Bonia Eastern">Bonia Eastern</option>
         <option value="Polo Sabindo">Polo Sabindo</option>
@@ -334,1116 +314,1187 @@
         <option value="Gm Eastern">Gm Eastern</option>
       </select>
     </div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">Cancel</button>
-      <button class="btn success"   style="flex:1" onclick="saveUserEdit()">Save 保存</button>
+    <div class="input-wrap">
+      <label class="field-label">System Role 权限权限</label>
+      <select id="edit-role">
+        <option value="staff">Staff 员工</option>
+        <option value="supervisor">Supervisor 主管</option>
+        <option value="manager">Manager 经理</option>
+        <option value="admin">Admin 管理员</option>
+        <option value="boss">Boss 老板 (View Only)</option>
+      </select>
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">PIN (4 digits 密码)</label>
+      <input type="password" id="edit-pin" maxlength="4" placeholder="••••">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">Account Status 状态</label>
+      <select id="edit-status">
+        <option value="active">Active 正常</option>
+        <option value="disabled">Disabled 停用</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">Cancel 取消</button>
+      <button class="btn success"   style="flex:1" onclick="saveUserEdit()">Save User 保存</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== ALL SUBMITTED MODAL ===================== -->
 <div class="modal-overlay" id="all-submitted-modal">
   <div class="modal-box" style="text-align:center">
-    <div style="font-size:50px;margin-bottom:10px;">🎉</div>
-    <div class="modal-title" style="color:var(--success)" id="all-submitted-title">All Branches Submitted!</div>
-    <p style="color:var(--text2);margin-bottom:20px;line-height:1.5;" id="all-submitted-msg">Great news! All branches have submitted today.</p>
+    <div style="font-size:56px;margin-bottom:10px;">🎉</div>
+    <div class="modal-title" id="all-submitted-title" style="text-align:center;margin-bottom:8px">All Stores Submitted!</div>
+    <p id="all-submitted-msg" style="font-size:14px;color:var(--text2);margin-bottom:20px">All branches have submitted today.</p>
     <button class="btn success" onclick="document.getElementById('all-submitted-modal').classList.remove('open')" id="awesome-btn">Awesome!</button>
   </div>
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqGNuHCmJ4IGdCVppj8BLoVxQrhUJogegYj_GsW4A846lfHaO90uvdDP8aOJpwt4zb/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyfrScHOVKa3AHXY7A-C9CxEa8sQpLMcJLLfNz3fJ8MjZ1a3Q2uIMiiq8Z-rngqGHG8/exec";
+  
+  let lang = 'en';
+  let currentUser = null;
+  let currentTab = 'submit';
+  let cachedUsers = {};
+  let cachedLog = [];
+  let selectedDateRange = 'today';
+  let customDateValue = new Date().toISOString().slice(0,10);
+  let selectedMonthValue = new Date().toISOString().slice(0,7);
+  let activeRecordStoreFilter = 'all';
+  let logStoreFilter = 'all';
+  let logActionFilter = 'all';
 
-let lang = 'en';
-let currentUser = null;
-let currentTab = 'submit';
-let cachedUsers = {};
-let cachedLog = [];
-let selectedDateRange  = 'today';
-let customDateValue    = new Date().toISOString().slice(0,10);
-let selectedMonthValue = new Date().toISOString().slice(0,7);
-let activeRecordStoreFilter = 'all';
-let logStoreFilter = 'all';
-let logActionFilter = 'all';
+  const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+  const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
-const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
-const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+  function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
+  function loadData(key, def) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch(e){return def;} }
 
-function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
-function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
-
-function getSales() {
-  return loadData('sales_records', []).filter(item => item && item.store !== 'Testing');
-}
-function saveSales(arr) {
-  saveData('sales_records', arr.filter(item => item && item.store !== 'Testing'));
-}
-
-// ============================================================
-// TRANSLATIONS
-// ============================================================
-const T = {
-  en: {
-    appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary',
-    log:'Log', admin:'Admin', me:'Me',
-    submitCard:'Enter / Update Sales', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
-    totalSales:'Total Sales', submitBtn:'Submit & Sync', remark:'Remark (optional)',
-    recordsTab:'Sales Records', noRecords:'No records found',
-    summaryTab:'Sales Summary', accessDenied:'Access Restricted',
-    accessMsg:'Only Boss, Admin & Manager can view this.',
-    todayTotal:'Range Total', monthTotal:'Monthly Total',
-    byStore:'Sales by Store', daily:'Daily Trend (7 Days)',
-    adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
-    submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
-    confirmTitle:'Confirm Submission', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
-    filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
-    selectMonthLabel:'Month Filter',
-    pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
-    approveBtn:'Approve ✓', rejectBtn:'Reject ✗',
-    addUser:'+ Add User', editUser:'Edit', deleteUser:'Delete', userMgmt:'User Management',
-    approvedMsg:'User approved!', rejectedMsg:'Request rejected.',
-    userSaved:'User saved!', userDeleted:'User deleted.',
-    allSubmittedTitle:'All Branches Submitted!',
-    allSubmittedMsg:'All branches have submitted today\'s sales.',
-    remindBtn:'🔔 Remind Pending',
-    awesomeBtn:'Awesome!',
-    dailySalesLabel:'First Submit',
-    updateSalesLabel:'Updated',
-    changePinTitle:'🔐 Change Security PIN',
-    oldPinLabel:'Current PIN', newPinLabel:'New PIN (4 digits)', confirmNewPinLabel:'Confirm New PIN',
-    pinSubmitBtn:'Update PIN',
-    onlyTodayAllowed:'Staff & Supervisors can only submit today\'s sales.',
-    logTab:'Sales Audit Log', logDesc:'Immutable history of all submissions & edits',
-    newEntry:'NEW SUBMISSION', editEntry:'EDITED',
-    beforeLabel:'Before', afterLabel:'After',
-    noLog:'No log entries found', logFilter:'Filter Log',
-    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.'
-  },
-  zh: {
-    appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
-    log:'日志', admin:'管理', me:'我的',
-    submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
-    totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
-    recordsTab:'销售记录', noRecords:'无匹配记录',
-    summaryTab:'销售汇总', accessDenied:'权限受限',
-    accessMsg:'仅老板、管理员及经理可查看。',
-    todayTotal:'选定总额', monthTotal:'月度总额',
-    byStore:'各门店月度排行', daily:'近7天趋势',
-    adminTab:'管理后台', logout:'安全退出', refresh:'同步',
-    submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
-    confirmTitle:'确认提交', allStores:'所有门店',
-    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
-    filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期',
-    selectMonthLabel:'月份筛选',
-    pendingApprovals:'待审批申请', noRequests:'暂无待审批申请',
-    approveBtn:'批准 ✓', rejectBtn:'拒绝 ✗',
-    addUser:'+ 添加用户', editUser:'编辑', deleteUser:'删除', userMgmt:'用户管理',
-    approvedMsg:'已批准账号！', rejectedMsg:'已拒绝申请。',
-    userSaved:'用户已保存！', userDeleted:'用户已删除。',
-    allSubmittedTitle:'所有门店已提交！',
-    allSubmittedMsg:'所有门店均已完成今日的销售数据上报。',
-    remindBtn:'🔔 提醒未交门店',
-    awesomeBtn:'太棒了！',
-    dailySalesLabel:'首次提交',
-    updateSalesLabel:'已修改',
-    changePinTitle:'🔐 安全密码修改',
-    oldPinLabel:'当前密码', newPinLabel:'新密码（4位）', confirmNewPinLabel:'确认新密码',
-    pinSubmitBtn:'确认更新密码',
-    onlyTodayAllowed:'员工和主管仅可提报今日销售数据。',
-    logTab:'销售审计日志', logDesc:'所有提交与修改的不可更改历史记录',
-    newEntry:'首次提交', editEntry:'已修改',
-    beforeLabel:'修改前', afterLabel:'修改后',
-    noLog:'暂无日志记录', logFilter:'筛选日志',
-    logAccessDenied:'仅老板、管理员及经理可查看审计日志。'
-  }
-};
-function t(k) { return T[lang][k] || k; }
-
-function toggleLang() { lang = lang === 'en' ? 'zh' : 'en'; renderCurrentTab(); updateTopBar(); updateNavLabels(); }
-
-function updateTopBar() {
-  if(currentUser) document.getElementById('app-user-info').textContent =
-    currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
-}
-function updateNavLabels() {
-  document.getElementById('nav-submit-lbl').textContent  = t('submit');
-  document.getElementById('nav-records-lbl').textContent = t('records');
-  document.getElementById('nav-summary-lbl').textContent = t('summary');
-  document.getElementById('nav-log-lbl').textContent     = t('log');
-  document.getElementById('nav-admin-lbl').textContent   = t('admin');
-  document.getElementById('nav-profile-lbl').textContent = t('me');
-}
-
-// ============================================================
-// REGISTRATION
-// ============================================================
-function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
-function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
-
-async function submitRegisterRequest() {
-  const username = document.getElementById('reg-username').value.trim().toLowerCase();
-  const name     = document.getElementById('reg-name').value.trim();
-  const phone    = document.getElementById('reg-phone').value.trim();
-  const store    = document.getElementById('reg-store').value;
-  const role     = document.getElementById('reg-role').value;
-  const pin      = document.getElementById('reg-pin').value.trim();
-  if(!username||!name||!store||!pin||!phone){showToast('Please fill all fields','error');return;}
-  if(pin.length!==4){showToast('PIN must be 4 digits','error');return;}
-  showToast('Sending request...','pending');
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'registerRequest',username,name,phone,store,role,pin})});
-    showToast('Registration sent! Waiting for Admin approval.','success');
-    closeRegisterModal();
-    ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('reg-store').value='';
-  } catch(e){showToast('Error: '+e,'error');}
-}
-
-// ============================================================
-// SYNC / REFRESH
-// ============================================================
-// ── Robust GET helper — uses fetch with no-cors fallback via script tag ──────
-// Google Apps Script GETs work fine with plain fetch() AS LONG AS the
-// deployment is set to "Execute as: Me" + "Who has access: Anyone".
-// We add { redirect:'follow' } to chase the redirect GAS always issues.
-function gasGet(action) {
-  return new Promise((resolve, reject) => {
-    const url = WEB_APP_URL + '?action=' + action + '&t=' + Date.now();
-    fetch(url, { method: 'GET', redirect: 'follow' })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.text();
-      })
-      .then(text => {
-        try { resolve(JSON.parse(text)); }
-        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,120))); }
-      })
-      .catch(err => {
-        // CORS hard-blocked — fall back to script-tag JSONP trick
-        // GAS doesn't natively support JSONP but we can detect the error clearly
-        reject(err);
-      });
-  });
-}
-
-async function triggerSyncRefresh() {
-  if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
-  const btn=document.getElementById('sync-btn');
-  if(btn) btn.textContent='⏳';
-  showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
-  try {
-    const json = await gasGet('getSales');
-    if(json&&json.sales&&Array.isArray(json.sales)){
-      saveSales(json.sales); renderCurrentTab(); checkAllStoresSubmitted();
-      showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
-    } else if(Array.isArray(json)){
-      saveSales(json); renderCurrentTab(); checkAllStoresSubmitted();
-      showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
-    } else {
-      console.error('Unexpected response:', json);
-      showToast('Sync error: unexpected response','error');
+  const I18N = {
+    en: {
+      submitTab:'Submit', recordsTab:'Records', summaryTab:'Summary', profileTab:'Me', logTab:'Log', adminTab:'Admin Backend',
+      welcome:'Welcome back', loginTitle:'Branches Sales Report', cash:'Cash 現金', qr:'QR Pay 微信/支付宝/TNG', card:'Card Credit/Debit Card',
+      bank:'Bank Transfer 银行转账', totalSales:'Calculated Total Sales', remark:'Remark (Optional)', submitBtn:'Submit Financial Report',
+      filterRange:'Date Filter', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Select Date', selectMonthLabel:'Select Month',
+      pendingApprovals:'Pending Registration Requests', noRequests:'No pending requests.', approveBtn:'Approve ✓', rejectBtn:'Reject ✗',
+      addUser:'+ Add New User', editUser:'Edit', deleteUser:'Delete', userMgmt:'User Directory Management', approvedMsg:'User Approved Successfully!',
+      rejectedMsg:'Registration request rejected.', userSaved:'User updated successfully.', userDeleted:'User removed.',
+      allSubmittedTitle:'All Stores Done!', allSubmittedMsg:'All operational stores have completed their sales reporting for today.',
+      remindBtn:'🔔 Send WhatsApp Reminder', awesomeBtn:'Excellent!', dailySalesLabel:'Daily Submission', updateSalesLabel:'Modified Entry',
+      changePinTitle:'🔐 Change Personal Security PIN', oldPinLabel:'Current PIN', newPinLabel:'New 4-Digit PIN', confirmNewPinLabel:'Confirm New PIN',
+      pinSubmitBtn:'Update Security PIN', onlyTodayAllowed:'Staff/Supervisors are limited to submitting today\'s operational data only.',
+      logTab:'Sales Audit Log', logDesc:'Immutable ledger of all entry modifications and initial creations', newEntry:'First Submission',
+      editEntry:'Modified Entry', beforeLabel:'Before Revision', afterLabel:'After Revision', noLog:'No historical log logs found.',
+      logFilter:'Filter Logs', logAccessDenied:'Only Executives (Boss, Admin, Manager) are permitted to inspect the system modifications trail.',
+      accessDenied:'Access Restrict', syncLbl:'Cloud Sync', syncingMsg:'Synchronizing live ledger metrics from structural databases...',
+      totalCalculated:'Total Collected', paymentBreakdown:'Channel Metrics', submissionMetrics:'Submissions Progress', monthlyOverview:'Monthly Yield Metrics'
+    },
+    zh: {
+      submitTab:'数据上报', recordsTab:'历史记录', summaryTab:'数据图表', profileTab:'我的账户', logTab:'审计日志', adminTab:'管理后台',
+      welcome:'欢迎回来', loginTitle:'门店日销报表系统', cash:'现金收入 (RM)', qr:'扫码支付 (RM)', card:'刷卡收入 (RM)',
+      bank:'银行转账 (RM)', totalSales:'当日总营业额', remark:'备注信息 (选填)', submitBtn:'确认提交今日报表',
+      filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期', selectMonthLabel:'月份筛选',
+      pendingApprovals:'待审批账号申请', noRequests:'暂无待审批申请。', approveBtn:'批准 ✓', rejectBtn:'拒绝 ✗',
+      addUser:'+ 添加新用户', editUser:'编辑', deleteUser:'删除', userMgmt:'系统用户管理', approvedMsg:'已批准账号！',
+      rejectedMsg:'已拒绝申请。', userSaved:'用户信息已保存！', userDeleted:'用户已成功删除。',
+      allSubmittedTitle:'所有门店已提交！', allSubmittedMsg:'所有门店均已完成今日的营业销售数据上报。',
+      remindBtn:'🔔 提醒未交门店', awesomeBtn:'太棒了！', dailySalesLabel:'首次提交', updateSalesLabel:'已修改数据',
+      changePinTitle:'🔐 修改个人登录密码', oldPinLabel:'当前密码', newPinLabel:'新密码（4位）', confirmNewPinLabel:'确认新密码',
+      pinSubmitBtn:'确认更新密码', onlyTodayAllowed:'员工与主管权限仅允许提报并修改今日的销售数据。',
+      logTab:'销售审计日志', logDesc:'所有销售额新增与重改的不可逆历史追溯账目', newEntry:'首次提报数据',
+      editEntry:'重修数据记录', beforeLabel:'修改前额度', afterLabel:'修改后额度', noLog:'暂无相关的审计日志。',
+      logFilter:'图表过滤', logAccessDenied:'只有高级管理层（老板、管理员、经理）有权限查阅系统核心的修改历史日志。',
+      accessDenied:'无权访问', syncLbl:'同步云端', syncingMsg:'正在从云端多维动态数据库进行实时指标同步...',
+      totalCalculated:'总计营业额', paymentBreakdown:'支付渠道占比', submissionMetrics:'门店上报进度', monthlyOverview:'月度整体数据概览'
     }
-  } catch(e){
-    console.error('Sync error:', e);
-    showToast(lang==='zh'?'同步失败 — 请检查脚本部署设置':'Sync failed — check GAS deployment settings','error');
-  }
-  if(btn) btn.textContent='🔄';
-}
+  };
 
-async function fetchLiveUsers() {
-  if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return null;
-  try {
-    const users = await gasGet('getUsers');
-    if(users&&typeof users==='object'&&!Array.isArray(users)){
-      cachedUsers=users; saveData('cached_users',users);
+  function t(key) { return I18N[lang][key] || key; }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    lang = loadData('sales_lang', 'en');
+    const saved = loadData('current_user', null);
+    if(saved){
+      currentUser = saved;
+      showMainApp();
     }
-    return cachedUsers;
-  } catch(e){
-    console.error('fetchLiveUsers error:', e);
-    cachedUsers=loadData('cached_users',{});
-    return cachedUsers;
-  }
-}
-
-async function fetchLog() {
-  try {
-    const json = await gasGet('getLog');
-    if(json&&json.log&&Array.isArray(json.log)){ cachedLog=json.log; return cachedLog; }
-  } catch(e){ console.error('fetchLog error:', e); }
-  return [];
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-async function doLogin() {
-  const username = document.getElementById('login-name').value.trim().toLowerCase();
-  const pin      = document.getElementById('login-pin').value.trim();
-  if(!username||!pin){showToast('Enter username and PIN','error');return;}
-  showToast(lang==='zh'?'正在验证...':'Verifying...','pending');
-  await fetchLiveUsers();
-  const userMatch = cachedUsers[username];
-  if(!userMatch||String(userMatch.pin)!==String(pin)){showToast('Wrong username or PIN','error');return;}
-  if(userMatch.status&&userMatch.status!=='active'){showToast('Account pending approval. Contact Admin.','error');return;}
-  currentUser={...userMatch,username};
-  document.getElementById('login-screen').classList.remove('active');
-  document.getElementById('app-screen').classList.add('active');
-  const isAdmin=['admin','boss'].includes(currentUser.role);
-  const isExec=['admin','boss','manager'].includes(currentUser.role);
-  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
-  document.getElementById('nav-log').style.display=isExec?'flex':'none';
-  updateTopBar(); updateNavLabels();
-  switchTab('submit',document.getElementById('nav-submit'));
-  triggerSyncRefresh();
-}
-
-// ============================================================
-// TAB SWITCHING
-// ============================================================
-function switchTab(tab,btn) {
-  currentTab=tab;
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  ['submit','records','summary','log','admin','profile'].forEach(tt=>{
-    document.getElementById('tab-'+tt).style.display=tt===tab?'block':'none';
   });
-  renderCurrentTab();
-}
-function renderCurrentTab() {
-  if(currentTab==='submit')  renderSubmitTab();
-  if(currentTab==='records') renderRecordsTab();
-  if(currentTab==='summary') renderSummaryTab();
-  if(currentTab==='log')     renderLogTab();
-  if(currentTab==='admin')   renderAdminTab();
-  if(currentTab==='profile') renderProfileTab();
-}
 
-// ============================================================
-// SUBMIT TAB
-// ============================================================
-function renderSubmitTab() {
-  const isManagerial=['boss','admin','manager'].includes(currentUser.role);
-  const isRestricted=['staff','supervisor'].includes(currentUser.role);
-  const todayStr=new Date().toISOString().slice(0,10);
-  let allowedStores=STORES;
-  if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
-
-  let storeOptions=!isManagerial
-    ?`<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
-    :`<select id="submit-store" onchange="checkAndLoadExistingSales()">
-         <option value="">-- Select Store --</option>
-         ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
-       </select>`;
-
-  // ── Date input: Staff/Supervisor locked to TODAY only ────
-  let dateInputHtml;
-  if(isRestricted){
-    dateInputHtml=`
-      <input type="date" id="submit-date" value="${todayStr}" disabled
-        style="background:#e2e8f0;color:var(--text2);font-weight:bold;">
-      <div style="font-size:12px;color:#b45309;background:#fef3c7;border-radius:8px;padding:6px 10px;margin-top:6px;font-weight:600;">
-        🔒 ${t('onlyTodayAllowed')}
-      </div>`;
-  } else {
-    dateInputHtml=`<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
+  function toggleLang() {
+    lang = lang === 'en' ? 'zh' : 'en';
+    saveData('sales_lang', lang);
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      const id = btn.id.replace('nav-', '');
+      const lbl = document.getElementById(`nav-${id}-lbl`);
+      if(lbl) lbl.textContent = t(id+'Tab');
+    });
+    renderTopBarInfo();
+    renderCurrentTab();
   }
 
-  document.getElementById('tab-submit').innerHTML=`
-    <div class="welcome-banner">
-      <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0':'Update or edit any date. Amounts can be RM 0.00'}</p>
-    </div>
-    <div class="card">
-      <div class="card-title">${t('submitCard')}</div>
-      <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
-        ${dateInputHtml}
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
-        ${storeOptions}
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">💵 ${t('cash')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-cash" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">📱 ${t('qr')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-qr" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">💳 ${t('card')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-card" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">🏦 ${t('bank')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-bank" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="stat-row">
-        <span class="stat-label">🧾 ${t('totalSales')}</span>
-        <span class="stat-value big" id="live-total">RM 0.00</span>
-      </div>
-      <div class="input-wrap" style="margin-top:12px">
-        <label class="field-label">📝 ${t('remark')}</label>
-        <input type="text" id="s-remark" placeholder="...">
-      </div>
-      <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-    </div>
-    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
-    </div>
-  `;
-  ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{
-    document.getElementById(id).addEventListener('input',updateLiveTotal);
-  });
-  checkAndLoadExistingSales();
-}
-
-function checkAndLoadExistingSales() {
-  const dateVal  = document.getElementById('submit-date')?.value;
-  const storeVal = document.getElementById('submit-store')?.value;
-  if(!dateVal||!storeVal) return;
-  const existing=getSales().find(s=>s.dateKey===dateVal&&s.store===storeVal);
-  if(existing){
-    document.getElementById('s-cash').value   = existing.cash  !==undefined?existing.cash:'';
-    document.getElementById('s-qr').value     = existing.qr    !==undefined?existing.qr:'';
-    document.getElementById('s-card').value   = existing.card  !==undefined?existing.card:'';
-    document.getElementById('s-bank').value   = existing.bank  !==undefined?existing.bank:'';
-    document.getElementById('s-remark').value = existing.remark||'';
-  } else {
-    ['s-cash','s-qr','s-card','s-bank'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('s-remark').value='';
-  }
-  updateLiveTotal();
-}
-
-function updateLiveTotal() {
-  const c=parseFloat(document.getElementById('s-cash').value)||0;
-  const q=parseFloat(document.getElementById('s-qr').value)||0;
-  const k=parseFloat(document.getElementById('s-card').value)||0;
-  const b=parseFloat(document.getElementById('s-bank').value)||0;
-  document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
-}
-
-function openConfirm() {
-  const store     =document.getElementById('submit-store').value;
-  const targetDate=document.getElementById('submit-date').value;
-  if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
-
-  // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
-  const isRestricted=['staff','supervisor'].includes(currentUser.role);
-  const todayStr=new Date().toISOString().slice(0,10);
-  if(isRestricted&&targetDate!==todayStr){
-    showToast(t('onlyTodayAllowed'),'error'); return;
+  function showToast(msg, type='success') {
+    const toast = document.getElementById('toast');
+    toast.className = `show ${type}-toast`;
+    toast.textContent = msg;
+    setTimeout(() => toast.classList.remove('show'), 3500);
   }
 
-  const cash  =parseFloat(document.getElementById('s-cash').value)||0;
-  const qr    =parseFloat(document.getElementById('s-qr').value)||0;
-  const card  =parseFloat(document.getElementById('s-card').value)||0;
-  const bank  =parseFloat(document.getElementById('s-bank').value)||0;
-  const total =cash+qr+card+bank;
-  const remark=document.getElementById('s-remark').value;
-
-  // Check if this is a new submission or an edit
-  const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
-  const isEdit=!!existingRecord;
-
-  document.getElementById('modal-title').innerHTML=t('confirmTitle')+
-    (isEdit?` <span class="log-action-edit">${t('editEntry')}</span>`:`<span class="log-action-new" style="margin-left:8px;">${t('newEntry')}</span>`);
-
-  let editWarning='';
-  if(isEdit){
-    editWarning=`
-      <div style="background:#fff3cd;border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#78350f;font-weight:600;">
-        ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
-      </div>`;
+  async function gasGet(action) {
+    const res = await fetch(`${WEB_APP_URL}?action=${action}`);
+    return res.json();
   }
 
-  document.getElementById('modal-body').innerHTML=`
-    ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
-    <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-    ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
-  `;
-  window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
-  document.getElementById('confirm-modal').classList.add('open');
-}
-
-function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
-
-function confirmSubmit() {
-  const s=window._pendingSubmit;
-  const now=new Date();
-  const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
-  const submissionType=existingRecord?'update':'daily_sales';
-  const changeLog={
-    before:existingRecord?{cash:existingRecord.cash,qr:existingRecord.qr,card:existingRecord.card,bank:existingRecord.bank,total:existingRecord.total}:null,
-    after:{cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total}
-  };
-  const record={
-    id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
-    total:s.total,remark:s.remark,submitter:currentUser.name,
-    role:currentUser.role,datetime:now.toISOString(),
-    dateKey:s.targetDate,month:s.targetDate.slice(0,7),
-    submissionType,changeLog:JSON.stringify(changeLog)
-  };
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...','pending');
-  fetch(WEB_APP_URL,{
-    method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'submitSales',...record})
-  }).then(()=>{
-    let sales=getSales().filter(item=>!(item.dateKey===s.targetDate&&item.store===s.store));
-    sales.push(record);
-    saveSales(sales);
-    closeModal();
-    showToast(t('submitted'),'success');
-    renderSubmitTab();
-    checkAllStoresSubmitted();
-  }).catch(err=>{showToast('Error: '+err,'error');});
-}
-
-// ============================================================
-// RECORDS TAB
-// ============================================================
-function renderRecordsTab() {
-  const sales  =getSales();
-  const isExec =['boss','admin','manager'].includes(currentUser.role);
-  const todayKey=new Date().toISOString().slice(0,10);
-  let yest=new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey=yest.toISOString().slice(0,10);
-  let targetDate=todayKey;
-  if(selectedDateRange==='yesterday')   targetDate=yestKey;
-  if(selectedDateRange==='custom_date') targetDate=customDateValue;
-  let filtered=isExec?sales:sales.filter(s=>s.store===currentUser.store);
-  if(selectedDateRange==='month'){
-    filtered=filtered.filter(s=>s.month===selectedMonthValue);
-  } else {
-    filtered=filtered.filter(s=>s.dateKey===targetDate);
+  async function gasPost(data) {
+    const res = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return res;
   }
-  if(isExec&&activeRecordStoreFilter!=='all') filtered=filtered.filter(r=>r.store===activeRecordStoreFilter);
-  filtered=filtered.slice().sort((a,b)=>String(b.dateKey).localeCompare(String(a.dateKey)));
-  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
 
-  let filterHtml=`
-    <div class="control-grid">
-      <div>
-        <label class="field-label" style="font-size:11px;">${t('filterRange')}</label>
-        <select onchange="updateRecordDateRange(this.value)">
-          <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
-          <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
-          <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
-        </select>
-      </div>
-      <div>
-        ${selectedDateRange==='custom_date'
-          ?`<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          :`<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+  async function doLogin() {
+    const username = document.getElementById('login-name').value.trim().toLowerCase();
+    const pin = document.getElementById('login-pin').value.trim();
+    if(!username || !pin){
+      showToast(lang==='zh'?'请输入完整凭证':'Please enter fields','error');
+      return;
+    }
+    showToast(lang==='zh'?'安全验证中...':'Authenticating...','pending');
+    try {
+      const users = await gasGet('getUsers');
+      if(users && users[username]){
+        const u = users[username];
+        if(u.status === 'pending'){
+          showToast(lang==='zh'?'账号尚在等待管理员审批！':'Account is pending admin approval!','error');
+          return;
         }
-      </div>
-    </div>`;
-
-  if(isExec){
-    filterHtml+=`<div class="filter-scroll">
-      <div class="filter-chip ${activeRecordStoreFilter==='all'?'active':''}" onclick="setRecordStoreFilter('all')">${t('allStores')}</div>
-      ${allowedStores.map(s=>`<div class="filter-chip ${activeRecordStoreFilter===s?'active':''}" onclick="setRecordStoreFilter('${s}')">${s}</div>`).join('')}
-    </div>`;
+        if(u.status === 'disabled' || u.status === 'inactive'){
+          showToast(lang==='zh'?'该账号已被系统停用！':'Account is disabled by management!','error');
+          return;
+        }
+        if(String(u.pin).trim() === String(pin).trim()){
+          currentUser = u;
+          saveData('current_user', u);
+          showMainApp();
+          showToast(lang==='zh'?'登录成功！':'Logged in successfully!','success');
+        } else {
+          showToast(lang==='zh'?'密码不正确！':'Invalid PIN combination!','error');
+        }
+      } else {
+        showToast(lang==='zh'?'用户名未注册！':'User identifier not found!','error');
+      }
+    } catch(e){
+      showToast('Network error: ' + e.message, 'error');
+    }
   }
 
-  const listHtml=filtered.length===0
-    ?`<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
-    :filtered.map(r=>{
-      const isUpdate=r.submissionType==='update';
+  function showMainApp() {
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('app-screen').classList.add('active');
+    
+    const isExec = ['boss','admin','manager'].includes(currentUser.role);
+    document.getElementById('nav-admin').style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
+    document.getElementById('nav-log').style.display = isExec ? 'flex' : 'none';
+    
+    renderTopBarInfo();
+    triggerSyncRefresh();
+  }
+
+  function renderTopBarInfo() {
+    document.getElementById('app-user-info').innerHTML = `
+      <div style="font-weight:900;font-size:14px;color:#fff">${currentUser.name}</div>
+      <div style="font-size:11px;opacity:0.9;display:flex;align-items:center;gap:4px">
+        <span>📍 ${currentUser.store}</span> • <span class="role-tag ${currentUser.role}" style="margin:0;padding:1px 6px;font-size:9px">${t(currentUser.role)}</span>
+      </div>
+    `;
+  }
+
+  function getSales() { return loadData('cached_sales', []); }
+  function saveSales(arr) { saveData('cached_sales', arr); }
+
+  async function triggerSyncRefresh() {
+    const btn = document.getElementById('sync-btn');
+    if(btn) btn.textContent = '⏳';
+    showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
+    try {
+      const json = await gasGet('getSales');
+      if(json && json.sales && Array.isArray(json.sales)){
+        saveSales(json.sales);
+        renderCurrentTab();
+        checkAllStoresSubmitted();
+        showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
+      } else if(Array.isArray(json)){
+        saveSales(json);
+        renderCurrentTab();
+        checkAllStoresSubmitted();
+        showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
+      } else {
+        console.error('Unexpected response:', json);
+        showToast('Sync error: unexpected response','error');
+      }
+    } catch(e){
+      console.error('Sync error:', e);
+      showToast(lang==='zh'?'同步失败 — 请检查脚本部署设置':'Sync failed — check GAS deployment settings','error');
+    }
+    if(btn) btn.textContent = '🔄';
+  }
+
+  async function fetchLiveUsers() {
+    if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
+    try {
+      const users = await gasGet('getUsers');
+      if(users && typeof users==='object' && !Array.isArray(users)){
+        cachedUsers = users;
+        saveData('cached_users', users);
+      }
+      return cachedUsers;
+    } catch(e){
+      console.error('fetchLiveUsers error:', e);
+      cachedUsers = loadData('cached_users', {});
+      return cachedUsers;
+    }
+  }
+
+  async function fetchLog() {
+    try {
+      const json = await gasGet('getLog');
+      if(json && json.log && Array.isArray(json.log)){
+        cachedLog = json.log;
+        return cachedLog;
+      }
+    } catch(e){
+      console.error('fetchLog error:', e);
+    }
+    return [];
+  }
+
+  function checkAllStoresSubmitted() {
+    if(currentTab !== 'submit') return;
+    const todayStr = new Date().toISOString().slice(0,10);
+    const sales = getSales();
+    const completed = sales.filter(s => s.dateKey === todayStr).map(s => s.store);
+    const missing = BRANCHES.filter(b => !completed.includes(b));
+    if(missing.length === 0 && BRANCHES.length > 0) {
+      document.getElementById('all-submitted-modal').classList.add('open');
+      document.getElementById('all-submitted-title').textContent = t('allSubmittedTitle');
+      document.getElementById('all-submitted-msg').textContent = t('allSubmittedMsg');
+      document.getElementById('awesome-btn').textContent = t('awesomeBtn');
+    }
+  }
+
+  function switchTab(tabId, el) {
+    currentTab = tabId;
+    document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(`tab-${tabId}`).style.display = 'block';
+    if(el) el.classList.add('active');
+    renderCurrentTab();
+  }
+
+  function renderCurrentTab() {
+    if(currentTab === 'submit') renderSubmitTab();
+    if(currentTab === 'records') renderRecordsTab();
+    if(currentTab === 'summary') renderSummaryTab();
+    if(currentTab === 'log') renderLogTab();
+    if(currentTab === 'admin') renderAdminTab();
+    if(currentTab === 'profile') renderProfileTab();
+  }
+
+  // ============================================================
+  // SUBMIT FINANCIAL TAB
+  // ============================================================
+  function renderSubmitTab() {
+    const todayStr = new Date().toISOString().slice(0,10);
+    const sales = getSales();
+    const completed = sales.filter(s => s.dateKey === todayStr).map(s => s.store);
+    const pending = BRANCHES.filter(b => !completed.includes(b));
+
+    let storeSelectorHtml = '';
+    if(['admin','boss','manager'].includes(currentUser.role)) {
+      storeSelectorHtml = `
+        <div class="input-wrap">
+          <label class="field-label">Select Location Target Store</label>
+          <select id="submit-store" onchange="checkAndLoadExistingSales()">
+            ${BRANCHES.map(b => `<option value="${b}" ${currentUser.store===b?'selected':''}>${b}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    } else {
+      storeSelectorHtml = `
+        <div class="input-wrap">
+          <label class="field-label">Store Location</label>
+          <input type="text" id="disabled-store-view" value="${currentUser.store}" disabled style="background:var(--border);font-weight:700">
+          <input type="hidden" id="submit-store" value="${currentUser.store}">
+        </div>
+      `;
+    }
+
+    let dateSelectorHtml = '';
+    if(['admin','boss','manager'].includes(currentUser.role)) {
+      dateSelectorHtml = `
+        <div class="input-wrap">
+          <label class="field-label">Reporting Ledger Date</label>
+          <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
+        </div>
+      `;
+    } else {
+      dateSelectorHtml = `
+        <div class="input-wrap">
+          <label class="field-label">Reporting Date</label>
+          <input type="date" id="submit-date" value="${todayStr}" disabled style="background:var(--border)">
+        </div>
+      `;
+    }
+
+    let progressCardHtml = '';
+    if(['admin','boss','manager','supervisor'].includes(currentUser.role)) {
+      const pct = Math.round((completed.length / BRANCHES.length) * 100) || 0;
+      progressCardHtml = `
+        <div class="card" style="padding:16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:800;color:var(--text)">📊 ${t('submissionMetrics')}</span>
+            <span style="font-size:13px;font-weight:900;color:var(--primary);margin-left:auto">${completed.length}/${BRANCHES.length} (${pct}%)</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          ${pending.length > 0 ? `
+            <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:11px;color:var(--danger);font-weight:700">${lang==='zh'?'未交门店':'Pending'}: ${pending.join(', ')}</span>
+              <button class="btn btn-sm warn" onclick="openReminderModal()" style="margin:0;padding:4px 10px;font-size:11px;width:auto">${t('remindBtn')}</button>
+            </div>
+          ` : `<div style="margin-top:8px;font-size:11px;color:var(--success);font-weight:800">✓ All stores submitted standard figures today.</div>`}
+        </div>
+      `;
+    }
+
+    document.getElementById('tab-submit').innerHTML = `
+      ${progressCardHtml}
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">📥 Financial Data Intake</div>
+        ${dateSelectorHtml}
+        ${storeSelectorHtml}
+        
+        <div class="input-wrap">
+          <label class="field-label">💵 ${t('cash')}</label>
+          <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+            <input type="number" class="amount-input" id="s-cash" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        <div class="input-wrap">
+          <label class="field-label">📱 ${t('qr')}</label>
+          <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+            <input type="number" class="amount-input" id="s-qr" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        <div class="input-wrap">
+          <label class="field-label">💳 ${t('card')}</label>
+          <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+            <input type="number" class="amount-input" id="s-card" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        <div class="input-wrap">
+          <label class="field-label">🏦 ${t('bank')}</label>
+          <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
+            <input type="number" class="amount-input" id="s-bank" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        <div class="stat-row">
+          <span class="stat-label">🧾 ${t('totalSales')}</span>
+          <span class="stat-value big" id="live-total">RM 0.00</span>
+        </div>
+        <div class="input-wrap" style="margin-top:12px">
+          <label class="field-label">📝 ${t('remark')}</label>
+          <input type="text" id="s-remark" placeholder="...">
+        </div>
+        <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
+      </div>
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
+        💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
+      </div>
+    `;
+
+    ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateLiveTotal);
+    });
+    checkAndLoadExistingSales();
+  }
+
+  function updateLiveTotal() {
+    const cash = parseFloat(document.getElementById('s-cash').value) || 0;
+    const qr   = parseFloat(document.getElementById('s-qr').value) || 0;
+    const card = parseFloat(document.getElementById('s-card').value) || 0;
+    const bank = parseFloat(document.getElementById('s-bank').value) || 0;
+    document.getElementById('live-total').textContent = 'RM ' + (cash + qr + card + bank).toFixed(2);
+  }
+
+  function checkAndLoadExistingSales() {
+    const dateVal = document.getElementById('submit-date')?.value;
+    const storeVal = document.getElementById('submit-store')?.value;
+    if(!dateVal || !storeVal) return;
+
+    const existing = getSales().find(s => s.dateKey === dateVal && s.store === storeVal);
+    if(existing){
+      document.getElementById('s-cash').value = existing.cash !== undefined ? existing.cash : '';
+      document.getElementById('s-qr').value   = existing.qr   !== undefined ? existing.qr   : '';
+      document.getElementById('s-card').value = existing.card !== undefined ? existing.card : '';
+      document.getElementById('s-bank').value = existing.bank !== undefined ? existing.bank : '';
+      document.getElementById('s-remark').value = existing.remark || '';
+    } else {
+      ['s-cash','s-qr','s-card','s-bank'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('s-remark').value = '';
+    }
+    updateLiveTotal();
+  }
+
+  function openConfirm() {
+    const cashStr = document.getElementById('s-cash').value.trim();
+    const qrStr   = document.getElementById('s-qr').value.trim();
+    const cardStr = document.getElementById('s-card').value.trim();
+    const bankStr = document.getElementById('s-bank').value.trim();
+
+    if(!cashStr && !qrStr && !cardStr && !bankStr){
+      showToast(t('fillAll'), 'error');
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0,10);
+    const dateVal = document.getElementById('submit-date').value;
+    if(dateVal !== todayStr && ['staff','supervisor'].includes(currentUser.role)) {
+      showToast(t('onlyTodayAllowed'), 'error');
+      return;
+    }
+
+    const storeVal = document.getElementById('submit-store').value;
+    const cash = parseFloat(cashStr) || 0;
+    const qr   = parseFloat(qrStr) || 0;
+    const card = parseFloat(cardStr) || 0;
+    const bank = parseFloat(bankStr) || 0;
+    const total = cash + qr + card + bank;
+    const remark = document.getElementById('s-remark').value.trim();
+
+    const existing = getSales().find(s => s.dateKey === dateVal && s.store === storeVal);
+    const isUpdate = !!existing;
+
+    document.getElementById('modal-title').textContent = t('confirmTitle') + ` (${isUpdate ? t('updateSalesLabel') : t('dailySalesLabel')})`;
+    document.getElementById('modal-body').innerHTML = `
+      <div style="font-size:14px;background:var(--bg);padding:14px;border-radius:12px;border:1px solid var(--border);line-height:1.7">
+        <p>📍 <strong>Store:</strong> ${storeVal}</p>
+        <p>📅 <strong>Date:</strong> ${dateVal}</p>
+        <hr style="margin:8px 0;border:none;border-top:1px solid var(--border)">
+        <p>💵 Cash: RM ${cash.toFixed(2)}</p>
+        <p>📱 QR Pay: RM ${qr.toFixed(2)}</p>
+        <p>💳 Card: RM ${card.toFixed(2)}</p>
+        <p>🏦 Bank: RM ${bank.toFixed(2)}</p>
+        <p style="font-size:18px;color:var(--primary);margin-top:6px;font-weight:900">🧾 Total: RM ${total.toFixed(2)}</p>
+        ${remark ? `<p style="margin-top:4px;color:var(--text2)">📝 Note: "${remark}"</p>` : ''}
+      </div>
+      ${isUpdate ? `
+        <div style="margin-top:12px;background:#fff3cd;color:#856404;font-size:12px;padding:10px;border-radius:8px;font-weight:700">
+          ⚠️ Warning: You are changing existing record. Original values will be logged in audit spreadsheet.
+        </div>
+        <div class="input-wrap" style="margin-top:12px">
+          <label class="field-label" style="font-size:13px;color:#856404">Reason for modification (Required)</label>
+          <input type="text" id="change-note-input" placeholder="e.g. Typo in cash value yesterday" style="border-color:var(--accent)">
+        </div>
+      ` : ''}
+    `;
+    document.getElementById('confirm-modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('confirm-modal').classList.remove('open'); }
+
+  async function confirmSubmit() {
+    const dateVal = document.getElementById('submit-date').value;
+    const storeVal = document.getElementById('submit-store').value;
+    const cash = parseFloat(document.getElementById('s-cash').value) || 0;
+    const qr   = parseFloat(document.getElementById('s-qr').value) || 0;
+    const card = parseFloat(document.getElementById('s-card').value) || 0;
+    const bank = parseFloat(document.getElementById('s-bank').value) || 0;
+    const total = cash + qr + card + bank;
+    const remark = document.getElementById('s-remark').value.trim();
+
+    const existing = getSales().find(s => s.dateKey === dateVal && s.store === storeVal);
+    let changeNote = '';
+    
+    if(existing) {
+      const inputEl = document.getElementById('change-note-input');
+      changeNote = inputEl ? inputEl.value.trim() : '';
+      if(!changeNote) {
+        alert(lang==='zh'?'请输入修改数据的理由原因':'Please provide a reason for data modification.');
+        return;
+      }
+    }
+
+    const changeLog = {
+      before: {
+        cash: existing ? (existing.cash || 0) : 0,
+        qr: existing ? (existing.qr || 0) : 0,
+        card: existing ? (existing.card || 0) : 0,
+        bank: existing ? (existing.bank || 0) : 0,
+        total: existing ? (existing.total || 0) : 0
+      },
+      note: changeNote
+    };
+
+    const payload = {
+      action: 'submitSales',
+      id: existing ? existing.id : 'S-' + Date.now(),
+      dateKey: dateVal,
+      store: storeVal,
+      cash, qr, card, bank, total,
+      remark,
+      submitter: currentUser.username,
+      role: currentUser.role,
+      datetime: new Date().toISOString().replace('T',' ').substring(0,19),
+      month: dateVal.substring(0,7),
+      submissionType: existing ? 'update' : 'daily',
+      changeLog
+    };
+
+    closeModal();
+    showToast(lang==='zh'?'正在发送数据至云端...':'Transmitting to Cloud...','pending');
+
+    // Optimistic UI updates
+    let sales = getSales();
+    if(existing) {
+      sales = sales.map(s => (s.dateKey===dateVal && s.store===storeVal) ? {...s, cash, qr, card, bank, total, remark} : s);
+    } else {
+      sales.push(payload);
+    }
+    saveSales(sales);
+    renderCurrentTab();
+
+    try {
+      await gasPost(payload);
+      showToast(t('submitted'), 'success');
+      setTimeout(triggerSyncRefresh, 1000);
+    } catch(e) {
+      showToast('Network timeout — transaction failed to verify','error');
+    }
+  }
+
+  // ============================================================
+  // RECORDS VIEW TAB
+  // ============================================================
+  function renderRecordsTab() {
+    const sales = getSales();
+    const isExec = ['boss','admin','manager'].includes(currentUser.role);
+
+    const todayKey = new Date().toISOString().slice(0,10);
+    let yest = new Date(); yest.setDate(yest.getDate() - 1);
+    const yestKey = yest.toISOString().slice(0,10);
+
+    let targetDate = todayKey;
+    if(selectedDateRange === 'yesterday') targetDate = yestKey;
+    if(selectedDateRange === 'custom_date') targetDate = customDateValue;
+
+    let filtered = isExec ? sales : sales.filter(s => s.store === currentUser.store);
+    if(selectedDateRange === 'month'){
+      filtered = filtered.filter(s => s.month === selectedMonthValue);
+    } else {
+      filtered = filtered.filter(s => s.dateKey === targetDate);
+    }
+
+    if(isExec && activeRecordStoreFilter !== 'all') filtered = filtered.filter(r => r.store === activeRecordStoreFilter);
+    filtered = filtered.slice().sort((a,b) => String(b.dateKey).localeCompare(String(a.dateKey)));
+
+    let allowedStores = STORES;
+    if(currentUser.role !== 'admin') allowedStores = STORES.filter(s => s !== 'HQ');
+
+    let filterHtml = `
+      <div class="control-grid">
+        <div>
+          <label class="field-label" style="font-size:11px;">${t('filterRange')}</label>
+          <select onchange="updateRecordDateRange(this.value)">
+            <option value="today" ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
+            <option value="yesterday" ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
+            <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
+            <option value="month" ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
+          </select>
+        </div>
+        <div>
+          ${selectedDateRange==='custom_date'
+            ?`<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
+            :`<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          }
+        </div>
+      </div>`;
+
+    let storeFilterScrollHtml = '';
+    if(isExec) {
+      storeFilterScrollHtml = `
+        <div class="filter-scroll">
+          <div class="filter-chip ${activeRecordStoreFilter==='all'?'active':''}" onclick="setRecordStoreFilter('all')">${t('allStores')}</div>
+          ${allowedStores.filter(s=>s!=='HQ').map(s => `
+            <div class="filter-chip ${activeRecordStoreFilter===s?'active':''}" onclick="setRecordStoreFilter('${s}')">${s}</div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    let recordsRowsHtml = '';
+    if(filtered.length === 0){
+      recordsRowsHtml = `<div class="empty-state"><div class="e-icon">📭</div><p>${lang==='zh'?'所选筛选条件内暂无上报记录':'No entries recorded for selection'}</p></div>`;
+    } else {
+      recordsRowsHtml = filtered.map(r => {
+        const tCash = parseFloat(r.cash)||0;
+        const tQr   = parseFloat(r.qr)||0;
+        const tCard = parseFloat(r.card)||0;
+        const tBank = parseFloat(r.bank)||0;
+        const total = parseFloat(r.total)||0;
+
+        return `
+          <div class="record-item">
+            <div class="record-icon">🏪</div>
+            <div class="record-info">
+              <div class="record-store">${r.store} <span style="font-size:11px;color:var(--text2);font-weight:normal">${r.dateKey}</span></div>
+              <div class="record-meta">
+                💵 Cash: ${tCash.toFixed(2)} | 📱 QR: ${tQr.toFixed(2)}<br>
+                💳 Card: ${tCard.toFixed(2)} | 🏦 Bank: ${tBank.toFixed(2)}
+                ${r.remark ? `<br><span style="color:var(--accent);font-style:italic">📝 "${r.remark}"</span>` : ''}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div class="record-amount">RM ${total.toFixed(2)}</div>
+              <div class="record-sub">by @${r.submitter || 'unknown'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('tab-records').innerHTML = `
+      ${filterHtml}
+      ${storeFilterScrollHtml}
+      <div class="card" style="padding-top:10px;padding-bottom:10px">
+        <div class="card-title" style="margin-bottom:6px;font-size:13px">📊 Aggregated Query Results</div>
+        ${recordsRowsHtml}
+      </div>
+    `;
+  }
+
+  function updateRecordDateRange(v){ selectedDateRange=v; renderRecordsTab(); }
+  function updateCustomDateValue(v){ customDateValue=v; renderRecordsTab(); }
+  function updateCustomMonthValue(v){ selectedMonthValue=v; renderRecordsTab(); }
+  function setRecordStoreFilter(s){ activeRecordStoreFilter=s; renderRecordsTab(); }
+
+  // ============================================================
+  // SUMMARY / GRAPH VISUALS TAB
+  // ============================================================
+  function renderSummaryTab() {
+    const sales = getSales();
+    const isExec = ['boss','admin','manager'].includes(currentUser.role);
+    let filtered = isExec ? sales : sales.filter(s => s.store === currentUser.store);
+    filtered = filtered.filter(s => s.month === selectedMonthValue);
+
+    let totalCash=0, totalQr=0, totalCard=0, totalBank=0, grandTotal=0;
+    const storeTotals = {};
+    BRANCHES.forEach(b => storeTotals[b] = 0);
+
+    filtered.forEach(s => {
+      const c = parseFloat(s.cash)||0;
+      const q = parseFloat(s.qr)||0;
+      const cd = parseFloat(s.card)||0;
+      const b = parseFloat(s.bank)||0;
+      const t = parseFloat(s.total)||0;
+
+      totalCash += c; totalQr += q; totalCard += cd; totalBank += b; grandTotal += t;
+      if(storeTotals[s.store] !== undefined) storeTotals[s.store] += t;
+    });
+
+    // Generate bar chart scales
+    const maxStoreVal = Math.max(...Object.values(storeTotals), 1);
+    const chartBarsHtml = Object.keys(storeTotals).map(st => {
+      const val = storeTotals[st];
+      const pct = Math.min((val / maxStoreVal) * 100, 100);
+      const shortName = st.replace('Bonia ','B-').replace('Polo ','P-').replace('Gm ','G-');
       return `
-        <div class="record-item">
-          <div class="record-icon">🏪</div>
-          <div class="record-info">
-            <div class="record-store">
-              ${r.store}
-              <span class="badge">${r.submitter||''}</span>
-              <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:${isUpdate?'#fff3cd':'#d1fae5'};color:${isUpdate?'#856404':'#0f5132'};margin-left:4px">
-                ${isUpdate?t('updateSalesLabel'):t('dailySalesLabel')}
-              </span>
-            </div>
-            <div class="record-meta">
-              💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
-              💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
-            </div>
-            ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
-            <div class="record-sub">${r.dateKey||''}</div>
-          </div>
-        </div>`;
+        <div class="bar-col">
+          <div style="font-size:9px;font-weight:900;color:var(--text)">${val > 0 ? (val/1000).toFixed(1)+'k' : '0'}</div>
+          <div class="bar-fill" style="height:${Math.max(pct, 4)}%"></div>
+          <div class="bar-label">${shortName}</div>
+        </div>
+      `;
     }).join('');
 
-  document.getElementById('tab-records').innerHTML=`
-    <div class="card-header-flex">
-      <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
-    </div>
-    ${filterHtml}
-    <div class="card">${listHtml}</div>`;
-}
+    document.getElementById('tab-summary').innerHTML = `
+      <div class="input-wrap">
+        <label class="field-label">${t('selectMonthLabel')}</label>
+        <input type="month" value="${selectedMonthValue}" onchange="updateSummaryMonth(this.value)">
+      </div>
 
-// ============================================================
-// SUMMARY TAB
-// ============================================================
-function renderSummaryTab() {
-  const isExec=['boss','admin','manager'].includes(currentUser.role);
-  if(!isExec){
-    document.getElementById('tab-summary').innerHTML=`
-      <div class="card" style="text-align:center;padding:40px 20px">
-        <div style="font-size:52px;">🔒</div>
-        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
-        <p style="color:var(--text2)">${t('accessMsg')}</p>
-      </div>`; return;
-  }
-  const sales=getSales();
-  const todayKey=new Date().toISOString().slice(0,10);
-  let yest=new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey=yest.toISOString().slice(0,10);
-  let targetRangeDay=todayKey;
-  if(selectedDateRange==='yesterday')   targetRangeDay=yestKey;
-  if(selectedDateRange==='custom_date') targetRangeDay=customDateValue;
-  const rangeSales=selectedDateRange==='month'?sales.filter(s=>s.month===selectedMonthValue):sales.filter(s=>s.dateKey===targetRangeDay);
-  const monthSales=sales.filter(s=>s.month===selectedMonthValue);
-  const rangeTotal=rangeSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
-  const monthTotal=monthSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
-  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
-  const storeMap={}; allowedStores.forEach(s=>storeMap[s]=0);
-  monthSales.forEach(s=>{if(storeMap[s.store]!==undefined) storeMap[s.store]=(storeMap[s.store]||0)+parseFloat(s.total||0);});
-  const maxStore=Math.max(...Object.values(storeMap),1);
-  const days=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const dk=d.toISOString().slice(0,10);
-    const label=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
-    const val=sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
-    days.push({label,val});
-  }
-  const maxDay=Math.max(...days.map(d=>d.val),1);
-  document.getElementById('tab-summary').innerHTML=`
-    <div class="card-header-flex">
-      <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
-    </div>
-    <div class="card" style="padding:14px;background:#eff6ff;">
-      <div class="control-grid" style="margin-bottom:0">
-        <div>
-          <label class="field-label" style="font-size:12px;margin-bottom:4px">📅 ${t('filterRange')}</label>
-          <select onchange="updateSummaryDateRange(this.value)" style="padding:8px 10px;font-size:14px">
-            <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
-            <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
-            <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-            <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
-          </select>
-          ${selectedDateRange==='custom_date'?`<input type="date" value="${customDateValue}" onchange="updateSummaryCustomDate(this.value)" style="padding:6px;font-size:12px;margin-top:6px">`:''}
-        </div>
-        <div>
-          <label class="field-label" style="font-size:12px;margin-bottom:4px">🗓️ ${t('selectMonthLabel')}</label>
-          <input type="month" value="${selectedMonthValue}" onchange="updateSummaryMonth(this.value)" style="padding:8px 10px;font-size:14px">
-        </div>
+      <div class="card" style="text-align:center;background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%);color:#fff">
+        <div class="card-title" style="color:#94a3b8">${t('totalCalculated')} (${selectedMonthValue})</div>
+        <div style="font-size:36px;font-weight:900;color:#fbbf24;margin:8px 0">RM ${grandTotal.toFixed(2)}</div>
+        <p style="font-size:12px;opacity:0.8">Combined revenue of active branches</p>
       </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-      <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 ${t('todayTotal')}</div>
-        <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
-      </div>
-      <div class="card" style="margin:0;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">🗓️ ${selectedMonthValue}</div>
-        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(2)}</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">📈 ${t('daily')}</div>
-      <div class="bar-chart">
-        ${days.map(d=>`<div class="bar-col"><div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*80)}px"></div><div class="bar-label">${d.label}</div></div>`).join('')}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header-flex" style="margin-bottom:10px">
-        <div class="card-title" style="margin:0">🏪 ${t('byStore')} (${selectedMonthValue})</div>
-        <button class="btn warn" onclick="sendReminder()" style="width:auto;padding:6px 12px;font-size:12px;margin:0;border-radius:10px">${t('remindBtn')}</button>
-      </div>
-      ${allowedStores.filter(s=>s!=='HQ').map(s=>`
-        <div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">
-            <span>${s}</span><span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
-          </div>
-          <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${((storeMap[s]||0)/maxStore*100).toFixed(1)}%"></div></div>
-        </div>`).join('')}
-    </div>`;
-}
-function updateSummaryDateRange(val){selectedDateRange=val;renderSummaryTab();}
-function updateSummaryCustomDate(val){customDateValue=val;renderSummaryTab();}
-function updateSummaryMonth(val){selectedMonthValue=val;renderSummaryTab();}
 
-// ============================================================
-// AUDIT LOG TAB  (Boss / Admin / Manager only)
-// ============================================================
-async function renderLogTab() {
-  const isExec=['boss','admin','manager'].includes(currentUser.role);
-  if(!isExec){
-    document.getElementById('tab-log').innerHTML=`
-      <div class="card" style="text-align:center;padding:40px 20px">
-        <div style="font-size:52px;">🔒</div>
-        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
-        <p style="color:var(--text2)">${t('logAccessDenied')}</p>
-      </div>`; return;
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">🏪 ${t('monthlyOverview')}</div>
+        <div class="bar-chart">${chartBarsHtml}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">💳 ${t('paymentBreakdown')}</div>
+        <div class="stat-row"><span class="stat-label">💵 Cash:</span><span class="stat-value">RM ${totalCash.toFixed(2)}</span></div>
+        <div class="stat-row"><span class="stat-label">📱 QR Pay:</span><span class="stat-value">RM ${totalQr.toFixed(2)}</span></div>
+        <div class="stat-row"><span class="stat-label">💳 Card Terminal:</span><span class="stat-value">RM ${totalCard.toFixed(2)}</span></div>
+        <div class="stat-row"><span class="stat-label">🏦 Bank Transfers:</span><span class="stat-value">RM ${totalBank.toFixed(2)}</span></div>
+      </div>
+    `;
   }
 
-  document.getElementById('tab-log').innerHTML=`
-    <div class="card-header-flex">
-      <div>
-        <h2 style="font-size:18px;font-weight:900">📜 ${t('logTab')}</h2>
-        <p style="font-size:12px;color:var(--text2);margin-top:2px">${t('logDesc')}</p>
-      </div>
-      <button class="btn refresh-inline" onclick="refreshLog()">🔄 ${t('refresh')}</button>
-    </div>
-    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>
-    <div id="log-content"></div>`;
+  function updateSummaryMonth(val){ selectedMonthValue=val; renderSummaryTab(); }
 
-  await refreshLog();
-}
-
-async function refreshLog() {
-  const loadEl=document.getElementById('log-loading');
-  const contentEl=document.getElementById('log-content');
-  if(!contentEl) return;
-  if(loadEl) loadEl.style.display='flex';
-
-  await fetchLog();
-
-  if(loadEl) loadEl.style.display='none';
-
-  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
-
-  // Filter
-  let filtered=cachedLog.filter(r=>r.store&&r.store!=='Testing');
-  if(logStoreFilter!=='all') filtered=filtered.filter(r=>r.store===logStoreFilter);
-  if(logActionFilter!=='all') filtered=filtered.filter(r=>{
-    const a=String(r.action||'').toUpperCase();
-    if(logActionFilter==='new')  return a.includes('NEW');
-    if(logActionFilter==='edit') return a.includes('EDIT');
-    return true;
-  });
-  // Sort newest first
-  filtered=filtered.slice().sort((a,b)=>String(b.timestamp).localeCompare(String(a.timestamp)));
-
-  const filterHtml=`
-    <div class="control-grid" style="margin-bottom:10px">
-      <div>
-        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':'Store'}</label>
-        <select onchange="logStoreFilter=this.value;renderLogEntries()">
-          <option value="all">${t('allStores')}</option>
-          ${allowedStores.filter(s=>s!=='HQ').map(s=>`<option value="${s}" ${logStoreFilter===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <label class="field-label" style="font-size:11px">📋 ${lang==='zh'?'操作类型':'Action Type'}</label>
-        <select onchange="logActionFilter=this.value;renderLogEntries()">
-          <option value="all">${lang==='zh'?'全部':'All'}</option>
-          <option value="new"  ${logActionFilter==='new'?'selected':''}>${t('newEntry')}</option>
-          <option value="edit" ${logActionFilter==='edit'?'selected':''}>${t('editEntry')}</option>
-        </select>
-      </div>
-    </div>`;
-
-  // Save filtered for renderLogEntries
-  window._logFiltered=filtered;
-
-  contentEl.innerHTML=filterHtml+`<div id="log-list"></div>`;
-  renderLogEntries();
-}
-
-function renderLogEntries() {
-  let log=cachedLog.filter(r=>r.store&&r.store!=='Testing');
-  if(logStoreFilter!=='all') log=log.filter(r=>r.store===logStoreFilter);
-  if(logActionFilter!=='all') log=log.filter(r=>{
-    const a=String(r.action||'').toUpperCase();
-    if(logActionFilter==='new')  return a.includes('NEW');
-    if(logActionFilter==='edit') return a.includes('EDIT');
-    return true;
-  });
-  log=log.slice().sort((a,b)=>String(b.timestamp).localeCompare(String(a.timestamp)));
-
-  const listEl=document.getElementById('log-list');
-  if(!listEl) return;
-
-  if(log.length===0){
-    listEl.innerHTML=`<div class="card"><div class="empty-state"><div class="e-icon">📭</div><p>${t('noLog')}</p></div></div>`;
-    return;
-  }
-
-  const isEdit=a=>String(a||'').toUpperCase().includes('EDIT');
-
-  const entries=log.map(r=>{
-    const edit=isEdit(r.action);
-    const actionBadge=edit
-      ?`<span class="log-action-edit">✏️ ${t('editEntry')}</span>`
-      :`<span class="log-action-new">✅ ${t('newEntry')}</span>`;
-
-    const ts=r.timestamp?new Date(r.timestamp).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):r.dateKey||'';
-
-    // Build diff display for edits
-    let diffHtml='';
-    if(edit){
-      const fields=[
-        {lbl:'💵 Cash',  before:r.before_cash, after:r.after_cash},
-        {lbl:'📱 QR',    before:r.before_qr,   after:r.after_qr},
-        {lbl:'💳 Card',  before:r.before_card, after:r.after_card},
-        {lbl:'🏦 Bank',  before:r.before_bank, after:r.after_bank},
-        {lbl:'🧾 Total', before:r.before_total,after:r.after_total},
-      ];
-      const changed=fields.filter(f=>String(f.before)!==String(f.after)&&f.before!==''&&f.before!==undefined);
-      if(changed.length>0){
-        diffHtml=`<div class="log-diff">
-          ${changed.map(f=>`
-            <span style="color:var(--text2)">${f.lbl}:</span>
-            <span class="diff-changed">RM ${parseFloat(f.before||0).toFixed(2)}</span>
-            <span class="diff-arrow">→</span>
-            <span class="diff-new">RM ${parseFloat(f.after||0).toFixed(2)}</span>
-            &nbsp;&nbsp;
-          `).join('')}
+  // ============================================================
+  // AUDIT LOG TAB (Boss / Admin / Manager only)
+  // ============================================================
+  async function renderLogTab() {
+    const isExec = ['boss','admin','manager'].includes(currentUser.role);
+    if(!isExec){
+      document.getElementById('tab-log').innerHTML = `
+        <div class="card" style="text-align:center;padding:40px 20px">
+          <div style="font-size:52px;">🔒</div>
+          <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
+          <p style="color:var(--text2)">${t('logAccessDenied')}</p>
         </div>`;
-      }
-    } else {
-      // New submission — just show totals
-      diffHtml=`<div class="log-diff">
-        💵 RM${parseFloat(r.after_cash||0).toFixed(2)} &nbsp;
-        📱 RM${parseFloat(r.after_qr||0).toFixed(2)} &nbsp;
-        💳 RM${parseFloat(r.after_card||0).toFixed(2)} &nbsp;
-        🏦 RM${parseFloat(r.after_bank||0).toFixed(2)} &nbsp;
-        <strong style="color:var(--primary)">= RM${parseFloat(r.after_total||0).toFixed(2)}</strong>
-      </div>`;
+      return;
     }
 
-    return `
-      <div class="log-item">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div>
-            <span style="font-size:13px;font-weight:800">${r.store||''}</span>
-            &nbsp;${actionBadge}
-          </div>
-          <span style="font-size:11px;color:var(--text2);white-space:nowrap">${ts}</span>
+    document.getElementById('tab-log').innerHTML = `
+      <div class="card-header-flex">
+        <div>
+          <h2 style="font-size:18px;font-weight:900">📜 ${t('logTab')}</h2>
+          <p style="font-size:12px;color:var(--text2)">${t('logDesc')}</p>
         </div>
-        <div style="font-size:12px;color:var(--text2);margin-top:3px">
-          📅 ${r.dateKey||''} &nbsp;·&nbsp; 👤 ${r.submitter||''} <span class="role-tag ${r.role||'staff'}" style="margin-left:2px">${t(r.role||'staff')}</span>
+        <button class="btn refresh-inline" onclick="refreshLogData(this)">🔄 Sync</button>
+      </div>
+      <div class="control-grid" style="margin-bottom:10px">
+        <div>
+          <label class="field-label" style="font-size:11px;">Filter Store</label>
+          <select id="log-store-sel" onchange="logStoreFilter=this.value;applyLogFilters()"></select>
         </div>
-        ${diffHtml}
-        ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:3px">📝 ${r.remark}</div>`:''}
-      </div>`;
-  }).join('');
+        <div>
+          <label class="field-label" style="font-size:11px;">Filter Action</label>
+          <select id="log-action-sel" onchange="logActionFilter=this.value;applyLogFilters()">
+            <option value="all">All Actions</option>
+            <option value="daily">First Submission</option>
+            <option value="update">Modifications</option>
+          </select>
+        </div>
+      </div>
+      <div id="log-items-container" class="card" style="padding-top:10px">
+        <div class="spinner-wrap"><div class="spin"></div> Fetching ledger audit logs...</div>
+      </div>
+    `;
 
-  listEl.innerHTML=`<div class="card" style="padding:14px">${entries}</div>`;
-}
+    // Populate log store select element
+    const storeSel = document.getElementById('log-store-sel');
+    if(storeSel) {
+      storeSel.innerHTML = `<option value="all">All Stores</option>` + STORES.filter(s=>s!=='HQ').map(s=>`<option value="${s}">${s}</option>`).join('');
+      storeSel.value = logStoreFilter;
+    }
+    document.getElementById('log-action-sel').value = logActionFilter;
 
-// ============================================================
-// ADMIN TAB
-// ============================================================
-async function renderAdminTab() {
-  const isAdmin=['admin','boss'].includes(currentUser.role);
-  if(!isAdmin){
-    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
-    return;
+    if(cachedLog.length === 0) {
+      cachedLog = await fetchLog();
+    }
+    applyLogFilters();
   }
-  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
-  await fetchLiveUsers();
-  const allUsers=cachedUsers;
-  const pending=[]; const active=[];
-  Object.entries(allUsers).forEach(([uname,u])=>{
-    if(u.status==='pending') pending.push({...u,username:uname});
-    else active.push({...u,username:uname});
-  });
 
-  let pendingHtml='';
-  if(pending.length>0){
-    pendingHtml=`
-      <div class="pending-card">
-        <div class="card-title" style="color:#92400e">⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
-        ${pending.map(u=>`
+  async function refreshLogData(btn) {
+    if(btn) btn.textContent = '⏳...';
+    cachedLog = await fetchLog();
+    applyLogFilters();
+    if(btn) btn.textContent = '🔄 Sync';
+  }
+
+  function applyLogFilters() {
+    const container = document.getElementById('log-items-container');
+    if(!container) return;
+
+    let filtered = cachedLog.slice().sort((a,b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+    if(logStoreFilter !== 'all') filtered = filtered.filter(l => l.store === logStoreFilter);
+    if(logActionFilter !== 'all') filtered = filtered.filter(l => l.action === logActionFilter);
+
+    if(filtered.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="e-icon">📜</div><p>${t('noLog')}</p></div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(l => {
+      const isEdit = l.action === 'update';
+      const actionBadge = isEdit ? `<span class="log-action-edit">${t('editEntry')}</span>` : `<span class="log-action-new">${t('newEntry')}</span>`;
+      
+      let diffHtml = '';
+      if(isEdit) {
+        const bCash = parseFloat(l.before_cash)||0; const aCash = parseFloat(l.after_cash)||0;
+        const bQr   = parseFloat(l.before_qr)||0;   const aQr   = parseFloat(l.after_qr)||0;
+        const bCard = parseFloat(l.before_card)||0; const aCard = parseFloat(l.after_card)||0;
+        const bBank = parseFloat(l.before_bank)||0; const aBank = parseFloat(l.after_bank)||0;
+        const bTot  = parseFloat(l.before_total)||0;const aTot  = parseFloat(l.after_total)||0;
+
+        diffHtml = `
+          <div class="log-diff">
+            ${bCash!==aCash ? `<div>💵 Cash: RM ${bCash.toFixed(2)} <span class="diff-arrow">➔</span> <span class="diff-new">${aCash.toFixed(2)}</span></div>`:''}
+            ${bQr!==aQr     ? `<div>📱 QR Pay: RM ${bQr.toFixed(2)} <span class="diff-arrow">➔</span> <span class="diff-new">${aQr.toFixed(2)}</span></div>`:''}
+            ${bCard!==aCard ? `<div>⌗ Card: RM ${bCard.toFixed(2)} <span class="diff-arrow">➔</span> <span class="diff-new">${aCard.toFixed(2)}</span></div>`:''}
+            ${bBank!==aBank ? `<div>🏦 Bank: RM ${bBank.toFixed(2)} <span class="diff-arrow">➔</span> <span class="diff-new">${aBank.toFixed(2)}</span></div>`:''}
+            <div style="font-weight:700">🧾 Total: RM ${bTot.toFixed(2)} <span class="diff-arrow">➔</span> <span class="diff-changed">RM ${aTot.toFixed(2)}</span></div>
+            ${l.changeNote ? `<div style="color:var(--accent);font-weight:600;margin-top:2px;">💬 Reason: "${l.changeNote}"</div>`:''}
+          </div>
+        `;
+      } else {
+        diffHtml = `<div class="log-diff" style="font-weight:700;color:var(--success)">🧾 Reported Amount: RM ${(parseFloat(l.after_total)||0).toFixed(2)}</div>`;
+      }
+
+      return `
+        <div class="log-item">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <strong>${l.store}</strong> <span style="font-size:12px;color:var(--text2)">(${l.dateKey})</span>
+            </div>
+            ${actionBadge}
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">
+            Executed by @${l.submitter} (${l.role}) at ${l.timestamp}
+          </div>
+          ${diffHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ============================================================
+  // ADMIN SYSTEM CONFIGURATION TAB
+  // ============================================================
+  async function renderAdminTab() {
+    if(currentUser.role !== 'admin'){
+      document.getElementById('tab-admin').innerHTML = `<div class="card"><h3 style="color:var(--danger)">Access Denied</h3></div>`;
+      return;
+    }
+
+    document.getElementById('tab-admin').innerHTML = `
+      <div class="card pending-card" id="admin-pending-container">
+        <div class="card-title" style="color:var(--accent)">⏳ ${t('pendingApprovals')}</div>
+        <div class="spinner-wrap"><div class="spin"></div> Fetching database requests...</div>
+      </div>
+      <div class="card">
+        <div class="card-header-flex">
+          <div class="card-title">👥 ${t('userMgmt')}</div>
+          <button class="btn success" onclick="openUserCreate()" style="width:auto;margin:0;padding:8px 14px;font-size:13px">${t('addUser')}</button>
+        </div>
+        <div id="admin-users-list">
+          <div class="spinner-wrap"><div class="spin"></div> Loading system files...</div>
+        </div>
+      </div>
+    `;
+
+    const users = await fetchLiveUsers();
+    renderAdminUsersData(users);
+  }
+
+  function renderAdminUsersData(usersObj) {
+    const pendingContainer = document.getElementById('admin-pending-container');
+    const listContainer    = document.getElementById('admin-users-list');
+    if(!usersObj) return;
+
+    const allArr = Object.values(usersObj);
+    const pendingArr = allArr.filter(u => u.status === 'pending');
+    const activeArr  = allArr.filter(u => u.status !== 'pending');
+
+    // 1. Pending account list section
+    if(pendingArr.length === 0) {
+      pendingContainer.innerHTML = `<div style="font-size:14px;color:var(--text2);text-align:center;padding:10px 0">${t('noRequests')}</div>`;
+    } else {
+      pendingContainer.innerHTML = `
+        <div class="card-title" style="color:var(--accent);margin-bottom:12px">⏳ ${t('pendingApprovals')} (${pendingArr.length})</div>
+        ` + pendingArr.map(p => `
           <div class="user-row">
-            <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+            <div class="user-avatar pending-av">${p.name.substring(0,1).toUpperCase()}</div>
             <div class="user-info">
-              <div class="user-name">@${u.username}</div>
-              <div class="user-meta">${u.name||''} · ${u.store||''} · 📱 ${u.phone||'N/A'} · ${u.role||'staff'}</div>
+              <div class="user-name">${p.name} <span class="role-tag ${p.role}">${p.role}</span></div>
+              <div class="user-meta">@${p.username} | 📱 ${p.phone}<br>🏠 Store Target: <strong>${p.store}</strong></div>
             </div>
             <div class="user-actions">
-              <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
-              <button class="btn-sm reject"  onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button>
+              <button class="btn-sm approve" onclick="approvePendingUser('${p.username}')">${t('approveBtn')}</button>
+              <button class="btn-sm reject" onclick="rejectPendingUser('${p.username}')">${t('rejectBtn')}</button>
             </div>
-          </div>`).join('')}
-      </div>`;
-  } else {
-    pendingHtml=`
-      <div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px">
-        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">✅ ${t('noRequests')}</div>
-      </div>`;
-  }
-
-  const activeHtml=active.map(u=>`
-    <div class="user-row">
-      <div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div>
-      <div class="user-info">
-        <div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div>
-        <div class="user-meta">@${u.username} · ${u.store||''} · 📱 ${u.phone||'N/A'}</div>
-      </div>
-      <div class="user-actions">
-        <button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>
-        ${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}
-      </div>
-    </div>`).join('');
-
-  document.getElementById('tab-admin').innerHTML=`
-    <div class="card-header-flex" style="margin-bottom:14px">
-      <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
-      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
-    </div>
-    ${pendingHtml}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
-      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button>
-    </div>
-    <div class="card">${activeHtml||`<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}</div>`;
-}
-
-async function approveUser(username) {
-  showToast(lang==='zh'?'正在审批...':'Approving...','pending');
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approveUser',username})});
-    if(cachedUsers[username]){cachedUsers[username].status='active';saveData('cached_users',cachedUsers);}
-    showToast(t('approvedMsg'),'success'); renderAdminTab();
-  } catch(e){showToast('Error: '+e,'error');}
-}
-async function rejectUser(username) {
-  if(!confirm('Reject & delete this request?')) return;
-  showToast('Rejecting...','pending');
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rejectUser',username})});
-    delete cachedUsers[username]; saveData('cached_users',cachedUsers);
-    showToast(t('rejectedMsg'),'success'); renderAdminTab();
-  } catch(e){showToast('Error: '+e,'error');}
-}
-function openAddUser() {
-  document.getElementById('user-edit-title').textContent='➕ '+t('addUser');
-  document.getElementById('edit-user-key').value='';
-  document.getElementById('edit-username').value=''; document.getElementById('edit-username').disabled=false;
-  document.getElementById('edit-name').value=''; document.getElementById('edit-phone').value='';
-  document.getElementById('edit-pin').value=''; document.getElementById('edit-role').value='staff';
-  document.getElementById('edit-store').value='HQ';
-  document.getElementById('user-edit-modal').classList.add('open');
-}
-function openEditUser(username) {
-  const u=cachedUsers[username]; if(!u) return;
-  document.getElementById('user-edit-title').textContent='✏️ '+t('editUser');
-  document.getElementById('edit-user-key').value=username;
-  document.getElementById('edit-username').value=username; document.getElementById('edit-username').disabled=true;
-  document.getElementById('edit-name').value=u.name||''; document.getElementById('edit-phone').value=u.phone||'';
-  document.getElementById('edit-pin').value=u.pin||''; document.getElementById('edit-role').value=u.role||'staff';
-  document.getElementById('edit-store').value=u.store||'HQ';
-  document.getElementById('user-edit-modal').classList.add('open');
-}
-function closeUserEditModal(){document.getElementById('user-edit-modal').classList.remove('open');}
-async function saveUserEdit() {
-  const originalKey=document.getElementById('edit-user-key').value;
-  const username=document.getElementById('edit-username').value.trim().toLowerCase();
-  const name=document.getElementById('edit-name').value.trim();
-  const phone=document.getElementById('edit-phone').value.trim();
-  const pin=document.getElementById('edit-pin').value.trim();
-  const role=document.getElementById('edit-role').value;
-  const store=document.getElementById('edit-store').value;
-  if(!username||!name||!pin||pin.length!==4||!phone){showToast('Fill all fields. PIN=4 digits.','error');return;}
-  const userData={action:'saveUser',originalKey,username,name,phone,pin,role,store,status:'active'};
-  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)});
-    if(originalKey&&originalKey!==username) delete cachedUsers[originalKey];
-    cachedUsers[username]={name,phone,pin,role,store,status:'active'};
-    saveData('cached_users',cachedUsers);
-    showToast(t('userSaved'),'success'); closeUserEditModal(); renderAdminTab();
-  } catch(e){showToast('Error: '+e,'error');}
-}
-async function deleteUser(username) {
-  if(!confirm('Delete user @'+username+'?')) return;
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteUser',username})});
-    delete cachedUsers[username]; saveData('cached_users',cachedUsers);
-    showToast(t('userDeleted'),'success'); renderAdminTab();
-  } catch(e){showToast('Error: '+e,'error');}
-}
-
-// ============================================================
-// PROFILE TAB
-// ============================================================
-function renderProfileTab() {
-  document.getElementById('tab-profile').innerHTML=`
-    <div class="card" style="text-align:center;padding:28px">
-      <div style="font-size:54px;margin-bottom:10px">👤</div>
-      <h2 style="font-size:22px;font-weight:900">${currentUser.name}</h2>
-      <div style="margin-top:8px"><span class="role-tag ${currentUser.role}">${t(currentUser.role)}</span></div>
-      <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
-      <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
-    </div>
-    <div class="card">
-      <div class="card-title">${t('changePinTitle')}</div>
-      <div class="input-wrap" style="margin-top:12px;">
-        <label class="field-label">${t('oldPinLabel')}</label>
-        <input type="password" id="profile-curr-pin" maxlength="4" placeholder="••••" inputmode="numeric">
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">${t('newPinLabel')}</label>
-        <input type="password" id="profile-new-pin" maxlength="4" placeholder="••••" inputmode="numeric">
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">${t('confirmNewPinLabel')}</label>
-        <input type="password" id="profile-conf-pin" maxlength="4" placeholder="••••" inputmode="numeric">
-      </div>
-      <button class="btn success" onclick="changeCurrentUserPin()">${t('pinSubmitBtn')}</button>
-    </div>
-    <div class="card">
-      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
-      <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
-        <span class="stat-value">${getSales().length}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
-        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
-      </div>
-    </div>
-    <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>`;
-}
-
-async function changeCurrentUserPin() {
-  const currentPin=document.getElementById('profile-curr-pin').value.trim();
-  const newPin=document.getElementById('profile-new-pin').value.trim();
-  const confirmPin=document.getElementById('profile-conf-pin').value.trim();
-  if(!currentPin||!newPin||!confirmPin){showToast(lang==='zh'?'请填写完整！':'Fill all fields!','error');return;}
-  if(String(currentPin)!==String(currentUser.pin)){showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!','error');return;}
-  if(newPin.length!==4||isNaN(newPin)){showToast(lang==='zh'?'新密码必须是4位数字！':'New PIN must be 4 digits!','error');return;}
-  if(newPin!==confirmPin){showToast(lang==='zh'?'新密码不一致！':'New PINs do not match!','error');return;}
-  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
-  const userPayload={action:'saveUser',originalKey:currentUser.username,username:currentUser.username,name:currentUser.name,phone:currentUser.phone||'',pin:newPin,role:currentUser.role,store:currentUser.store,status:'active'};
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userPayload)});
-    currentUser.pin=newPin;
-    if(cachedUsers[currentUser.username]){cachedUsers[currentUser.username].pin=newPin;saveData('cached_users',cachedUsers);}
-    showToast(lang==='zh'?'密码修改成功！':'PIN updated!','success');
-    document.getElementById('profile-curr-pin').value='';
-    document.getElementById('profile-new-pin').value='';
-    document.getElementById('profile-conf-pin').value='';
-  } catch(e){showToast('Failed: '+e,'error');}
-}
-
-// ============================================================
-// LOGOUT & HELPERS
-// ============================================================
-function doLogout() {
-  currentUser=null;
-  document.getElementById('app-screen').classList.remove('active');
-  document.getElementById('login-screen').classList.add('active');
-  document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
-}
-
-function showToast(msg,type='') {
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='show '+(type?type+'-toast':'');
-  setTimeout(()=>el.className='',3000);
-}
-
-function updateRecordDateRange(val){selectedDateRange=val;renderRecordsTab();}
-function updateCustomDateValue(val){customDateValue=val;renderRecordsTab();}
-function updateCustomMonthValue(val){selectedMonthValue=val;renderRecordsTab();}
-function setRecordStoreFilter(val){activeRecordStoreFilter=val;renderRecordsTab();}
-
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
-function checkAllStoresSubmitted() {
-  if(!currentUser||!['admin','boss','manager'].includes(currentUser.role)) return;
-  const today=new Date().toISOString().slice(0,10);
-  const notifiedKey='notified_all_submitted_'+today;
-  if(sessionStorage.getItem(notifiedKey)) return;
-  const todaySales=getSales().filter(s=>s.dateKey===today);
-  const submittedStores=new Set(todaySales.map(s=>s.store));
-  const allSubmitted=BRANCHES.length>0&&BRANCHES.every(b=>submittedStores.has(b));
-  if(allSubmitted){
-    document.getElementById('all-submitted-title').textContent=t('allSubmittedTitle');
-    document.getElementById('all-submitted-msg').textContent=t('allSubmittedMsg');
-    document.getElementById('awesome-btn').textContent=t('awesomeBtn');
-    document.getElementById('all-submitted-modal').classList.add('open');
-    sessionStorage.setItem(notifiedKey,'true');
-  }
-}
-
-function sendReminder() {
-  const today=new Date().toISOString().slice(0,10);
-  const todaySales=getSales().filter(s=>s.dateKey===today);
-  const submittedStores=new Set(todaySales.map(s=>s.store));
-  const pending=BRANCHES.filter(b=>!submittedStores.has(b));
-  if(pending.length===0){showToast(lang==='zh'?'所有门店今日已提交！':'All branches submitted today!','success');return;}
-  const msgEn=`🔔 *Sales Report Reminder*\nDate: ${today}\n\nPending branches:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit ASAP. Thank you!`;
-  const msgZh=`🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
-  let contactsHtml='';
-  pending.forEach(storeName=>{
-    const storeUsers=Object.entries(cachedUsers)
-      .filter(([,u])=>u.store===storeName&&u.phone&&u.status==='active')
-      .map(([,u])=>({name:u.name,phone:u.phone}));
-    if(storeUsers.length>0){
-      contactsHtml+=`
-        <div style="margin-top:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-          <span style="font-weight:700">${storeName}:</span>
-          <div style="display:flex;gap:6px;">
-            ${storeUsers.map(u=>`
-              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent(lang==='zh'?'您好！请尽快提交您门店今天的日销数据，谢谢！':'Hi! Please submit today\'s sales figures ASAP, thank you!')}" target="_blank" class="badge" style="background:#d1fae5;color:#065f46;text-decoration:none;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;">
-                📱 ${u.name}
-              </a>`).join('')}
           </div>
-        </div>`;
+        `).join('');
     }
-  });
-  if(contactsHtml){
-    const overlay=document.createElement('div');
-    overlay.className='modal-overlay open'; overlay.id='reminder-modal';
-    overlay.innerHTML=`
-      <div class="modal-box">
-        <div class="modal-title">🔔 Send Reminders</div>
-        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${lang==='zh'?'未提交门店：':'Pending stores:'} <strong>${pending.join(', ')}</strong></p>
-        <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang==='zh'?msgZh:msgEn)}','_blank');document.getElementById('reminder-modal').remove();" style="margin-bottom:14px">
-          📢 ${lang==='zh'?'发送群组提醒':'Send Group Reminder'}
-        </button>
-        <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--text);border-top:1px solid var(--border);padding-top:10px">
-          ${lang==='zh'?'直接联系负责人：':'Direct WhatsApp to staff:'}
-        </div>
-        ${contactsHtml}
-        <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px">Close 关闭</button>
-      </div>`;
-    document.body.appendChild(overlay);
-  } else {
-    window.open('https://wa.me/?text='+encodeURIComponent(lang==='zh'?msgZh:msgEn),'_blank');
-  }
-}
 
-window.addEventListener('DOMContentLoaded',fetchLiveUsers);
+    // 2. Active directory user records section
+    if(activeArr.length === 0){
+      listContainer.innerHTML = `<p style="text-align:center;color:var(--text2)">No system profiles verified.</p>`;
+    } else {
+      listContainer.innerHTML = activeArr.map(u => `
+        <div class="user-row">
+          <div class="user-avatar">${u.name.substring(0,1).toUpperCase()}</div>
+          <div class="user-info">
+            <div class="user-name">${u.name} <span class="role-tag ${u.role}">${u.role}</span> ${u.status==='disabled'?'<span class="badge amber">Disabled</span>':''}</div>
+            <div class="user-meta">@${u.username} | 📱 ${u.phone || 'no phone'} | 🔑 PIN: <code>${u.pin}</code><br>📍 Assigned: <strong>${u.store}</strong></div>
+          </div>
+          <div class="user-actions">
+            <button class="btn-sm edit" onclick="openUserEdit('${u.username}')">${t('editUser')}</button>
+            <button class="btn-sm del" onclick="deleteUserRow('${u.username}')">${t('deleteUser')}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  async function approvePendingUser(username) {
+    if(!confirm(`Approve registration request for @${username}?`)) return;
+    showToast('Processing structural update...','pending');
+    try {
+      await gasPost({ action: 'approveUser', username });
+      showToast(t('approvedMsg'), 'success');
+      const u = await fetchLiveUsers(); renderAdminUsersData(u);
+    } catch(e){ alert(e); }
+  }
+
+  async function rejectPendingUser(username) {
+    if(!confirm(`Reject and delete request for @${username}?`)) return;
+    showToast('Deleting index entity...','pending');
+    try {
+      await gasPost({ action: 'rejectUser', username });
+      showToast(t('rejectedMsg'), 'success');
+      const u = await fetchLiveUsers(); renderAdminUsersData(u);
+    } catch(e){ alert(e); }
+  }
+
+  function openUserCreate() {
+    document.getElementById('user-edit-title').textContent = t('addUser');
+    document.getElementById('edit-user-key').value = '';
+    document.getElementById('edit-username').value = ''; document.getElementById('edit-username').disabled = false;
+    document.getElementById('edit-name').value = '';
+    document.getElementById('edit-phone').value = '';
+    document.getElementById('edit-store').value = 'Bonia Sabindo';
+    document.getElementById('edit-role').value = 'staff';
+    document.getElementById('edit-pin').value = '';
+    document.getElementById('edit-status').value = 'active';
+    document.getElementById('user-edit-modal').classList.add('open');
+  }
+
+  function openUserEdit(username) {
+    const u = cachedUsers[username];
+    if(!u) return;
+    document.getElementById('user-edit-title').textContent = `${t('editUser')}: @${username}`;
+    document.getElementById('edit-user-key').value = username;
+    document.getElementById('edit-username').value = u.username; document.getElementById('edit-username').disabled = true;
+    document.getElementById('edit-name').value = u.name;
+    document.getElementById('edit-phone').value = u.phone || '';
+    document.getElementById('edit-store').value = u.store || 'HQ';
+    document.getElementById('edit-role').value = u.role || 'staff';
+    document.getElementById('edit-pin').value = u.pin;
+    document.getElementById('edit-status').value = u.status || 'active';
+    document.getElementById('user-edit-modal').classList.add('open');
+  }
+
+  function closeUserEditModal(){ document.getElementById('user-edit-modal').classList.remove('open'); }
+
+  async function saveUserEdit() {
+    const key = document.getElementById('edit-user-key').value;
+    const username = document.getElementById('edit-username').value.trim().toLowerCase();
+    const name = document.getElementById('edit-name').value.trim();
+    const phone = document.getElementById('edit-phone').value.trim();
+    const store = document.getElementById('edit-store').value;
+    const role = document.getElementById('edit-role').value;
+    const pin = document.getElementById('edit-pin').value.trim();
+    const status = document.getElementById('edit-status').value;
+
+    if(!username || !name || !pin) { alert('Fill values required.'); return; }
+
+    const payload = { action: 'saveUser', username, name, phone, store, role, pin, status };
+    closeUserEditModal();
+    showToast('Saving to cloud files database...','pending');
+    try {
+      await gasPost(payload);
+      showToast(t('userSaved'), 'success');
+      const u = await fetchLiveUsers(); renderAdminUsersData(u);
+    } catch(e){ alert(e); }
+  }
+
+  async function deleteUserRow(username) {
+    if(!confirm(`CRITICAL: Remove access authorization profile for @${username}?`)) return;
+    showToast('Deleting ledger entry index...','pending');
+    try {
+      await gasPost({ action: 'deleteUser', username });
+      showToast(t('userDeleted'), 'success');
+      const u = await fetchLiveUsers(); renderAdminUsersData(u);
+    } catch(e){ alert(e); }
+  }
+
+  // ============================================================
+  // USER MODAL REGISTER REQUESTS FRONTEND
+  // ============================================================
+  function openRegisterModal() { document.getElementById('register-modal').classList.add('open'); }
+  function closeRegisterModal() { document.getElementById('register-modal').classList.remove('remove'); document.getElementById('register-modal').classList.remove('open'); }
+
+  async function submitRegisterRequest() {
+    const username = document.getElementById('reg-username').value.trim().toLowerCase();
+    const name     = document.getElementById('reg-name').value.trim();
+    const phone    = document.getElementById('reg-phone').value.trim();
+    const store    = document.getElementById('reg-store').value;
+    const role     = document.getElementById('reg-role').value;
+    const pin      = document.getElementById('reg-pin').value.trim();
+
+    if(!username || !name || !phone || !store || !role || !pin) {
+      alert('Please fill out all registration parameters fields.');
+      return;
+    }
+    if(pin.length !== 4 || isNaN(pin)){
+      alert('Security PIN selection must be exactly a 4-digit number numeric combination.');
+      return;
+    }
+
+    const payload = { action: 'registerRequest', username, name, phone, store, role, pin };
+    closeRegisterModal();
+    showToast('Filing official registration token...','pending');
+
+    try {
+      const res = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      alert('✓ Registration parameters filed successfully! Please prompt an authorized system Admin to enable your login.');
+    } catch(e){
+      alert('Error connecting infrastructure pipeline: ' + e.message);
+    }
+  }
+
+  // ============================================================
+  // ACCOUNT PROFILE ME TAB
+  // ============================================================
+  function renderProfileTab() {
+    document.getElementById('tab-profile').innerHTML = `
+      <div class="welcome-banner">
+        <h2>${t('welcome')}, ${currentUser.name}!</h2>
+        <p>Authenticated system identity descriptor frame log.</p>
+        <div style="margin-top:12px;font-size:12px;background:rgba(255,255,255,0.2);padding:6px 12px;border-radius:8px;display:inline-block">
+          Username ID: <strong>${currentUser.username}</strong>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">${t('changePinTitle')}</div>
+        <div class="input-wrap">
+          <label class="field-label">${t('oldPinLabel')}</label>
+          <input type="password" id="p-old" maxlength="4" placeholder="••••">
+        </div>
+        <div class="input-wrap">
+          <label class="field-label">${t('newPinLabel')}</label>
+          <input type="password" id="p-new1" maxlength="4" placeholder="••••">
+        </div>
+        <div class="input-wrap">
+          <label class="field-label">${t('confirmNewPinLabel')}</label>
+          <input type="password" id="p-new2" maxlength="4" placeholder="••••">
+        </div>
+        <button class="btn secondary" onclick="executePinChange()">✓ ${t('pinSubmitBtn')}</button>
+      </div>
+
+      <button class="btn danger" onclick="doLogout()" style="margin-top:10px">${t('logout')}</button>
+    `;
+  }
+
+  async function executePinChange() {
+    const oldPin = document.getElementById('p-old').value.trim();
+    const n1 = document.getElementById('p-new1').value.trim();
+    const n2 = document.getElementById('p-new2').value.trim();
+
+    if(String(currentUser.pin).trim() !== oldPin) { alert('Current input security PIN verification combination failed.'); return; }
+    if(n1.length !== 4 || isNaN(n1)) { alert('New verification structures must conform exactly to a 4-digit token structure.'); return; }
+    if(n1 !== n2) { alert('Confirmation configuration mismatch.'); return; }
+
+    const updatedUser = { ...currentUser, pin: n1 };
+    showToast('Restructuring encryption records keys...','pending');
+    try {
+      await gasPost({ action: 'saveUser', ...updatedUser });
+      currentUser = updatedUser;
+      saveData('current_user', currentUser);
+      showToast('Security configuration updated safely ✓', 'success');
+      renderProfileTab();
+    } catch(e){ alert(e); }
+  }
+
+  function doLogout() {
+    if(!confirm('Log out from active structural session parameters securely?')) return;
+    localStorage.removeItem('current_user');
+    currentUser = null;
+    document.getElementById('app-screen').classList.remove('active');
+    document.getElementById('login-screen').classList.add('active');
+    document.getElementById('login-name').value = '';
+    document.getElementById('login-pin').value = '';
+  }
+
+  // ============================================================
+  // WHATSAPP OPERATIONS ALERTS SYSTEM
+  // ============================================================
+  function openReminderModal() {
+    const todayStr = new Date().toISOString().slice(0,10);
+    const sales = getSales();
+    const completed = sales.filter(s => s.dateKey === todayStr).map(s => s.store);
+    const pending = BRANCHES.filter(b => !completed.includes(b));
+
+    if(pending.length === 0) { alert('All functional locations updated operational accounts metrics.'); return; }
+
+    const msgEn = `📢 *STORES REMINDER* 📢\nThe following branches have not submitted their daily sales report for today (*${todayStr}*):\n\n👉 *${pending.join(', ')}*\n\nPlease submit your sales reports as soon as possible. Thank you!`;
+    const msgZh = `📢 *团队温馨提示：未交店面催报* 📢\n以下店面尚未提报今日（*${todayStr}*）销售营业额数据：\n\n👉 *${pending.join(', ')}*\n\n请相关负责人收到通知后，立即前往报表工具完成数据录入，谢谢配合！`;
+
+    let contactsHtml = '';
+    const uList = Object.values(cachedUsers);
+    
+    pending.forEach(storeName => {
+      const staffInStore = uList.filter(u => u.store === storeName && u.status==='active' && u.phone);
+      if(staffInStore.length > 0) {
+        contactsHtml += `
+          <div style="margin-top:8px;background:var(--bg);padding:10px;border-radius:10px;border:1px solid var(--border)">
+            <div style="font-size:12px;font-weight:900;color:var(--text);margin-bottom:4px">🏪 ${storeName}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${staffInStore.map(u => {
+                const individualTxt = lang==='zh'
+                  ? `Hi ${u.name}，温馨提醒，您负责的 ${storeName} 门店今日销售报表尚未提交，麻烦抽空进入系统提报哦，谢谢！`
+                  : `Hi ${u.name}, gentle reminder that the sales report for ${storeName} today has not been submitted yet. Please submit via the app at your earliest convenience. Thanks!`;
+                return `
+                  <a href="https://wa.me/${u.phone}?text=${encodeURIComponent(individualTxt)}" target="_blank" class="btn success" style="width:auto;margin:0;font-size:11px;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;">
+                    📱 ${u.name}
+                  </a>`;
+              }).join('')}
+            </div>
+          </div>`;
+      }
+    });
+
+    if(contactsHtml){
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay open'; overlay.id = 'reminder-modal';
+      overlay.innerHTML = `
+        <div class="modal-box">
+          <div class="modal-title">🔔 Send Reminders</div>
+          <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${lang==='zh'?'未提交门店：':'Pending stores:'} <strong>${pending.join(', ')}</strong></p>
+          <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang==='zh'?msgZh:msgEn)}','_blank');document.getElementById('reminder-modal').remove();" style="margin-bottom:14px">
+            📢 ${lang==='zh'?'发送群组提醒':'Send Group Reminder'}
+          </button>
+          <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--text);border-top:1px solid var(--border);padding-top:10px">
+            ${lang==='zh'?'直接联系负责人：':'Direct WhatsApp to staff:'}
+          </div>
+          ${contactsHtml}
+          <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px">Close 关闭</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+  }
 </script>
+
 </body>
 </html>
