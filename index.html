@@ -97,7 +97,6 @@
   .role-tag.manager { background: #dbeafe; color: #1d4ed8; }
   .role-tag.supervisor { background: #d1fae5; color: #065f46; }
   .role-tag.staff { background: #f3e8ff; color: #6d28d9; }
-  /* ADMIN PANEL */
   .user-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .user-row:last-child { border-bottom: none; }
   .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; flex-shrink: 0; }
@@ -113,10 +112,18 @@
   .btn-sm.reject { background: #fee2e2; color: var(--danger); }
   .pending-card { border: 2px solid var(--accent); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; background: #fffbeb; }
   .pending-badge { display: inline-block; background: var(--accent); color: #fff; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; margin-left: 6px; }
-  /* SPINNER */
   .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 30px; gap: 10px; color: var(--text2); font-size:14px; font-weight:700; }
   .spin { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink:0; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* LOG TAB */
+  .log-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .log-item:last-child { border-bottom: none; }
+  .log-action-new  { display:inline-block; background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 10px; font-size:11px; font-weight:800; }
+  .log-action-edit { display:inline-block; background:#fff3cd; color:#856404; border-radius:20px; padding:2px 10px; font-size:11px; font-weight:800; }
+  .log-diff { font-size:12px; color:var(--text2); margin-top:4px; line-height:1.7; }
+  .diff-arrow { color:#94a3b8; margin:0 4px; }
+  .diff-changed { color:var(--danger); font-weight:800; }
+  .diff-new { color:var(--success); font-weight:800; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -128,7 +135,6 @@
 <div id="login-screen" class="screen active">
   <div class="login-box">
     <div class="login-logo">
-      <!-- UPDATED HOME SCREEN LOGO -->
       <svg viewBox="0 0 360 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:340px;margin:0 auto 12px;display:block">
         <defs>
           <linearGradient id="gMain" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -140,41 +146,27 @@
             <stop offset="0%" stop-color="#f59e0b"/>
             <stop offset="100%" stop-color="#fbbf24"/>
           </linearGradient>
-          <filter id="shadow">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(37,99,235,0.25)"/>
-          </filter>
+          <filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(37,99,235,0.25)"/></filter>
         </defs>
-
-        <!-- Main Text: BRANCHES -->
-        <text x="180" y="52" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="42" fill="url(#gMain)" filter="url(#shadow)" text-anchor="middle" letter-spacing="3">BRANCHES</text>
-
-        <!-- Sub Text: SALES REPORT -->
-        <text x="180" y="84" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="20" fill="#1e3a8a" text-anchor="middle" letter-spacing="6">SALES REPORT</text>
-
-        <!-- Decorative Line -->
+        <text x="180" y="52" font-family="system-ui,-apple-system,sans-serif" font-weight="900" font-size="42" fill="url(#gMain)" filter="url(#shadow)" text-anchor="middle" letter-spacing="3">BRANCHES</text>
+        <text x="180" y="84" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="20" fill="#1e3a8a" text-anchor="middle" letter-spacing="6">SALES REPORT</text>
         <rect x="70" y="98" width="220" height="4" rx="2" fill="url(#gAccent)"/>
-
-        <!-- "by ki" -->
-        <text x="260" y="118" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#f59e0b" font-style="italic">by ki</text>
-
-        <!-- "version 1.0" (Right down side) -->
-        <text x="350" y="132" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 1.0</text>
-
-        <!-- Sparkles -->
+        <text x="260" y="118" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="14" fill="#f59e0b" font-style="italic">by ki</text>
+        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 2.0</text>
         <text x="20" y="25" font-size="18" fill="#f59e0b" opacity="0.8">✦</text>
         <text x="335" y="65" font-size="14" fill="#60a5fa" opacity="0.9">✦</text>
         <text x="100" y="125" font-size="10" fill="#93c5fd" opacity="0.7">✦</text>
       </svg>
     </div>
     <div class="input-wrap">
-      <label class="field-label" id="lbl-name">Username 用户名</label>
+      <label class="field-label">Username 用户名</label>
       <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off">
     </div>
     <div class="input-wrap">
-      <label class="field-label" id="lbl-pass">PIN (4 digits 4位密码)</label>
+      <label class="field-label">PIN (4 digits 4位密码)</label>
       <input type="password" id="login-pin" maxlength="4" placeholder="••••" inputmode="numeric">
     </div>
-    <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
+    <button class="btn" onclick="doLogin()">Login 登录</button>
     <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
   </div>
 </div>
@@ -183,33 +175,25 @@
 <div id="app-screen" class="screen">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <!-- UPDATED INSIDE APP LOGO -->
       <svg viewBox="0 0 190 40" xmlns="http://www.w3.org/2000/svg" style="width:145px;height:32px;flex-shrink:0">
         <defs>
           <linearGradient id="tgWhite" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff"/>
-            <stop offset="100%" stop-color="#e2e8f0"/>
+            <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e2e8f0"/>
           </linearGradient>
           <linearGradient id="tgGold" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fcd34d"/>
-            <stop offset="100%" stop-color="#f59e0b"/>
+            <stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#f59e0b"/>
           </linearGradient>
         </defs>
-        <!-- BRANCHES -->
-        <text x="0" y="17" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="16" fill="url(#tgWhite)" letter-spacing="1.5">BRANCHES</text>
-        <!-- SALES REPORT -->
-        <text x="0" y="31" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="url(#tgWhite)" opacity="0.9" letter-spacing="2">SALES REPORT</text>
-        <!-- Accent Line -->
+        <text x="0" y="17" font-family="system-ui,-apple-system,sans-serif" font-weight="900" font-size="16" fill="url(#tgWhite)" letter-spacing="1.5">BRANCHES</text>
+        <text x="0" y="31" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="10" fill="url(#tgWhite)" opacity="0.9" letter-spacing="2">SALES REPORT</text>
         <rect x="0" y="35" width="105" height="2.5" rx="1.25" fill="url(#tgGold)"/>
-        <!-- by ki -->
-        <text x="112" y="32" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="11" fill="url(#tgGold)" font-style="italic">by ki</text>
-        <!-- version 1.0 -->
-        <text x="188" y="38" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v1.0</text>
+        <text x="112" y="32" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="11" fill="url(#tgGold)" font-style="italic">by ki</text>
+        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v2.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn" title="Sync from Google Sheets">🔄</button>
+      <button class="btn refresh-btn" onclick="triggerSyncRefresh()" id="sync-btn">🔄</button>
       <button class="lang-btn" onclick="toggleLang()">中/EN</button>
     </div>
   </div>
@@ -217,6 +201,7 @@
   <div class="content" id="tab-submit"  style="display:block"></div>
   <div class="content" id="tab-records" style="display:none"></div>
   <div class="content" id="tab-summary" style="display:none"></div>
+  <div class="content" id="tab-log"     style="display:none"></div>
   <div class="content" id="tab-admin"   style="display:none"></div>
   <div class="content" id="tab-profile" style="display:none"></div>
 
@@ -230,7 +215,10 @@
     <button class="nav-item" onclick="switchTab('summary',this)" id="nav-summary">
       <span class="nav-icon">📊</span><span id="nav-summary-lbl">Summary</span>
     </button>
-    <button class="nav-item" onclick="switchTab('admin',this)"   id="nav-admin" style="display:none">
+    <button class="nav-item" onclick="switchTab('log',this)" id="nav-log" style="display:none">
+      <span class="nav-icon">📜</span><span id="nav-log-lbl">Log</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('admin',this)" id="nav-admin" style="display:none">
       <span class="nav-icon">⚙️</span><span id="nav-admin-lbl">Admin</span>
     </button>
     <button class="nav-item" onclick="switchTab('profile',this)" id="nav-profile">
@@ -252,7 +240,7 @@
       <input type="text" id="reg-name" placeholder="e.g. Ali Ahmad">
     </div>
     <div class="input-wrap">
-      <label class="field-label">WhatsApp Phone Number 电话号码</label>
+      <label class="field-label">WhatsApp Phone Number 📱 电话号码</label>
       <input type="text" id="reg-phone" placeholder="e.g. 60123456789" inputmode="tel">
     </div>
     <div class="input-wrap">
@@ -316,7 +304,7 @@
       <input type="text" id="edit-name">
     </div>
     <div class="input-wrap">
-      <label class="field-label">WhatsApp Phone Number 电话号码</label>
+      <label class="field-label">WhatsApp Phone 📱 电话号码</label>
       <input type="text" id="edit-phone" placeholder="e.g. 60123456789" inputmode="tel">
     </div>
     <div class="input-wrap">
@@ -356,38 +344,31 @@
 <!-- ===================== ALL SUBMITTED MODAL ===================== -->
 <div class="modal-overlay" id="all-submitted-modal">
   <div class="modal-box" style="text-align:center">
-    <div style="font-size:50px; margin-bottom:10px;">🎉</div>
+    <div style="font-size:50px;margin-bottom:10px;">🎉</div>
     <div class="modal-title" style="color:var(--success)" id="all-submitted-title">All Branches Submitted!</div>
-    <p style="color:var(--text2); margin-bottom:20px; line-height: 1.5;" id="all-submitted-msg">
-      Great news! All branches have successfully updated their sales figures for today.
-    </p>
+    <p style="color:var(--text2);margin-bottom:20px;line-height:1.5;" id="all-submitted-msg">Great news! All branches have submitted today.</p>
     <button class="btn success" onclick="document.getElementById('all-submitted-modal').classList.remove('open')" id="awesome-btn">Awesome!</button>
   </div>
 </div>
 
 <script>
-// ============================================================
-// CONFIGURATION — paste your Google Apps Script URL here
-// ============================================================
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbym3OoeUaE9mYCi46J5oqo6BJqwG_HaT0z2XkKm4CNl-gwnO9OTAA0E_2TTRBB3r7jt/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVPgZxsYCaTrp-o3H3NaPtoc5selvqJytORDjmw37XqViaUsfHazu3gP7wlLiprv3S/exec";
 
-// ============================================================
-// STATE
-// ============================================================
 let lang = 'en';
 let currentUser = null;
 let currentTab = 'submit';
 let cachedUsers = {};
+let cachedLog = [];
 let selectedDateRange  = 'today';
 let customDateValue    = new Date().toISOString().slice(0,10);
 let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
+let logStoreFilter = 'all';
+let logActionFilter = 'all';
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
-// ============================================================
-// LOCAL STORAGE HELPERS
-// ============================================================
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
@@ -403,94 +384,93 @@ function saveSales(arr) {
 // ============================================================
 const T = {
   en: {
-    appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary', admin:'Admin', me:'Me',
+    appTitle:'SALES REPORT', submit:'Submit', records:'Records', summary:'Summary',
+    log:'Log', admin:'Admin', me:'Me',
     submitCard:'Enter / Update Sales', cash:'Cash Sales', qr:'QR Pay', card:'Credit Card', bank:'Bank Transfer',
     totalSales:'Total Sales', submitBtn:'Submit & Sync', remark:'Remark (optional)',
-    recordsTab:'Sales Records', noRecords:'No records found for this filter',
+    recordsTab:'Sales Records', noRecords:'No records found',
     summaryTab:'Sales Summary', accessDenied:'Access Restricted',
     accessMsg:'Only Boss, Admin & Manager can view this.',
     todayTotal:'Range Total', monthTotal:'Monthly Total',
     byStore:'Sales by Store', daily:'Daily Trend (7 Days)',
     adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
     submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
-    confirmTitle:'Confirm Submission', confirmMsg:'Submit these figures?',
-    allStores:'All Stores',
+    confirmTitle:'Confirm Submission', allStores:'All Stores',
     staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
     filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
     selectMonthLabel:'Month Filter',
     pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
     approveBtn:'Approve ✓', rejectBtn:'Reject ✗',
-    addUser:'+ Add User', editUser:'Edit', deleteUser:'Delete',
-    userMgmt:'User Management',
-    approvedMsg:'User approved & activated!', rejectedMsg:'Request rejected.',
+    addUser:'+ Add User', editUser:'Edit', deleteUser:'Delete', userMgmt:'User Management',
+    approvedMsg:'User approved!', rejectedMsg:'Request rejected.',
     userSaved:'User saved!', userDeleted:'User deleted.',
     allSubmittedTitle:'All Branches Submitted!',
-    allSubmittedMsg:'Great news! All branches have successfully updated their sales figures for today.',
+    allSubmittedMsg:'All branches have submitted today\'s sales.',
     remindBtn:'🔔 Remind Pending',
     awesomeBtn:'Awesome!',
-    dailySalesLabel:'Daily Sales (First Submit)',
-    updateSalesLabel:'Updated Sales (Edit)',
+    dailySalesLabel:'First Submit',
+    updateSalesLabel:'Updated',
     changePinTitle:'🔐 Change Security PIN',
-    oldPinLabel:'Current Security PIN 现密码',
-    newPinLabel:'New 4-digit PIN 新密码 (4位)',
-    confirmNewPinLabel:'Confirm New PIN 确认新密码',
-    pinSubmitBtn:'Update Security PIN',
-    onlyTodayAllowed:'Staff/Supervisors can only submit today\'s sales.'
+    oldPinLabel:'Current PIN', newPinLabel:'New PIN (4 digits)', confirmNewPinLabel:'Confirm New PIN',
+    pinSubmitBtn:'Update PIN',
+    onlyTodayAllowed:'Staff & Supervisors can only submit today\'s sales.',
+    logTab:'Sales Audit Log', logDesc:'Immutable history of all submissions & edits',
+    newEntry:'NEW SUBMISSION', editEntry:'EDITED',
+    beforeLabel:'Before', afterLabel:'After',
+    noLog:'No log entries found', logFilter:'Filter Log',
+    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.'
   },
   zh: {
-    appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', admin:'管理', me:'我的',
+    appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
+    log:'日志', admin:'管理', me:'我的',
     submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
     totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
     recordsTab:'销售记录', noRecords:'无匹配记录',
     summaryTab:'销售汇总', accessDenied:'权限受限',
-    accessMsg:'仅老板、管理员及经理可查看汇总数据。',
+    accessMsg:'仅老板、管理员及经理可查看。',
     todayTotal:'选定总额', monthTotal:'月度总额',
     byStore:'各门店月度排行', daily:'近7天趋势',
     adminTab:'管理后台', logout:'安全退出', refresh:'同步',
     submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
-    confirmTitle:'确认提交', confirmMsg:'确认提交这些数据吗？',
-    allStores:'所有门店',
+    confirmTitle:'确认提交', allStores:'所有门店',
     staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
     filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期',
     selectMonthLabel:'月份筛选',
     pendingApprovals:'待审批申请', noRequests:'暂无待审批申请',
     approveBtn:'批准 ✓', rejectBtn:'拒绝 ✗',
-    addUser:'+ 添加用户', editUser:'编辑', deleteUser:'删除',
-    userMgmt:'用户管理',
-    approvedMsg:'已批准并激活账号！', rejectedMsg:'已拒绝申请。',
+    addUser:'+ 添加用户', editUser:'编辑', deleteUser:'删除', userMgmt:'用户管理',
+    approvedMsg:'已批准账号！', rejectedMsg:'已拒绝申请。',
     userSaved:'用户已保存！', userDeleted:'用户已删除。',
     allSubmittedTitle:'所有门店已提交！',
-    allSubmittedMsg:'好消息！所有门店均已完成今日的销售数据上报。',
+    allSubmittedMsg:'所有门店均已完成今日的销售数据上报。',
     remindBtn:'🔔 提醒未交门店',
     awesomeBtn:'太棒了！',
-    dailySalesLabel:'当日首报销售 (First Submit)',
-    updateSalesLabel:'修改更新数据 (Updated Sales)',
+    dailySalesLabel:'首次提交',
+    updateSalesLabel:'已修改',
     changePinTitle:'🔐 安全密码修改',
-    oldPinLabel:'当前 4 位安全密码',
-    newPinLabel:'新 4 位安全密码',
-    confirmNewPinLabel:'确认新密码',
-    pinSubmitBtn:'确认更新安全密码',
-    onlyTodayAllowed:'员工和主管仅可提报今日销售数据。'
+    oldPinLabel:'当前密码', newPinLabel:'新密码（4位）', confirmNewPinLabel:'确认新密码',
+    pinSubmitBtn:'确认更新密码',
+    onlyTodayAllowed:'员工和主管仅可提报今日销售数据。',
+    logTab:'销售审计日志', logDesc:'所有提交与修改的不可更改历史记录',
+    newEntry:'首次提交', editEntry:'已修改',
+    beforeLabel:'修改前', afterLabel:'修改后',
+    noLog:'暂无日志记录', logFilter:'筛选日志',
+    logAccessDenied:'仅老板、管理员及经理可查看审计日志。'
   }
 };
 function t(k) { return T[lang][k] || k; }
 
-function toggleLang() {
-  lang = lang === 'en' ? 'zh' : 'en';
-  renderCurrentTab();
-  updateTopBar();
-  updateNavLabels();
-}
+function toggleLang() { lang = lang === 'en' ? 'zh' : 'en'; renderCurrentTab(); updateTopBar(); updateNavLabels(); }
 
 function updateTopBar() {
   if(currentUser) document.getElementById('app-user-info').textContent =
     currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
 }
-
 function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
   document.getElementById('nav-records-lbl').textContent = t('records');
   document.getElementById('nav-summary-lbl').textContent = t('summary');
+  document.getElementById('nav-log-lbl').textContent     = t('log');
   document.getElementById('nav-admin-lbl').textContent   = t('admin');
   document.getElementById('nav-profile-lbl').textContent = t('me');
 }
@@ -508,78 +488,57 @@ async function submitRegisterRequest() {
   const store    = document.getElementById('reg-store').value;
   const role     = document.getElementById('reg-role').value;
   const pin      = document.getElementById('reg-pin').value.trim();
-
-  if(!username || !name || !store || !pin || !phone) { showToast('Please fill all fields', 'error'); return; }
-  if(pin.length !== 4) { showToast('PIN must be 4 digits', 'error'); return; }
-
-  showToast('Sending request...', 'pending');
+  if(!username||!name||!store||!pin||!phone){showToast('Please fill all fields','error');return;}
+  if(pin.length!==4){showToast('PIN must be 4 digits','error');return;}
+  showToast('Sending request...','pending');
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors', cache: 'no-cache',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'registerRequest', username, name, phone, store, role, pin })
-    });
-    showToast('Registration sent! Waiting for Admin approval.', 'success');
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'registerRequest',username,name,phone,store,role,pin})});
+    showToast('Registration sent! Waiting for Admin approval.','success');
     closeRegisterModal();
-    // Clear fields
-    ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('reg-store').value = '';
-  } catch(e) {
-    showToast('Error: ' + e, 'error');
-  }
+    ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('reg-store').value='';
+  } catch(e){showToast('Error: '+e,'error');}
 }
 
 // ============================================================
-// SYNC / REFRESH — fetches real data FROM Google Sheets
+// SYNC / REFRESH
 // ============================================================
 async function triggerSyncRefresh() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) { showToast('No URL configured','error'); return; }
-  const btn = document.getElementById('sync-btn');
-  if(btn) btn.textContent = '⏳';
-  showToast(lang === 'zh' ? '正在从云端同步...' : 'Syncing from Cloud...', 'pending');
+  if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
+  const btn=document.getElementById('sync-btn');
+  if(btn) btn.textContent='⏳';
+  showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
   try {
-    // Fetch sales data from the sheet
-    const res  = await fetch(WEB_APP_URL + '?action=getSales');
+    const res  = await fetch(WEB_APP_URL+'?action=getSales');
     const json = await res.json();
-
-    if(json && json.sales && Array.isArray(json.sales)) {
-      // json.sales is the canonical list from the sheet — replace local cache entirely
-      saveSales(json.sales);
-      renderCurrentTab();
-      checkAllStoresSubmitted();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else if(Array.isArray(json)) {
-      // Legacy: bare array
-      saveSales(json);
-      renderCurrentTab();
-      checkAllStoresSubmitted();
-      showToast(lang === 'zh' ? '数据已从云端更新 ✓' : 'Synced from Cloud ✓', 'success');
-    } else {
-      showToast('Sync error: unexpected response', 'error');
-    }
-  } catch(e) {
-    showToast('Sync failed — check internet', 'error');
-  }
-  if(btn) btn.textContent = '🔄';
+    if(json&&json.sales&&Array.isArray(json.sales)){
+      saveSales(json.sales); renderCurrentTab(); checkAllStoresSubmitted();
+      showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
+    } else if(Array.isArray(json)){
+      saveSales(json); renderCurrentTab(); checkAllStoresSubmitted();
+      showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
+    } else { showToast('Sync error: unexpected response','error'); }
+  } catch(e){ showToast('Sync failed — check internet','error'); }
+  if(btn) btn.textContent='🔄';
 }
 
-// ============================================================
-// FETCH USERS FROM SHEET
-// ============================================================
 async function fetchLiveUsers() {
-  if(!WEB_APP_URL || WEB_APP_URL.includes("PASTE_YOUR")) return null;
+  if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
-    const response = await fetch(WEB_APP_URL + '?action=getUsers');
-    const users = await response.json();
-    if(users && typeof users === 'object') {
-      cachedUsers = users;
-      saveData('cached_users', users);
-    }
+    const response = await fetch(WEB_APP_URL+'?action=getUsers');
+    const users    = await response.json();
+    if(users&&typeof users==='object'){cachedUsers=users;saveData('cached_users',users);}
     return cachedUsers;
-  } catch(e) {
-    cachedUsers = loadData('cached_users', {});
-    return cachedUsers;
-  }
+  } catch(e){ cachedUsers=loadData('cached_users',{}); return cachedUsers; }
+}
+
+async function fetchLog() {
+  try {
+    const res  = await fetch(WEB_APP_URL+'?action=getLog');
+    const json = await res.json();
+    if(json&&json.log&&Array.isArray(json.log)){ cachedLog=json.log; return cachedLog; }
+  } catch(e){}
+  return [];
 }
 
 // ============================================================
@@ -588,77 +547,79 @@ async function fetchLiveUsers() {
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username || !pin) { showToast('Enter username and PIN', 'error'); return; }
-  showToast(lang === 'zh' ? '正在验证...' : 'Verifying...', 'pending');
+  if(!username||!pin){showToast('Enter username and PIN','error');return;}
+  showToast(lang==='zh'?'正在验证...':'Verifying...','pending');
   await fetchLiveUsers();
   const userMatch = cachedUsers[username];
-  if(!userMatch || String(userMatch.pin) !== String(pin)) {
-    showToast('Wrong username or PIN', 'error'); return;
-  }
-  if(userMatch.status && userMatch.status !== 'active') {
-    showToast('Account pending approval. Contact Admin.', 'error'); return;
-  }
-  currentUser = { ...userMatch, username };
+  if(!userMatch||String(userMatch.pin)!==String(pin)){showToast('Wrong username or PIN','error');return;}
+  if(userMatch.status&&userMatch.status!=='active'){showToast('Account pending approval. Contact Admin.','error');return;}
+  currentUser={...userMatch,username};
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-
-  const isAdmin = ['admin','boss'].includes(currentUser.role);
-  document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
-
+  const isAdmin=['admin','boss'].includes(currentUser.role);
+  const isExec=['admin','boss','manager'].includes(currentUser.role);
+  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
+  document.getElementById('nav-log').style.display=isExec?'flex':'none';
   updateTopBar(); updateNavLabels();
-  switchTab('submit', document.getElementById('nav-submit'));
+  switchTab('submit',document.getElementById('nav-submit'));
   triggerSyncRefresh();
 }
 
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-function switchTab(tab, btn) {
-  currentTab = tab;
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+function switchTab(tab,btn) {
+  currentTab=tab;
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  ['submit','records','summary','admin','profile'].forEach(tt => {
-    document.getElementById('tab-' + tt).style.display = tt === tab ? 'block' : 'none';
+  ['submit','records','summary','log','admin','profile'].forEach(tt=>{
+    document.getElementById('tab-'+tt).style.display=tt===tab?'block':'none';
   });
   renderCurrentTab();
 }
-
 function renderCurrentTab() {
-  if(currentTab === 'submit')  renderSubmitTab();
-  if(currentTab === 'records') renderRecordsTab();
-  if(currentTab === 'summary') renderSummaryTab();
-  if(currentTab === 'admin')   renderAdminTab();
-  if(currentTab === 'profile') renderProfileTab();
+  if(currentTab==='submit')  renderSubmitTab();
+  if(currentTab==='records') renderRecordsTab();
+  if(currentTab==='summary') renderSummaryTab();
+  if(currentTab==='log')     renderLogTab();
+  if(currentTab==='admin')   renderAdminTab();
+  if(currentTab==='profile') renderProfileTab();
 }
 
 // ============================================================
 // SUBMIT TAB
 // ============================================================
 function renderSubmitTab() {
-  const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
-  const isStaffOrSupervisor = ['staff', 'supervisor'].includes(currentUser.role);
-  const todayStr = new Date().toISOString().slice(0,10);
+  const isManagerial=['boss','admin','manager'].includes(currentUser.role);
+  const isRestricted=['staff','supervisor'].includes(currentUser.role);
+  const todayStr=new Date().toISOString().slice(0,10);
+  let allowedStores=STORES;
+  if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
 
-  let allowedStores = STORES;
-  if (currentUser.role !== 'admin') allowedStores = STORES.filter(s => s !== 'HQ');
-
-  let storeOptions = !isManagerial
-    ? `<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
-    : `<select id="submit-store" onchange="checkAndLoadExistingSales()">
+  let storeOptions=!isManagerial
+    ?`<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
+    :`<select id="submit-store" onchange="checkAndLoadExistingSales()">
          <option value="">-- Select Store --</option>
-         ${allowedStores.map(s => `<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
+         ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
-  // Lock date for Staff and Supervisors to only allow Today's submissions
-  let dateInputHtml = `<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
-  if (isStaffOrSupervisor) {
-    dateInputHtml = `<input type="date" id="submit-date" value="${todayStr}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`;
+  // ── Date input: Staff/Supervisor locked to TODAY only ────
+  let dateInputHtml;
+  if(isRestricted){
+    dateInputHtml=`
+      <input type="date" id="submit-date" value="${todayStr}" disabled
+        style="background:#e2e8f0;color:var(--text2);font-weight:bold;">
+      <div style="font-size:12px;color:#b45309;background:#fef3c7;border-radius:8px;padding:6px 10px;margin-top:6px;font-weight:600;">
+        🔒 ${t('onlyTodayAllowed')}
+      </div>`;
+  } else {
+    dateInputHtml=`<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
   }
 
-  document.getElementById('tab-submit').innerHTML = `
+  document.getElementById('tab-submit').innerHTML=`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh' ? '可随时补录、覆盖或更新历史数据，金额可填 0' : 'Update or edit any date. Amounts can be RM 0.00'}</p>
+      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0':'Update or edit any date. Amounts can be RM 0.00'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
@@ -667,7 +628,7 @@ function renderSubmitTab() {
         ${dateInputHtml}
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${t('store') || 'Store'}</label>
+        <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -706,63 +667,77 @@ function renderSubmitTab() {
       <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${lang==='zh'?'所有金额均可填写为 0.00（表示无销售额）':'All amounts can be 0.00 (means no sales for that type)'}
+      💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
   `;
-  ['s-cash','s-qr','s-card','s-bank'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updateLiveTotal);
+  ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',updateLiveTotal);
   });
   checkAndLoadExistingSales();
 }
 
 function checkAndLoadExistingSales() {
-  const dateVal  = document.getElementById('submit-date') ? document.getElementById('submit-date').value : '';
-  const storeVal = document.getElementById('submit-store') ? document.getElementById('submit-store').value : '';
-  if(!dateVal || !storeVal) return;
-  const existing = getSales().find(s => s.dateKey === dateVal && s.store === storeVal);
-  if(existing) {
-    document.getElementById('s-cash').value  = existing.cash  !== undefined ? existing.cash  : '';
-    document.getElementById('s-qr').value    = existing.qr    !== undefined ? existing.qr    : '';
-    document.getElementById('s-card').value  = existing.card  !== undefined ? existing.card  : '';
-    document.getElementById('s-bank').value  = existing.bank  !== undefined ? existing.bank  : '';
-    document.getElementById('s-remark').value = existing.remark || '';
+  const dateVal  = document.getElementById('submit-date')?.value;
+  const storeVal = document.getElementById('submit-store')?.value;
+  if(!dateVal||!storeVal) return;
+  const existing=getSales().find(s=>s.dateKey===dateVal&&s.store===storeVal);
+  if(existing){
+    document.getElementById('s-cash').value   = existing.cash  !==undefined?existing.cash:'';
+    document.getElementById('s-qr').value     = existing.qr    !==undefined?existing.qr:'';
+    document.getElementById('s-card').value   = existing.card  !==undefined?existing.card:'';
+    document.getElementById('s-bank').value   = existing.bank  !==undefined?existing.bank:'';
+    document.getElementById('s-remark').value = existing.remark||'';
   } else {
-    ['s-cash','s-qr','s-card','s-bank'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('s-remark').value = '';
+    ['s-cash','s-qr','s-card','s-bank'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('s-remark').value='';
   }
   updateLiveTotal();
 }
 
 function updateLiveTotal() {
-  const c = parseFloat(document.getElementById('s-cash').value)  || 0;
-  const q = parseFloat(document.getElementById('s-qr').value)    || 0;
-  const k = parseFloat(document.getElementById('s-card').value)  || 0;
-  const b = parseFloat(document.getElementById('s-bank').value)  || 0;
-  document.getElementById('live-total').textContent = 'RM ' + (c+q+k+b).toFixed(2);
+  const c=parseFloat(document.getElementById('s-cash').value)||0;
+  const q=parseFloat(document.getElementById('s-qr').value)||0;
+  const k=parseFloat(document.getElementById('s-card').value)||0;
+  const b=parseFloat(document.getElementById('s-bank').value)||0;
+  document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
 }
 
 function openConfirm() {
-  const store      = document.getElementById('submit-store').value;
-  const targetDate = document.getElementById('submit-date').value;
-  if(!store || !targetDate) { showToast(lang==='zh'?'请选择门店和日期':'Select store and date', 'error'); return; }
+  const store     =document.getElementById('submit-store').value;
+  const targetDate=document.getElementById('submit-date').value;
+  if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
 
-  // Restrict Staff/Supervisors from selecting anything other than Today's date
-  const isStaffOrSupervisor = ['staff', 'supervisor'].includes(currentUser.role);
-  const todayStr = new Date().toISOString().slice(0,10);
-  if (isStaffOrSupervisor && targetDate !== todayStr) {
-    showToast(t('onlyTodayAllowed'), 'error');
-    return;
+  // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
+  const isRestricted=['staff','supervisor'].includes(currentUser.role);
+  const todayStr=new Date().toISOString().slice(0,10);
+  if(isRestricted&&targetDate!==todayStr){
+    showToast(t('onlyTodayAllowed'),'error'); return;
   }
 
-  const cash  = parseFloat(document.getElementById('s-cash').value)  || 0;
-  const qr    = parseFloat(document.getElementById('s-qr').value)    || 0;
-  const card  = parseFloat(document.getElementById('s-card').value)  || 0;
-  const bank  = parseFloat(document.getElementById('s-bank').value)  || 0;
-  const total = cash + qr + card + bank;
-  const remark = document.getElementById('s-remark').value;
+  const cash  =parseFloat(document.getElementById('s-cash').value)||0;
+  const qr    =parseFloat(document.getElementById('s-qr').value)||0;
+  const card  =parseFloat(document.getElementById('s-card').value)||0;
+  const bank  =parseFloat(document.getElementById('s-bank').value)||0;
+  const total =cash+qr+card+bank;
+  const remark=document.getElementById('s-remark').value;
 
-  document.getElementById('modal-title').textContent = t('confirmTitle');
-  document.getElementById('modal-body').innerHTML = `
+  // Check if this is a new submission or an edit
+  const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
+  const isEdit=!!existingRecord;
+
+  document.getElementById('modal-title').innerHTML=t('confirmTitle')+
+    (isEdit?` <span class="log-action-edit">${t('editEntry')}</span>`:`<span class="log-action-new" style="margin-left:8px;">${t('newEntry')}</span>`);
+
+  let editWarning='';
+  if(isEdit){
+    editWarning=`
+      <div style="background:#fff3cd;border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#78350f;font-weight:600;">
+        ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
+      </div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML=`
+    ${editWarning}
     <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
     <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
@@ -770,81 +745,69 @@ function openConfirm() {
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-    ${remark ? `<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>` : ''}
+    ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
-  window._pendingSubmit = { store, targetDate, cash, qr, card, bank, total, remark };
+  window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
   document.getElementById('confirm-modal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('confirm-modal').classList.remove('open'); }
+function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
 function confirmSubmit() {
-  const s   = window._pendingSubmit;
-  const now = new Date();
-
-  // Differentiate Daily Sales vs Updated Sales
-  const existingRecord = getSales().find(item => item.dateKey === s.targetDate && item.store === s.store);
-  const submissionType = existingRecord ? 'update' : 'daily_sales';
-
-  // Construct Change Log Payload to send to Spreadsheet (Log tab backend)
-  const changeLog = {
-    before: existingRecord ? { cash: existingRecord.cash, qr: existingRecord.qr, card: existingRecord.card, bank: existingRecord.bank, total: existingRecord.total } : null,
-    after: { cash: s.cash, qr: s.qr, card: s.card, bank: s.bank, total: s.total }
+  const s=window._pendingSubmit;
+  const now=new Date();
+  const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
+  const submissionType=existingRecord?'update':'daily_sales';
+  const changeLog={
+    before:existingRecord?{cash:existingRecord.cash,qr:existingRecord.qr,card:existingRecord.card,bank:existingRecord.bank,total:existingRecord.total}:null,
+    after:{cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total}
   };
-
-  const record = {
-    id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
-    total: s.total, remark: s.remark, submitter: currentUser.name,
-    role: currentUser.role, datetime: now.toISOString(),
-    dateKey: s.targetDate, month: s.targetDate.slice(0,7),
-    submissionType: submissionType, // 'daily_sales' or 'update'
-    changeLog: JSON.stringify(changeLog)
+  const record={
+    id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
+    total:s.total,remark:s.remark,submitter:currentUser.name,
+    role:currentUser.role,datetime:now.toISOString(),
+    dateKey:s.targetDate,month:s.targetDate.slice(0,7),
+    submissionType,changeLog:JSON.stringify(changeLog)
   };
-
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
-
-  fetch(WEB_APP_URL, {
-    method: 'POST', mode: 'no-cors', cache: 'no-cache',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'submitSales', ...record })
-  }).then(() => {
-    // Update local cache: replace same date+store entry
-    let sales = getSales().filter(item => !(item.dateKey === s.targetDate && item.store === s.store));
+  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...','pending');
+  fetch(WEB_APP_URL,{
+    method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'submitSales',...record})
+  }).then(()=>{
+    let sales=getSales().filter(item=>!(item.dateKey===s.targetDate&&item.store===s.store));
     sales.push(record);
     saveSales(sales);
     closeModal();
-    showToast(t('submitted'), 'success');
+    showToast(t('submitted'),'success');
     renderSubmitTab();
     checkAllStoresSubmitted();
-  }).catch(err => { showToast('Error: ' + err, 'error'); });
+  }).catch(err=>{showToast('Error: '+err,'error');});
 }
 
 // ============================================================
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
-  const sales   = getSales();
-  const isExec  = ['boss','admin','manager'].includes(currentUser.role);
-  const todayKey = new Date().toISOString().slice(0,10);
-  let yest = new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey = yest.toISOString().slice(0,10);
-
-  let targetDate = todayKey;
-  if(selectedDateRange === 'yesterday')   targetDate = yestKey;
-  if(selectedDateRange === 'custom_date') targetDate = customDateValue;
-
-  let filtered = isExec ? sales : sales.filter(s => s.store === currentUser.store);
-  if(selectedDateRange === 'month') {
-    filtered = filtered.filter(s => s.month === selectedMonthValue);
+  const sales  =getSales();
+  const isExec =['boss','admin','manager'].includes(currentUser.role);
+  const todayKey=new Date().toISOString().slice(0,10);
+  let yest=new Date(); yest.setDate(yest.getDate()-1);
+  const yestKey=yest.toISOString().slice(0,10);
+  let targetDate=todayKey;
+  if(selectedDateRange==='yesterday')   targetDate=yestKey;
+  if(selectedDateRange==='custom_date') targetDate=customDateValue;
+  let filtered=isExec?sales:sales.filter(s=>s.store===currentUser.store);
+  if(selectedDateRange==='month'){
+    filtered=filtered.filter(s=>s.month===selectedMonthValue);
   } else {
-    filtered = filtered.filter(s => s.dateKey === targetDate);
+    filtered=filtered.filter(s=>s.dateKey===targetDate);
   }
-  if(isExec && activeRecordStoreFilter !== 'all') {
-    filtered = filtered.filter(r => r.store === activeRecordStoreFilter);
-  }
-  filtered = filtered.slice().sort((a,b) => String(b.dateKey).localeCompare(String(a.dateKey)));
+  if(isExec&&activeRecordStoreFilter!=='all') filtered=filtered.filter(r=>r.store===activeRecordStoreFilter);
+  filtered=filtered.slice().sort((a,b)=>String(b.dateKey).localeCompare(String(a.dateKey)));
+  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
 
-  let filterHtml = `
+  let filterHtml=`
     <div class="control-grid">
       <div>
         <label class="field-label" style="font-size:11px;">${t('filterRange')}</label>
@@ -857,116 +820,97 @@ function renderRecordsTab() {
       </div>
       <div>
         ${selectedDateRange==='custom_date'
-          ? `<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
-          : selectedDateRange==='month'
-            ? `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
-            : `<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
+          ?`<label class="field-label" style="font-size:11px;">${t('customOpt')}</label><input type="date" value="${customDateValue}" onchange="updateCustomDateValue(this.value)">`
+          :`<label class="field-label" style="font-size:11px;">${t('selectMonthLabel')}</label><input type="month" value="${selectedMonthValue}" onchange="updateCustomMonthValue(this.value)">`
         }
       </div>
-    </div>
-  `;
+    </div>`;
 
-  if(isExec) {
-    let allowedStores = STORES;
-    if (currentUser.role !== 'admin') allowedStores = STORES.filter(s => s !== 'HQ');
-
-    filterHtml += `<div class="filter-scroll">
+  if(isExec){
+    filterHtml+=`<div class="filter-scroll">
       <div class="filter-chip ${activeRecordStoreFilter==='all'?'active':''}" onclick="setRecordStoreFilter('all')">${t('allStores')}</div>
       ${allowedStores.map(s=>`<div class="filter-chip ${activeRecordStoreFilter===s?'active':''}" onclick="setRecordStoreFilter('${s}')">${s}</div>`).join('')}
     </div>`;
   }
 
-  const listHtml = filtered.length === 0
-    ? `<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
-    : filtered.map(r => {
-        const isUpdate = r.submissionType === 'update';
-        const badgeColor = isUpdate ? 'orange' : 'green';
-        const badgeLabel = isUpdate ? t('updateSalesLabel') : t('dailySalesLabel');
-
-        return `
+  const listHtml=filtered.length===0
+    ?`<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
+    :filtered.map(r=>{
+      const isUpdate=r.submissionType==='update';
+      return `
         <div class="record-item">
           <div class="record-icon">🏪</div>
           <div class="record-info">
             <div class="record-store">
-              ${r.store} 
+              ${r.store}
               <span class="badge">${r.submitter||''}</span>
-              <span class="badge ${badgeColor}" style="font-size: 10px; background: ${isUpdate ? '#fff3cd':'#d1fae5'}; color: ${isUpdate ? '#856404':'#0f5132'}">${badgeLabel}</span>
+              <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:${isUpdate?'#fff3cd':'#d1fae5'};color:${isUpdate?'#856404':'#0f5132'};margin-left:4px">
+                ${isUpdate?t('updateSalesLabel'):t('dailySalesLabel')}
+              </span>
             </div>
             <div class="record-meta">
               💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
               💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
             </div>
-            ${r.remark ? `<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
+            ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
             <div class="record-sub">${r.dateKey||''}</div>
           </div>
         </div>`;
-      }).join('');
+    }).join('');
 
-  document.getElementById('tab-records').innerHTML = `
+  document.getElementById('tab-records').innerHTML=`
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderRecordsTab)">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
-    <div class="card">${listHtml}</div>
-  `;
+    <div class="card">${listHtml}</div>`;
 }
 
 // ============================================================
 // SUMMARY TAB
 // ============================================================
 function renderSummaryTab() {
-  const isExec = ['boss','admin','manager'].includes(currentUser.role);
-  if(!isExec) {
-    document.getElementById('tab-summary').innerHTML = `
+  const isExec=['boss','admin','manager'].includes(currentUser.role);
+  if(!isExec){
+    document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
         <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
         <p style="color:var(--text2)">${t('accessMsg')}</p>
       </div>`; return;
   }
-
-  const sales = getSales();
-  const todayKey = new Date().toISOString().slice(0,10);
-  let yest = new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey = yest.toISOString().slice(0,10);
-
-  let targetRangeDay = todayKey;
-  if(selectedDateRange === 'yesterday')   targetRangeDay = yestKey;
-  if(selectedDateRange === 'custom_date') targetRangeDay = customDateValue;
-
-  const rangeSales = selectedDateRange === 'month'
-    ? sales.filter(s => s.month === selectedMonthValue)
-    : sales.filter(s => s.dateKey === targetRangeDay);
-
-  const monthSales = sales.filter(s => s.month === selectedMonthValue);
-  const rangeTotal = rangeSales.reduce((a,s) => a + parseFloat(s.total||0), 0);
-  const monthTotal = monthSales.reduce((a,s) => a + parseFloat(s.total||0), 0);
-
-  let allowedStores = STORES;
-  if (currentUser.role !== 'admin') allowedStores = STORES.filter(s => s !== 'HQ');
-
-  const storeMap = {}; allowedStores.forEach(s => storeMap[s] = 0);
-  monthSales.forEach(s => { if(storeMap[s.store] !== undefined) storeMap[s.store] = (storeMap[s.store]||0) + parseFloat(s.total||0) });
-  const maxStore = Math.max(...Object.values(storeMap), 1);
-
-  const days = [];
-  for(let i=6; i>=0; i--) {
-    const d = new Date(); d.setDate(d.getDate()-i);
-    const dk = d.toISOString().slice(0,10);
-    const label = d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
-    const val = sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
+  const sales=getSales();
+  const todayKey=new Date().toISOString().slice(0,10);
+  let yest=new Date(); yest.setDate(yest.getDate()-1);
+  const yestKey=yest.toISOString().slice(0,10);
+  let targetRangeDay=todayKey;
+  if(selectedDateRange==='yesterday')   targetRangeDay=yestKey;
+  if(selectedDateRange==='custom_date') targetRangeDay=customDateValue;
+  const rangeSales=selectedDateRange==='month'?sales.filter(s=>s.month===selectedMonthValue):sales.filter(s=>s.dateKey===targetRangeDay);
+  const monthSales=sales.filter(s=>s.month===selectedMonthValue);
+  const rangeTotal=rangeSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
+  const monthTotal=monthSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
+  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
+  const storeMap={}; allowedStores.forEach(s=>storeMap[s]=0);
+  monthSales.forEach(s=>{if(storeMap[s.store]!==undefined) storeMap[s.store]=(storeMap[s.store]||0)+parseFloat(s.total||0);});
+  const maxStore=Math.max(...Object.values(storeMap),1);
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const dk=d.toISOString().slice(0,10);
+    const label=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
+    const val=sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
     days.push({label,val});
   }
-  const maxDay = Math.max(...days.map(d=>d.val), 1);
-
-  document.getElementById('tab-summary').innerHTML = `
+  const maxDay=Math.max(...days.map(d=>d.val),1);
+  document.getElementById('tab-summary').innerHTML=`
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh().then(renderSummaryTab)">🔄 ${t('refresh')}</button>
+      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
     </div>
     <div class="card" style="padding:14px;background:#eff6ff;">
       <div class="control-grid" style="margin-bottom:0">
@@ -1007,54 +951,203 @@ function renderSummaryTab() {
         <div class="card-title" style="margin:0">🏪 ${t('byStore')} (${selectedMonthValue})</div>
         <button class="btn warn" onclick="sendReminder()" style="width:auto;padding:6px 12px;font-size:12px;margin:0;border-radius:10px">${t('remindBtn')}</button>
       </div>
-      ${allowedStores.map(s=>`
+      ${allowedStores.filter(s=>s!=='HQ').map(s=>`
         <div style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">
             <span>${s}</span><span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
           </div>
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${((storeMap[s]||0)/maxStore*100).toFixed(1)}%"></div></div>
         </div>`).join('')}
+    </div>`;
+}
+function updateSummaryDateRange(val){selectedDateRange=val;renderSummaryTab();}
+function updateSummaryCustomDate(val){customDateValue=val;renderSummaryTab();}
+function updateSummaryMonth(val){selectedMonthValue=val;renderSummaryTab();}
+
+// ============================================================
+// AUDIT LOG TAB  (Boss / Admin / Manager only)
+// ============================================================
+async function renderLogTab() {
+  const isExec=['boss','admin','manager'].includes(currentUser.role);
+  if(!isExec){
+    document.getElementById('tab-log').innerHTML=`
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div style="font-size:52px;">🔒</div>
+        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
+        <p style="color:var(--text2)">${t('logAccessDenied')}</p>
+      </div>`; return;
+  }
+
+  document.getElementById('tab-log').innerHTML=`
+    <div class="card-header-flex">
+      <div>
+        <h2 style="font-size:18px;font-weight:900">📜 ${t('logTab')}</h2>
+        <p style="font-size:12px;color:var(--text2);margin-top:2px">${t('logDesc')}</p>
+      </div>
+      <button class="btn refresh-inline" onclick="refreshLog()">🔄 ${t('refresh')}</button>
     </div>
-  `;
+    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>
+    <div id="log-content"></div>`;
+
+  await refreshLog();
 }
 
-function updateSummaryDateRange(val)  { selectedDateRange  = val; renderSummaryTab(); }
-function updateSummaryCustomDate(val) { customDateValue    = val; renderSummaryTab(); }
-function updateSummaryMonth(val)      { selectedMonthValue = val; renderSummaryTab(); }
+async function refreshLog() {
+  const loadEl=document.getElementById('log-loading');
+  const contentEl=document.getElementById('log-content');
+  if(!contentEl) return;
+  if(loadEl) loadEl.style.display='flex';
 
-// ============================================================
-// ADMIN TAB — Pending approvals + User management
-// ============================================================
-async function renderAdminTab() {
-  const isAdmin = ['admin','boss'].includes(currentUser.role);
-  if(!isAdmin) {
-    document.getElementById('tab-admin').innerHTML = `<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
+  await fetchLog();
+
+  if(loadEl) loadEl.style.display='none';
+
+  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
+
+  // Filter
+  let filtered=cachedLog.filter(r=>r.store&&r.store!=='Testing');
+  if(logStoreFilter!=='all') filtered=filtered.filter(r=>r.store===logStoreFilter);
+  if(logActionFilter!=='all') filtered=filtered.filter(r=>{
+    const a=String(r.action||'').toUpperCase();
+    if(logActionFilter==='new')  return a.includes('NEW');
+    if(logActionFilter==='edit') return a.includes('EDIT');
+    return true;
+  });
+  // Sort newest first
+  filtered=filtered.slice().sort((a,b)=>String(b.timestamp).localeCompare(String(a.timestamp)));
+
+  const filterHtml=`
+    <div class="control-grid" style="margin-bottom:10px">
+      <div>
+        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':'Store'}</label>
+        <select onchange="logStoreFilter=this.value;renderLogEntries()">
+          <option value="all">${t('allStores')}</option>
+          ${allowedStores.filter(s=>s!=='HQ').map(s=>`<option value="${s}" ${logStoreFilter===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" style="font-size:11px">📋 ${lang==='zh'?'操作类型':'Action Type'}</label>
+        <select onchange="logActionFilter=this.value;renderLogEntries()">
+          <option value="all">${lang==='zh'?'全部':'All'}</option>
+          <option value="new"  ${logActionFilter==='new'?'selected':''}>${t('newEntry')}</option>
+          <option value="edit" ${logActionFilter==='edit'?'selected':''}>${t('editEntry')}</option>
+        </select>
+      </div>
+    </div>`;
+
+  // Save filtered for renderLogEntries
+  window._logFiltered=filtered;
+
+  contentEl.innerHTML=filterHtml+`<div id="log-list"></div>`;
+  renderLogEntries();
+}
+
+function renderLogEntries() {
+  let log=cachedLog.filter(r=>r.store&&r.store!=='Testing');
+  if(logStoreFilter!=='all') log=log.filter(r=>r.store===logStoreFilter);
+  if(logActionFilter!=='all') log=log.filter(r=>{
+    const a=String(r.action||'').toUpperCase();
+    if(logActionFilter==='new')  return a.includes('NEW');
+    if(logActionFilter==='edit') return a.includes('EDIT');
+    return true;
+  });
+  log=log.slice().sort((a,b)=>String(b.timestamp).localeCompare(String(a.timestamp)));
+
+  const listEl=document.getElementById('log-list');
+  if(!listEl) return;
+
+  if(log.length===0){
+    listEl.innerHTML=`<div class="card"><div class="empty-state"><div class="e-icon">📭</div><p>${t('noLog')}</p></div></div>`;
     return;
   }
 
-  document.getElementById('tab-admin').innerHTML = `<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
+  const isEdit=a=>String(a||'').toUpperCase().includes('EDIT');
 
-  // Re-fetch latest users from sheet
+  const entries=log.map(r=>{
+    const edit=isEdit(r.action);
+    const actionBadge=edit
+      ?`<span class="log-action-edit">✏️ ${t('editEntry')}</span>`
+      :`<span class="log-action-new">✅ ${t('newEntry')}</span>`;
+
+    const ts=r.timestamp?new Date(r.timestamp).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):r.dateKey||'';
+
+    // Build diff display for edits
+    let diffHtml='';
+    if(edit){
+      const fields=[
+        {lbl:'💵 Cash',  before:r.before_cash, after:r.after_cash},
+        {lbl:'📱 QR',    before:r.before_qr,   after:r.after_qr},
+        {lbl:'💳 Card',  before:r.before_card, after:r.after_card},
+        {lbl:'🏦 Bank',  before:r.before_bank, after:r.after_bank},
+        {lbl:'🧾 Total', before:r.before_total,after:r.after_total},
+      ];
+      const changed=fields.filter(f=>String(f.before)!==String(f.after)&&f.before!==''&&f.before!==undefined);
+      if(changed.length>0){
+        diffHtml=`<div class="log-diff">
+          ${changed.map(f=>`
+            <span style="color:var(--text2)">${f.lbl}:</span>
+            <span class="diff-changed">RM ${parseFloat(f.before||0).toFixed(2)}</span>
+            <span class="diff-arrow">→</span>
+            <span class="diff-new">RM ${parseFloat(f.after||0).toFixed(2)}</span>
+            &nbsp;&nbsp;
+          `).join('')}
+        </div>`;
+      }
+    } else {
+      // New submission — just show totals
+      diffHtml=`<div class="log-diff">
+        💵 RM${parseFloat(r.after_cash||0).toFixed(2)} &nbsp;
+        📱 RM${parseFloat(r.after_qr||0).toFixed(2)} &nbsp;
+        💳 RM${parseFloat(r.after_card||0).toFixed(2)} &nbsp;
+        🏦 RM${parseFloat(r.after_bank||0).toFixed(2)} &nbsp;
+        <strong style="color:var(--primary)">= RM${parseFloat(r.after_total||0).toFixed(2)}</strong>
+      </div>`;
+    }
+
+    return `
+      <div class="log-item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <span style="font-size:13px;font-weight:800">${r.store||''}</span>
+            &nbsp;${actionBadge}
+          </div>
+          <span style="font-size:11px;color:var(--text2);white-space:nowrap">${ts}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">
+          📅 ${r.dateKey||''} &nbsp;·&nbsp; 👤 ${r.submitter||''} <span class="role-tag ${r.role||'staff'}" style="margin-left:2px">${t(r.role||'staff')}</span>
+        </div>
+        ${diffHtml}
+        ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:3px">📝 ${r.remark}</div>`:''}
+      </div>`;
+  }).join('');
+
+  listEl.innerHTML=`<div class="card" style="padding:14px">${entries}</div>`;
+}
+
+// ============================================================
+// ADMIN TAB
+// ============================================================
+async function renderAdminTab() {
+  const isAdmin=['admin','boss'].includes(currentUser.role);
+  if(!isAdmin){
+    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
+    return;
+  }
+  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
   await fetchLiveUsers();
-
-  // Separate pending vs active
-  const allUsers  = cachedUsers; // object keyed by username
-  const pending   = [];
-  const active    = [];
-
-  Object.entries(allUsers).forEach(([uname, u]) => {
-    if(u.status === 'pending') pending.push({...u, username: uname});
-    else active.push({...u, username: uname});
+  const allUsers=cachedUsers;
+  const pending=[]; const active=[];
+  Object.entries(allUsers).forEach(([uname,u])=>{
+    if(u.status==='pending') pending.push({...u,username:uname});
+    else active.push({...u,username:uname});
   });
 
-  let pendingHtml = '';
-  if(pending.length > 0) {
-    pendingHtml = `
+  let pendingHtml='';
+  if(pending.length>0){
+    pendingHtml=`
       <div class="pending-card">
-        <div class="card-title" style="color:#92400e">
-          ⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span>
-        </div>
-        ${pending.map(u => `
+        <div class="card-title" style="color:#92400e">⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
+        ${pending.map(u=>`
           <div class="user-row">
             <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
             <div class="user-info">
@@ -1068,164 +1161,108 @@ async function renderAdminTab() {
           </div>`).join('')}
       </div>`;
   } else {
-    pendingHtml = `
+    pendingHtml=`
       <div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px">
-        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">
-          ✅ ${t('noRequests')}
-        </div>
+        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">✅ ${t('noRequests')}</div>
       </div>`;
   }
 
-  const activeHtml = active.map(u => `
+  const activeHtml=active.map(u=>`
     <div class="user-row">
       <div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div>
       <div class="user-info">
         <div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div>
-        <div class="user-meta">@${u.username} · ${u.store||''} · 📱 ${u.phone || 'N/A'}</div>
+        <div class="user-meta">@${u.username} · ${u.store||''} · 📱 ${u.phone||'N/A'}</div>
       </div>
       <div class="user-actions">
         <button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>
-        ${u.username !== 'admin' ? `<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>` : ''}
+        ${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}
       </div>
     </div>`).join('');
 
-  document.getElementById('tab-admin').innerHTML = `
+  document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px">
       <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
       <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
     </div>
-
     ${pendingHtml}
-
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
-      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">
-        ${t('addUser')}
-      </button>
+      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button>
     </div>
-    <div class="card">
-      ${activeHtml || `<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}
-    </div>
-  `;
+    <div class="card">${activeHtml||`<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}</div>`;
 }
 
-// ---- APPROVE / REJECT ----
 async function approveUser(username) {
-  showToast(lang==='zh'?'正在审批...':'Approving...', 'pending');
+  showToast(lang==='zh'?'正在审批...':'Approving...','pending');
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approveUser', username })
-    });
-    // Update local cache immediately
-    if(cachedUsers[username]) {
-      cachedUsers[username].status = 'active';
-      saveData('cached_users', cachedUsers);
-    }
-    showToast(t('approvedMsg'), 'success');
-    renderAdminTab();
-  } catch(e) { showToast('Error: '+e, 'error'); }
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approveUser',username})});
+    if(cachedUsers[username]){cachedUsers[username].status='active';saveData('cached_users',cachedUsers);}
+    showToast(t('approvedMsg'),'success'); renderAdminTab();
+  } catch(e){showToast('Error: '+e,'error');}
 }
-
 async function rejectUser(username) {
-  if(!confirm('Reject & delete this registration request?')) return;
-  showToast('Rejecting...', 'pending');
+  if(!confirm('Reject & delete this request?')) return;
+  showToast('Rejecting...','pending');
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'rejectUser', username })
-    });
-    delete cachedUsers[username];
-    saveData('cached_users', cachedUsers);
-    showToast(t('rejectedMsg'), 'success');
-    renderAdminTab();
-  } catch(e) { showToast('Error: '+e, 'error'); }
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rejectUser',username})});
+    delete cachedUsers[username]; saveData('cached_users',cachedUsers);
+    showToast(t('rejectedMsg'),'success'); renderAdminTab();
+  } catch(e){showToast('Error: '+e,'error');}
 }
-
-// ---- ADD / EDIT USER ----
 function openAddUser() {
-  document.getElementById('user-edit-title').textContent = '➕ ' + t('addUser');
-  document.getElementById('edit-user-key').value  = '';
-  document.getElementById('edit-username').value  = '';
-  document.getElementById('edit-username').disabled = false;
-  document.getElementById('edit-name').value      = '';
-  document.getElementById('edit-phone').value     = '';
-  document.getElementById('edit-pin').value       = '';
-  document.getElementById('edit-role').value      = 'staff';
-  document.getElementById('edit-store').value     = 'HQ';
+  document.getElementById('user-edit-title').textContent='➕ '+t('addUser');
+  document.getElementById('edit-user-key').value='';
+  document.getElementById('edit-username').value=''; document.getElementById('edit-username').disabled=false;
+  document.getElementById('edit-name').value=''; document.getElementById('edit-phone').value='';
+  document.getElementById('edit-pin').value=''; document.getElementById('edit-role').value='staff';
+  document.getElementById('edit-store').value='HQ';
   document.getElementById('user-edit-modal').classList.add('open');
 }
-
 function openEditUser(username) {
-  const u = cachedUsers[username];
-  if(!u) return;
-  document.getElementById('user-edit-title').textContent  = '✏️ ' + t('editUser');
-  document.getElementById('edit-user-key').value          = username;
-  document.getElementById('edit-username').value          = username;
-  document.getElementById('edit-username').disabled       = true; // can't change username
-  document.getElementById('edit-name').value              = u.name  || '';
-  document.getElementById('edit-phone').value             = u.phone || '';
-  document.getElementById('edit-pin').value               = u.pin   || '';
-  document.getElementById('edit-role').value              = u.role  || 'staff';
-  document.getElementById('edit-store').value             = u.store || 'HQ';
+  const u=cachedUsers[username]; if(!u) return;
+  document.getElementById('user-edit-title').textContent='✏️ '+t('editUser');
+  document.getElementById('edit-user-key').value=username;
+  document.getElementById('edit-username').value=username; document.getElementById('edit-username').disabled=true;
+  document.getElementById('edit-name').value=u.name||''; document.getElementById('edit-phone').value=u.phone||'';
+  document.getElementById('edit-pin').value=u.pin||''; document.getElementById('edit-role').value=u.role||'staff';
+  document.getElementById('edit-store').value=u.store||'HQ';
   document.getElementById('user-edit-modal').classList.add('open');
 }
-
-function closeUserEditModal() { document.getElementById('user-edit-modal').classList.remove('open'); }
-
+function closeUserEditModal(){document.getElementById('user-edit-modal').classList.remove('open');}
 async function saveUserEdit() {
-  const originalKey = document.getElementById('edit-user-key').value;
-  const username    = document.getElementById('edit-username').value.trim().toLowerCase();
-  const name        = document.getElementById('edit-name').value.trim();
-  const phone       = document.getElementById('edit-phone').value.trim();
-  const pin         = document.getElementById('edit-pin').value.trim();
-  const role        = document.getElementById('edit-role').value;
-  const store       = document.getElementById('edit-store').value;
-
-  if(!username || !name || !pin || pin.length !== 4 || !phone) {
-    showToast('Fill all fields. PIN must be 4 digits.', 'error'); return;
-  }
-
-  const userData = { action: 'saveUser', originalKey, username, name, phone, pin, role, store, status: 'active' };
-  showToast(lang==='zh'?'正在保存...':'Saving...', 'pending');
+  const originalKey=document.getElementById('edit-user-key').value;
+  const username=document.getElementById('edit-username').value.trim().toLowerCase();
+  const name=document.getElementById('edit-name').value.trim();
+  const phone=document.getElementById('edit-phone').value.trim();
+  const pin=document.getElementById('edit-pin').value.trim();
+  const role=document.getElementById('edit-role').value;
+  const store=document.getElementById('edit-store').value;
+  if(!username||!name||!pin||pin.length!==4||!phone){showToast('Fill all fields. PIN=4 digits.','error');return;}
+  const userData={action:'saveUser',originalKey,username,name,phone,pin,role,store,status:'active'};
+  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    });
-    // Update local cache
-    if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
-    cachedUsers[username] = { name, phone, pin, role, store, status: 'active' };
-    saveData('cached_users', cachedUsers);
-    showToast(t('userSaved'), 'success');
-    closeUserEditModal();
-    renderAdminTab();
-  } catch(e) { showToast('Error: '+e, 'error'); }
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)});
+    if(originalKey&&originalKey!==username) delete cachedUsers[originalKey];
+    cachedUsers[username]={name,phone,pin,role,store,status:'active'};
+    saveData('cached_users',cachedUsers);
+    showToast(t('userSaved'),'success'); closeUserEditModal(); renderAdminTab();
+  } catch(e){showToast('Error: '+e,'error');}
 }
-
 async function deleteUser(username) {
-  if(!confirm('Delete user @' + username + '?')) return;
+  if(!confirm('Delete user @'+username+'?')) return;
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'deleteUser', username })
-    });
-    delete cachedUsers[username];
-    saveData('cached_users', cachedUsers);
-    showToast(t('userDeleted'), 'success');
-    renderAdminTab();
-  } catch(e) { showToast('Error: '+e, 'error'); }
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteUser',username})});
+    delete cachedUsers[username]; saveData('cached_users',cachedUsers);
+    showToast(t('userDeleted'),'success'); renderAdminTab();
+  } catch(e){showToast('Error: '+e,'error');}
 }
 
 // ============================================================
 // PROFILE TAB
 // ============================================================
 function renderProfileTab() {
-  document.getElementById('tab-profile').innerHTML = `
+  document.getElementById('tab-profile').innerHTML=`
     <div class="card" style="text-align:center;padding:28px">
       <div style="font-size:54px;margin-bottom:10px">👤</div>
       <h2 style="font-size:22px;font-weight:900">${currentUser.name}</h2>
@@ -1233,8 +1270,6 @@ function renderProfileTab() {
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
     </div>
-    
-    <!-- CHANGE PIN FORM -->
     <div class="card">
       <div class="card-title">${t('changePinTitle')}</div>
       <div class="input-wrap" style="margin-top:12px;">
@@ -1251,7 +1286,6 @@ function renderProfileTab() {
       </div>
       <button class="btn success" onclick="changeCurrentUserPin()">${t('pinSubmitBtn')}</button>
     </div>
-
     <div class="card">
       <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
       <div class="stat-row">
@@ -1263,191 +1297,120 @@ function renderProfileTab() {
         <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
       </div>
     </div>
-    <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
-  `;
+    <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>`;
 }
 
-// ---- SECURE PIN MODIFICATION ----
 async function changeCurrentUserPin() {
-  const currentPin = document.getElementById('profile-curr-pin').value.trim();
-  const newPin     = document.getElementById('profile-new-pin').value.trim();
-  const confirmPin = document.getElementById('profile-conf-pin').value.trim();
-
-  if(!currentPin || !newPin || !confirmPin) {
-    showToast(lang==='zh'?'请填写完整信息！':'Please fill in all security fields!', 'error');
-    return;
-  }
-  if(String(currentPin) !== String(currentUser.pin)) {
-    showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!', 'error');
-    return;
-  }
-  if(newPin.length !== 4 || isNaN(newPin)) {
-    showToast(lang==='zh'?'新密码必须是4位数字！':'New PIN must be exactly 4 digits!', 'error');
-    return;
-  }
-  if(newPin !== confirmPin) {
-    showToast(lang==='zh'?'新密码输入不一致！':'New PINs do not match!', 'error');
-    return;
-  }
-
-  showToast(lang==='zh'?'正在保存新密码...':'Saving new PIN...', 'pending');
-  
-  // Submit the update pin payload to Apps Script (via saveUser edit endpoint)
-  const userPayload = {
-    action: 'saveUser',
-    originalKey: currentUser.username,
-    username: currentUser.username,
-    name: currentUser.name,
-    phone: currentUser.phone || '',
-    pin: newPin,
-    role: currentUser.role,
-    store: currentUser.store,
-    status: 'active'
-  };
-
+  const currentPin=document.getElementById('profile-curr-pin').value.trim();
+  const newPin=document.getElementById('profile-new-pin').value.trim();
+  const confirmPin=document.getElementById('profile-conf-pin').value.trim();
+  if(!currentPin||!newPin||!confirmPin){showToast(lang==='zh'?'请填写完整！':'Fill all fields!','error');return;}
+  if(String(currentPin)!==String(currentUser.pin)){showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!','error');return;}
+  if(newPin.length!==4||isNaN(newPin)){showToast(lang==='zh'?'新密码必须是4位数字！':'New PIN must be 4 digits!','error');return;}
+  if(newPin!==confirmPin){showToast(lang==='zh'?'新密码不一致！':'New PINs do not match!','error');return;}
+  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
+  const userPayload={action:'saveUser',originalKey:currentUser.username,username:currentUser.username,name:currentUser.name,phone:currentUser.phone||'',pin:newPin,role:currentUser.role,store:currentUser.store,status:'active'};
   try {
-    await fetch(WEB_APP_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userPayload)
-    });
-    
-    // Update local variables on successful transaction
-    currentUser.pin = newPin;
-    if(cachedUsers[currentUser.username]) {
-      cachedUsers[currentUser.username].pin = newPin;
-      saveData('cached_users', cachedUsers);
-    }
-    
-    showToast(lang==='zh'?'安全密码修改成功！':'Security PIN updated successfully!', 'success');
-    
-    // Reset inputs
-    document.getElementById('profile-curr-pin').value = '';
-    document.getElementById('profile-new-pin').value = '';
-    document.getElementById('profile-conf-pin').value = '';
-  } catch(e) {
-    showToast('Failed: ' + e, 'error');
-  }
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userPayload)});
+    currentUser.pin=newPin;
+    if(cachedUsers[currentUser.username]){cachedUsers[currentUser.username].pin=newPin;saveData('cached_users',cachedUsers);}
+    showToast(lang==='zh'?'密码修改成功！':'PIN updated!','success');
+    document.getElementById('profile-curr-pin').value='';
+    document.getElementById('profile-new-pin').value='';
+    document.getElementById('profile-conf-pin').value='';
+  } catch(e){showToast('Failed: '+e,'error');}
 }
 
 // ============================================================
-// LOGOUT
+// LOGOUT & HELPERS
 // ============================================================
 function doLogout() {
-  currentUser = null;
+  currentUser=null;
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
-  document.getElementById('login-pin').value  = '';
-  document.getElementById('login-name').value = '';
+  document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
 }
 
-// ============================================================
-// TOAST
-// ============================================================
-function showToast(msg, type='') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + (type ? type + '-toast' : '');
-  setTimeout(() => el.className = '', 3000);
+function showToast(msg,type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+(type?type+'-toast':'');
+  setTimeout(()=>el.className='',3000);
 }
 
+function updateRecordDateRange(val){selectedDateRange=val;renderRecordsTab();}
+function updateCustomDateValue(val){customDateValue=val;renderRecordsTab();}
+function updateCustomMonthValue(val){selectedMonthValue=val;renderRecordsTab();}
+function setRecordStoreFilter(val){activeRecordStoreFilter=val;renderRecordsTab();}
+
 // ============================================================
-// NOTIFICATIONS & REMINDERS
+// NOTIFICATIONS
 // ============================================================
 function checkAllStoresSubmitted() {
-  if(!currentUser || !['admin','boss','manager'].includes(currentUser.role)) return;
-  
-  const today = new Date().toISOString().slice(0,10);
-  const notifiedKey = 'notified_all_submitted_' + today;
+  if(!currentUser||!['admin','boss','manager'].includes(currentUser.role)) return;
+  const today=new Date().toISOString().slice(0,10);
+  const notifiedKey='notified_all_submitted_'+today;
   if(sessionStorage.getItem(notifiedKey)) return;
-
-  const todaySales = getSales().filter(s => s.dateKey === today);
-  const submittedStores = new Set(todaySales.map(s => s.store));
-  const branches = STORES.filter(s => s !== 'HQ');
-  const allSubmitted = branches.length > 0 && branches.every(b => submittedStores.has(b));
-
-  if(allSubmitted) {
-    document.getElementById('all-submitted-title').textContent = t('allSubmittedTitle');
-    document.getElementById('all-submitted-msg').textContent = t('allSubmittedMsg');
-    document.getElementById('awesome-btn').textContent = t('awesomeBtn');
+  const todaySales=getSales().filter(s=>s.dateKey===today);
+  const submittedStores=new Set(todaySales.map(s=>s.store));
+  const allSubmitted=BRANCHES.length>0&&BRANCHES.every(b=>submittedStores.has(b));
+  if(allSubmitted){
+    document.getElementById('all-submitted-title').textContent=t('allSubmittedTitle');
+    document.getElementById('all-submitted-msg').textContent=t('allSubmittedMsg');
+    document.getElementById('awesome-btn').textContent=t('awesomeBtn');
     document.getElementById('all-submitted-modal').classList.add('open');
-    sessionStorage.setItem(notifiedKey, 'true');
+    sessionStorage.setItem(notifiedKey,'true');
   }
 }
 
 function sendReminder() {
-  const today = new Date().toISOString().slice(0,10);
-  const todaySales = getSales().filter(s => s.dateKey === today);
-  const submittedStores = new Set(todaySales.map(s => s.store));
-  const branches = STORES.filter(s => s !== 'HQ');
-  const pending = branches.filter(b => !submittedStores.has(b));
-
-  if (pending.length === 0) {
-    showToast(lang==='zh'?'所有门店今日已提交！':'All branches have submitted today!', 'success');
-    return;
-  }
-
-  const msgEn = `🔔 *Sales Report Reminder*\nDate: ${today}\n\nThe following branches have not submitted their sales report today:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit via the app ASAP. Thank you!`;
-  const msgZh = `🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交今日的销售数据：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
-
-  // Look for users belonging to pending stores to offer direct WA contact links
-  let contactsHtml = '';
-  pending.forEach(storeName => {
-    const storeUsers = Object.entries(cachedUsers)
-      .filter(([uname, u]) => u.store === storeName && u.phone && u.status === 'active')
-      .map(([uname, u]) => ({ name: u.name, phone: u.phone }));
-    
-    if (storeUsers.length > 0) {
-      contactsHtml += `
-        <div style="margin-top: 8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border-radius:8px; border:1px solid var(--border)">
+  const today=new Date().toISOString().slice(0,10);
+  const todaySales=getSales().filter(s=>s.dateKey===today);
+  const submittedStores=new Set(todaySales.map(s=>s.store));
+  const pending=BRANCHES.filter(b=>!submittedStores.has(b));
+  if(pending.length===0){showToast(lang==='zh'?'所有门店今日已提交！':'All branches submitted today!','success');return;}
+  const msgEn=`🔔 *Sales Report Reminder*\nDate: ${today}\n\nPending branches:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit ASAP. Thank you!`;
+  const msgZh=`🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
+  let contactsHtml='';
+  pending.forEach(storeName=>{
+    const storeUsers=Object.entries(cachedUsers)
+      .filter(([,u])=>u.store===storeName&&u.phone&&u.status==='active')
+      .map(([,u])=>({name:u.name,phone:u.phone}));
+    if(storeUsers.length>0){
+      contactsHtml+=`
+        <div style="margin-top:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
           <span style="font-weight:700">${storeName}:</span>
-          <div style="display:flex; gap:6px;">
-            ${storeUsers.map(u => `
-              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent(lang==='zh'?'您好！请尽快提交您门店今天的日销数据，谢谢！':'Hi! Please submit today\'s sales figures for your branch ASAP, thank you!')}" target="_blank" class="badge" style="background:#d1fae5; color:#065f46; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:4px 8px;">
-                📱 Direct Chat (${u.name})
-              </a>
-            `).join('')}
+          <div style="display:flex;gap:6px;">
+            ${storeUsers.map(u=>`
+              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent(lang==='zh'?'您好！请尽快提交您门店今天的日销数据，谢谢！':'Hi! Please submit today\'s sales figures ASAP, thank you!')}" target="_blank" class="badge" style="background:#d1fae5;color:#065f46;text-decoration:none;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;">
+                📱 ${u.name}
+              </a>`).join('')}
           </div>
         </div>`;
     }
   });
-
-  if (contactsHtml) {
-    // Generate a beautiful, interactive popup modal
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay open';
-    overlay.id = 'reminder-modal';
-    overlay.innerHTML = `
+  if(contactsHtml){
+    const overlay=document.createElement('div');
+    overlay.className='modal-overlay open'; overlay.id='reminder-modal';
+    overlay.innerHTML=`
       <div class="modal-box">
-        <div class="modal-title">🔔 Send Reminders 提醒未交门店</div>
-        <div style="margin-bottom:14px; font-size:14px; color:var(--text2)">
-          ${lang==='zh'?'可直接一键发送群发模板至群聊，或者分别私聊对应负责人：':'Send a complete group chat summary, or message the person-in-charge directly:'}
-        </div>
-        
-        <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang === 'zh' ? msgZh : msgEn)}', '_blank'); document.getElementById('reminder-modal').remove();" style="margin-bottom:14px;">
-          📢 Send Group Reminder 发送群组提醒
+        <div class="modal-title">🔔 Send Reminders</div>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${lang==='zh'?'未提交门店：':'Pending stores:'} <strong>${pending.join(', ')}</strong></p>
+        <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang==='zh'?msgZh:msgEn)}','_blank');document.getElementById('reminder-modal').remove();" style="margin-bottom:14px">
+          📢 ${lang==='zh'?'发送群组提醒':'Send Group Reminder'}
         </button>
-        
-        <div style="font-weight:800; font-size:13px; margin-bottom:6px; color:var(--text); border-top:1px solid var(--border); padding-top:10px;">
-          Direct WhatsApp Chat with Staff:
+        <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--text);border-top:1px solid var(--border);padding-top:10px">
+          ${lang==='zh'?'直接联系负责人：':'Direct WhatsApp to staff:'}
         </div>
         ${contactsHtml}
-        
-        <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px;">Close 关闭</button>
-      </div>
-    `;
+        <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px">Close 关闭</button>
+      </div>`;
     document.body.appendChild(overlay);
   } else {
-    // General group link fallback
-    const text = encodeURIComponent(lang === 'zh' ? msgZh : msgEn);
-    window.open('https://wa.me/?text=' + text, '_blank');
+    window.open('https://wa.me/?text='+encodeURIComponent(lang==='zh'?msgZh:msgEn),'_blank');
   }
 }
 
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', fetchLiveUsers);
+window.addEventListener('DOMContentLoaded',fetchLiveUsers);
 </script>
 </body>
 </html>
