@@ -3,8 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1a1a2e">
-<title>Sales Reporter 日销报告</title>
+<meta name="theme-color" content="#1e3a8a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KI Sales">
+<title>KI Sales Report</title>
+<link id="apple-touch-icon-link" rel="apple-touch-icon" sizes="180x180" href="">
+<link rel="icon" type="image/svg+xml" href="">
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22KI%20Sales%20Report%22%2C%22short_name%22%3A%22KI%20Sales%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231e3a8a%22%2C%22theme_color%22%3A%22%231e3a8a%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2C%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
   :root {
@@ -1169,6 +1176,157 @@ function showToast(msg, type='') {
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', fetchLiveUsers);
+</script>
+
+<script>
+// ============================================================
+// PWA — Icon generator + Service Worker registration
+// ============================================================
+(function() {
+  // Draw professional icon on canvas and set as apple-touch-icon + favicon
+  function buildIcon(size) {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    const r = size * 0.18; // corner radius
+
+    // Rounded rect background
+    function roundRect(x, y, w, h, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    // Deep blue gradient background
+    const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+    bgGrad.addColorStop(0, '#0f2460');
+    bgGrad.addColorStop(0.5, '#1e3a8a');
+    bgGrad.addColorStop(1, '#2563eb');
+    roundRect(0, 0, size, size, r);
+    ctx.fillStyle = bgGrad;
+    ctx.fill();
+
+    // Subtle radial highlight top-left
+    const hl = ctx.createRadialGradient(size*0.25, size*0.22, 0, size*0.25, size*0.22, size*0.55);
+    hl.addColorStop(0, 'rgba(255,255,255,0.13)');
+    hl.addColorStop(1, 'rgba(255,255,255,0)');
+    roundRect(0, 0, size, size, r);
+    ctx.fillStyle = hl;
+    ctx.fill();
+
+    // Gold accent bar at bottom 
+    const goldH = size * 0.055;
+    const goldY = size - goldH - size * 0.0;
+    const goldGrad = ctx.createLinearGradient(size*0.1, 0, size*0.9, 0);
+    goldGrad.addColorStop(0, '#f59e0b');
+    goldGrad.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = goldGrad;
+    ctx.beginPath();
+    ctx.roundRect(size*0.1, goldY, size*0.8, goldH, goldH/2);
+    ctx.fill();
+
+    // "KI" text
+    const fontSize = size * 0.46;
+    ctx.font = `900 ${fontSize}px "Arial Black", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // White shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = size * 0.04;
+    ctx.shadowOffsetY = size * 0.025;
+
+    // White-to-light-blue gradient for text
+    const txtGrad = ctx.createLinearGradient(0, size*0.22, 0, size*0.7);
+    txtGrad.addColorStop(0, '#ffffff');
+    txtGrad.addColorStop(1, 'rgba(255,255,255,0.82)');
+    ctx.fillStyle = txtGrad;
+    ctx.fillText('KI', size * 0.5, size * 0.44);
+
+    ctx.shadowColor = 'transparent';
+
+    // Small "SALES" text below KI
+    const smallSize = size * 0.095;
+    ctx.font = `800 ${smallSize}px "Arial Black", Arial, sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('SALES', size * 0.5, size * 0.74);
+
+    return c.toDataURL('image/png');
+  }
+
+  // Set apple-touch-icon (180px)
+  const icon180 = buildIcon(180);
+  const appleLink = document.getElementById('apple-touch-icon-link');
+  if (appleLink) appleLink.href = icon180;
+
+  // Set favicon (64px)
+  const icon64 = buildIcon(64);
+  const faviconLink = document.querySelector('link[rel="icon"]');
+  if (faviconLink) faviconLink.href = icon64;
+
+  // Rebuild manifest with real icon embedded
+  const manifestData = {
+    name: 'KI Sales Report',
+    short_name: 'KI Sales',
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#1e3a8a',
+    theme_color: '#1e3a8a',
+    orientation: 'portrait',
+    icons: [
+      { src: icon180, sizes: '180x180', type: 'image/png', purpose: 'any maskable' },
+      { src: buildIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    ]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+  const manifestURL = URL.createObjectURL(manifestBlob);
+  const manifestLink = document.querySelector('link[rel="manifest"]');
+  if (manifestLink) manifestLink.href = manifestURL;
+
+  // Register minimal service worker (inline blob) for standalone mode
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE = 'ki-sales-v1';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll([location.pathname || '/']))
+  );
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  // Network first, fallback to cache for navigation requests
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+  }
+  // For everything else, try cache then network
+  else {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request))
+    );
+  }
+});
+`;
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL, { scope: '/' })
+      .then(() => console.log('KI Sales SW registered'))
+      .catch(e => console.log('SW reg failed (expected on file://):', e.message));
+  }
+})();
 </script>
 </body>
 </html>
