@@ -252,6 +252,10 @@
       <input type="text" id="reg-name" placeholder="e.g. Ali Ahmad">
     </div>
     <div class="input-wrap">
+      <label class="field-label">WhatsApp Phone Number 电话号码</label>
+      <input type="text" id="reg-phone" placeholder="e.g. 60123456789" inputmode="tel">
+    </div>
+    <div class="input-wrap">
       <label class="field-label">Target Store Location 门店</label>
       <select id="reg-store">
         <option value="">-- Select Store --</option>
@@ -310,6 +314,10 @@
     <div class="input-wrap">
       <label class="field-label">Display Name 姓名</label>
       <input type="text" id="edit-name">
+    </div>
+    <div class="input-wrap">
+      <label class="field-label">WhatsApp Phone Number 电话号码</label>
+      <input type="text" id="edit-phone" placeholder="e.g. 60123456789" inputmode="tel">
     </div>
     <div class="input-wrap">
       <label class="field-label">PIN (4 digits)</label>
@@ -419,7 +427,15 @@ const T = {
     allSubmittedTitle:'All Branches Submitted!',
     allSubmittedMsg:'Great news! All branches have successfully updated their sales figures for today.',
     remindBtn:'🔔 Remind Pending',
-    awesomeBtn:'Awesome!'
+    awesomeBtn:'Awesome!',
+    dailySalesLabel:'Daily Sales (First Submit)',
+    updateSalesLabel:'Updated Sales (Edit)',
+    changePinTitle:'🔐 Change Security PIN',
+    oldPinLabel:'Current Security PIN 现密码',
+    newPinLabel:'New 4-digit PIN 新密码 (4位)',
+    confirmNewPinLabel:'Confirm New PIN 确认新密码',
+    pinSubmitBtn:'Update Security PIN',
+    onlyTodayAllowed:'Staff/Supervisors can only submit today\'s sales.'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总', admin:'管理', me:'我的',
@@ -446,7 +462,15 @@ const T = {
     allSubmittedTitle:'所有门店已提交！',
     allSubmittedMsg:'好消息！所有门店均已完成今日的销售数据上报。',
     remindBtn:'🔔 提醒未交门店',
-    awesomeBtn:'太棒了！'
+    awesomeBtn:'太棒了！',
+    dailySalesLabel:'当日首报销售 (First Submit)',
+    updateSalesLabel:'修改更新数据 (Updated Sales)',
+    changePinTitle:'🔐 安全密码修改',
+    oldPinLabel:'当前 4 位安全密码',
+    newPinLabel:'新 4 位安全密码',
+    confirmNewPinLabel:'确认新密码',
+    pinSubmitBtn:'确认更新安全密码',
+    onlyTodayAllowed:'员工和主管仅可提报今日销售数据。'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -480,11 +504,12 @@ function closeRegisterModal() { document.getElementById('register-modal').classL
 async function submitRegisterRequest() {
   const username = document.getElementById('reg-username').value.trim().toLowerCase();
   const name     = document.getElementById('reg-name').value.trim();
+  const phone    = document.getElementById('reg-phone').value.trim();
   const store    = document.getElementById('reg-store').value;
   const role     = document.getElementById('reg-role').value;
   const pin      = document.getElementById('reg-pin').value.trim();
 
-  if(!username || !name || !store || !pin) { showToast('Please fill all fields', 'error'); return; }
+  if(!username || !name || !store || !pin || !phone) { showToast('Please fill all fields', 'error'); return; }
   if(pin.length !== 4) { showToast('PIN must be 4 digits', 'error'); return; }
 
   showToast('Sending request...', 'pending');
@@ -492,12 +517,12 @@ async function submitRegisterRequest() {
     await fetch(WEB_APP_URL, {
       method: 'POST', mode: 'no-cors', cache: 'no-cache',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'registerRequest', username, name, store, role, pin })
+      body: JSON.stringify({ action: 'registerRequest', username, name, phone, store, role, pin })
     });
     showToast('Registration sent! Waiting for Admin approval.', 'success');
     closeRegisterModal();
     // Clear fields
-    ['reg-username','reg-name','reg-pin'].forEach(id => document.getElementById(id).value = '');
+    ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('reg-store').value = '';
   } catch(e) {
     showToast('Error: ' + e, 'error');
@@ -611,6 +636,7 @@ function renderCurrentTab() {
 // ============================================================
 function renderSubmitTab() {
   const isManagerial = ['boss','admin','manager'].includes(currentUser.role);
+  const isStaffOrSupervisor = ['staff', 'supervisor'].includes(currentUser.role);
   const todayStr = new Date().toISOString().slice(0,10);
 
   let allowedStores = STORES;
@@ -623,6 +649,12 @@ function renderSubmitTab() {
          ${allowedStores.map(s => `<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
+  // Lock date for Staff and Supervisors to only allow Today's submissions
+  let dateInputHtml = `<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
+  if (isStaffOrSupervisor) {
+    dateInputHtml = `<input type="date" id="submit-date" value="${todayStr}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`;
+  }
+
   document.getElementById('tab-submit').innerHTML = `
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
@@ -632,7 +664,7 @@ function renderSubmitTab() {
       <div class="card-title">${t('submitCard')}</div>
       <div class="input-wrap">
         <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
-        <input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">
+        ${dateInputHtml}
       </div>
       <div class="input-wrap">
         <label class="field-label">🏪 ${t('store') || 'Store'}</label>
@@ -712,8 +744,15 @@ function updateLiveTotal() {
 function openConfirm() {
   const store      = document.getElementById('submit-store').value;
   const targetDate = document.getElementById('submit-date').value;
-  // FIX: allow 0 — only block if store or date missing
   if(!store || !targetDate) { showToast(lang==='zh'?'请选择门店和日期':'Select store and date', 'error'); return; }
+
+  // Restrict Staff/Supervisors from selecting anything other than Today's date
+  const isStaffOrSupervisor = ['staff', 'supervisor'].includes(currentUser.role);
+  const todayStr = new Date().toISOString().slice(0,10);
+  if (isStaffOrSupervisor && targetDate !== todayStr) {
+    showToast(t('onlyTodayAllowed'), 'error');
+    return;
+  }
 
   const cash  = parseFloat(document.getElementById('s-cash').value)  || 0;
   const qr    = parseFloat(document.getElementById('s-qr').value)    || 0;
@@ -742,11 +781,24 @@ function closeModal() { document.getElementById('confirm-modal').classList.remov
 function confirmSubmit() {
   const s   = window._pendingSubmit;
   const now = new Date();
+
+  // Differentiate Daily Sales vs Updated Sales
+  const existingRecord = getSales().find(item => item.dateKey === s.targetDate && item.store === s.store);
+  const submissionType = existingRecord ? 'update' : 'daily_sales';
+
+  // Construct Change Log Payload to send to Spreadsheet (Log tab backend)
+  const changeLog = {
+    before: existingRecord ? { cash: existingRecord.cash, qr: existingRecord.qr, card: existingRecord.card, bank: existingRecord.bank, total: existingRecord.total } : null,
+    after: { cash: s.cash, qr: s.qr, card: s.card, bank: s.bank, total: s.total }
+  };
+
   const record = {
     id: Date.now(), store: s.store, cash: s.cash, qr: s.qr, card: s.card, bank: s.bank,
     total: s.total, remark: s.remark, submitter: currentUser.name,
     role: currentUser.role, datetime: now.toISOString(),
     dateKey: s.targetDate, month: s.targetDate.slice(0,7),
+    submissionType: submissionType, // 'daily_sales' or 'update'
+    changeLog: JSON.stringify(changeLog)
   };
 
   showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...', 'pending');
@@ -826,22 +878,32 @@ function renderRecordsTab() {
 
   const listHtml = filtered.length === 0
     ? `<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
-    : filtered.map(r => `
-      <div class="record-item">
-        <div class="record-icon">🏪</div>
-        <div class="record-info">
-          <div class="record-store">${r.store} <span class="badge">${r.submitter||''}</span></div>
-          <div class="record-meta">
-            💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
-            💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
+    : filtered.map(r => {
+        const isUpdate = r.submissionType === 'update';
+        const badgeColor = isUpdate ? 'orange' : 'green';
+        const badgeLabel = isUpdate ? t('updateSalesLabel') : t('dailySalesLabel');
+
+        return `
+        <div class="record-item">
+          <div class="record-icon">🏪</div>
+          <div class="record-info">
+            <div class="record-store">
+              ${r.store} 
+              <span class="badge">${r.submitter||''}</span>
+              <span class="badge ${badgeColor}" style="font-size: 10px; background: ${isUpdate ? '#fff3cd':'#d1fae5'}; color: ${isUpdate ? '#856404':'#0f5132'}">${badgeLabel}</span>
+            </div>
+            <div class="record-meta">
+              💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
+              💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
+            </div>
+            ${r.remark ? `<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
           </div>
-          ${r.remark ? `<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
-          <div class="record-sub">${r.dateKey||''}</div>
-        </div>
-      </div>`).join('');
+          <div style="text-align:right;flex-shrink:0">
+            <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
+            <div class="record-sub">${r.dateKey||''}</div>
+          </div>
+        </div>`;
+      }).join('');
 
   document.getElementById('tab-records').innerHTML = `
     <div class="card-header-flex">
@@ -852,11 +914,6 @@ function renderRecordsTab() {
     <div class="card">${listHtml}</div>
   `;
 }
-
-function updateRecordDateRange(val) { selectedDateRange = val; renderRecordsTab(); }
-function updateCustomDateValue(val) { customDateValue   = val; renderRecordsTab(); }
-function updateCustomMonthValue(val){ selectedMonthValue = val; renderRecordsTab(); }
-function setRecordStoreFilter(store){ activeRecordStoreFilter = store; renderRecordsTab(); }
 
 // ============================================================
 // SUMMARY TAB
@@ -1002,7 +1059,7 @@ async function renderAdminTab() {
             <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
             <div class="user-info">
               <div class="user-name">@${u.username}</div>
-              <div class="user-meta">${u.name||''} · ${u.store||''} · ${u.role||'staff'}</div>
+              <div class="user-meta">${u.name||''} · ${u.store||''} · 📱 ${u.phone||'N/A'} · ${u.role||'staff'}</div>
             </div>
             <div class="user-actions">
               <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
@@ -1024,7 +1081,7 @@ async function renderAdminTab() {
       <div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div>
       <div class="user-info">
         <div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div>
-        <div class="user-meta">@${u.username} · ${u.store||''}</div>
+        <div class="user-meta">@${u.username} · ${u.store||''} · 📱 ${u.phone || 'N/A'}</div>
       </div>
       <div class="user-actions">
         <button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>
@@ -1094,6 +1151,7 @@ function openAddUser() {
   document.getElementById('edit-username').value  = '';
   document.getElementById('edit-username').disabled = false;
   document.getElementById('edit-name').value      = '';
+  document.getElementById('edit-phone').value     = '';
   document.getElementById('edit-pin').value       = '';
   document.getElementById('edit-role').value      = 'staff';
   document.getElementById('edit-store').value     = 'HQ';
@@ -1108,6 +1166,7 @@ function openEditUser(username) {
   document.getElementById('edit-username').value          = username;
   document.getElementById('edit-username').disabled       = true; // can't change username
   document.getElementById('edit-name').value              = u.name  || '';
+  document.getElementById('edit-phone').value             = u.phone || '';
   document.getElementById('edit-pin').value               = u.pin   || '';
   document.getElementById('edit-role').value              = u.role  || 'staff';
   document.getElementById('edit-store').value             = u.store || 'HQ';
@@ -1120,15 +1179,16 @@ async function saveUserEdit() {
   const originalKey = document.getElementById('edit-user-key').value;
   const username    = document.getElementById('edit-username').value.trim().toLowerCase();
   const name        = document.getElementById('edit-name').value.trim();
+  const phone       = document.getElementById('edit-phone').value.trim();
   const pin         = document.getElementById('edit-pin').value.trim();
   const role        = document.getElementById('edit-role').value;
   const store       = document.getElementById('edit-store').value;
 
-  if(!username || !name || !pin || pin.length !== 4) {
+  if(!username || !name || !pin || pin.length !== 4 || !phone) {
     showToast('Fill all fields. PIN must be 4 digits.', 'error'); return;
   }
 
-  const userData = { action: 'saveUser', originalKey, username, name, pin, role, store, status: 'active' };
+  const userData = { action: 'saveUser', originalKey, username, name, phone, pin, role, store, status: 'active' };
   showToast(lang==='zh'?'正在保存...':'Saving...', 'pending');
   try {
     await fetch(WEB_APP_URL, {
@@ -1138,7 +1198,7 @@ async function saveUserEdit() {
     });
     // Update local cache
     if(originalKey && originalKey !== username) delete cachedUsers[originalKey];
-    cachedUsers[username] = { name, pin, role, store, status: 'active' };
+    cachedUsers[username] = { name, phone, pin, role, store, status: 'active' };
     saveData('cached_users', cachedUsers);
     showToast(t('userSaved'), 'success');
     closeUserEditModal();
@@ -1173,6 +1233,25 @@ function renderProfileTab() {
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
     </div>
+    
+    <!-- CHANGE PIN FORM -->
+    <div class="card">
+      <div class="card-title">${t('changePinTitle')}</div>
+      <div class="input-wrap" style="margin-top:12px;">
+        <label class="field-label">${t('oldPinLabel')}</label>
+        <input type="password" id="profile-curr-pin" maxlength="4" placeholder="••••" inputmode="numeric">
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">${t('newPinLabel')}</label>
+        <input type="password" id="profile-new-pin" maxlength="4" placeholder="••••" inputmode="numeric">
+      </div>
+      <div class="input-wrap">
+        <label class="field-label">${t('confirmNewPinLabel')}</label>
+        <input type="password" id="profile-conf-pin" maxlength="4" placeholder="••••" inputmode="numeric">
+      </div>
+      <button class="btn success" onclick="changeCurrentUserPin()">${t('pinSubmitBtn')}</button>
+    </div>
+
     <div class="card">
       <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
       <div class="stat-row">
@@ -1186,6 +1265,69 @@ function renderProfileTab() {
     </div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>
   `;
+}
+
+// ---- SECURE PIN MODIFICATION ----
+async function changeCurrentUserPin() {
+  const currentPin = document.getElementById('profile-curr-pin').value.trim();
+  const newPin     = document.getElementById('profile-new-pin').value.trim();
+  const confirmPin = document.getElementById('profile-conf-pin').value.trim();
+
+  if(!currentPin || !newPin || !confirmPin) {
+    showToast(lang==='zh'?'请填写完整信息！':'Please fill in all security fields!', 'error');
+    return;
+  }
+  if(String(currentPin) !== String(currentUser.pin)) {
+    showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!', 'error');
+    return;
+  }
+  if(newPin.length !== 4 || isNaN(newPin)) {
+    showToast(lang==='zh'?'新密码必须是4位数字！':'New PIN must be exactly 4 digits!', 'error');
+    return;
+  }
+  if(newPin !== confirmPin) {
+    showToast(lang==='zh'?'新密码输入不一致！':'New PINs do not match!', 'error');
+    return;
+  }
+
+  showToast(lang==='zh'?'正在保存新密码...':'Saving new PIN...', 'pending');
+  
+  // Submit the update pin payload to Apps Script (via saveUser edit endpoint)
+  const userPayload = {
+    action: 'saveUser',
+    originalKey: currentUser.username,
+    username: currentUser.username,
+    name: currentUser.name,
+    phone: currentUser.phone || '',
+    pin: newPin,
+    role: currentUser.role,
+    store: currentUser.store,
+    status: 'active'
+  };
+
+  try {
+    await fetch(WEB_APP_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userPayload)
+    });
+    
+    // Update local variables on successful transaction
+    currentUser.pin = newPin;
+    if(cachedUsers[currentUser.username]) {
+      cachedUsers[currentUser.username].pin = newPin;
+      saveData('cached_users', cachedUsers);
+    }
+    
+    showToast(lang==='zh'?'安全密码修改成功！':'Security PIN updated successfully!', 'success');
+    
+    // Reset inputs
+    document.getElementById('profile-curr-pin').value = '';
+    document.getElementById('profile-new-pin').value = '';
+    document.getElementById('profile-conf-pin').value = '';
+  } catch(e) {
+    showToast('Failed: ' + e, 'error');
+  }
 }
 
 // ============================================================
@@ -1248,8 +1390,58 @@ function sendReminder() {
   const msgEn = `🔔 *Sales Report Reminder*\nDate: ${today}\n\nThe following branches have not submitted their sales report today:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit via the app ASAP. Thank you!`;
   const msgZh = `🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交今日的销售数据：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
 
-  const text = encodeURIComponent(lang === 'zh' ? msgZh : msgEn);
-  window.open('https://wa.me/?text=' + text, '_blank');
+  // Look for users belonging to pending stores to offer direct WA contact links
+  let contactsHtml = '';
+  pending.forEach(storeName => {
+    const storeUsers = Object.entries(cachedUsers)
+      .filter(([uname, u]) => u.store === storeName && u.phone && u.status === 'active')
+      .map(([uname, u]) => ({ name: u.name, phone: u.phone }));
+    
+    if (storeUsers.length > 0) {
+      contactsHtml += `
+        <div style="margin-top: 8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border-radius:8px; border:1px solid var(--border)">
+          <span style="font-weight:700">${storeName}:</span>
+          <div style="display:flex; gap:6px;">
+            ${storeUsers.map(u => `
+              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent(lang==='zh'?'您好！请尽快提交您门店今天的日销数据，谢谢！':'Hi! Please submit today\'s sales figures for your branch ASAP, thank you!')}" target="_blank" class="badge" style="background:#d1fae5; color:#065f46; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:4px 8px;">
+                📱 Direct Chat (${u.name})
+              </a>
+            `).join('')}
+          </div>
+        </div>`;
+    }
+  });
+
+  if (contactsHtml) {
+    // Generate a beautiful, interactive popup modal
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay open';
+    overlay.id = 'reminder-modal';
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-title">🔔 Send Reminders 提醒未交门店</div>
+        <div style="margin-bottom:14px; font-size:14px; color:var(--text2)">
+          ${lang==='zh'?'可直接一键发送群发模板至群聊，或者分别私聊对应负责人：':'Send a complete group chat summary, or message the person-in-charge directly:'}
+        </div>
+        
+        <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang === 'zh' ? msgZh : msgEn)}', '_blank'); document.getElementById('reminder-modal').remove();" style="margin-bottom:14px;">
+          📢 Send Group Reminder 发送群组提醒
+        </button>
+        
+        <div style="font-weight:800; font-size:13px; margin-bottom:6px; color:var(--text); border-top:1px solid var(--border); padding-top:10px;">
+          Direct WhatsApp Chat with Staff:
+        </div>
+        ${contactsHtml}
+        
+        <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px;">Close 关闭</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  } else {
+    // General group link fallback
+    const text = encodeURIComponent(lang === 'zh' ? msgZh : msgEn);
+    window.open('https://wa.me/?text=' + text, '_blank');
+  }
 }
 
 // ============================================================
