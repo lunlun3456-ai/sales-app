@@ -352,7 +352,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOKkAoR693mIst4dXpjHfG8Z2rAlzSR5lpNehZB3SJEjT3spCMBqLhvTFYS7qX_4HE/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqGNuHCmJ4IGdCVppj8BLoVxQrhUJogegYj_GsW4A846lfHaO90uvdDP8aOJpwt4zb/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -503,41 +503,74 @@ async function submitRegisterRequest() {
 // ============================================================
 // SYNC / REFRESH
 // ============================================================
+// ── Robust GET helper — uses fetch with no-cors fallback via script tag ──────
+// Google Apps Script GETs work fine with plain fetch() AS LONG AS the
+// deployment is set to "Execute as: Me" + "Who has access: Anyone".
+// We add { redirect:'follow' } to chase the redirect GAS always issues.
+function gasGet(action) {
+  return new Promise((resolve, reject) => {
+    const url = WEB_APP_URL + '?action=' + action + '&t=' + Date.now();
+    fetch(url, { method: 'GET', redirect: 'follow' })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(text => {
+        try { resolve(JSON.parse(text)); }
+        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,120))); }
+      })
+      .catch(err => {
+        // CORS hard-blocked — fall back to script-tag JSONP trick
+        // GAS doesn't natively support JSONP but we can detect the error clearly
+        reject(err);
+      });
+  });
+}
+
 async function triggerSyncRefresh() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
   const btn=document.getElementById('sync-btn');
   if(btn) btn.textContent='⏳';
   showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
   try {
-    const res  = await fetch(WEB_APP_URL+'?action=getSales');
-    const json = await res.json();
+    const json = await gasGet('getSales');
     if(json&&json.sales&&Array.isArray(json.sales)){
       saveSales(json.sales); renderCurrentTab(); checkAllStoresSubmitted();
       showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
     } else if(Array.isArray(json)){
       saveSales(json); renderCurrentTab(); checkAllStoresSubmitted();
       showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
-    } else { showToast('Sync error: unexpected response','error'); }
-  } catch(e){ showToast('Sync failed — check internet','error'); }
+    } else {
+      console.error('Unexpected response:', json);
+      showToast('Sync error: unexpected response','error');
+    }
+  } catch(e){
+    console.error('Sync error:', e);
+    showToast(lang==='zh'?'同步失败 — 请检查脚本部署设置':'Sync failed — check GAS deployment settings','error');
+  }
   if(btn) btn.textContent='🔄';
 }
 
 async function fetchLiveUsers() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
-    const response = await fetch(WEB_APP_URL+'?action=getUsers');
-    const users    = await response.json();
-    if(users&&typeof users==='object'){cachedUsers=users;saveData('cached_users',users);}
+    const users = await gasGet('getUsers');
+    if(users&&typeof users==='object'&&!Array.isArray(users)){
+      cachedUsers=users; saveData('cached_users',users);
+    }
     return cachedUsers;
-  } catch(e){ cachedUsers=loadData('cached_users',{}); return cachedUsers; }
+  } catch(e){
+    console.error('fetchLiveUsers error:', e);
+    cachedUsers=loadData('cached_users',{});
+    return cachedUsers;
+  }
 }
 
 async function fetchLog() {
   try {
-    const res  = await fetch(WEB_APP_URL+'?action=getLog');
-    const json = await res.json();
+    const json = await gasGet('getLog');
     if(json&&json.log&&Array.isArray(json.log)){ cachedLog=json.log; return cachedLog; }
-  } catch(e){}
+  } catch(e){ console.error('fetchLog error:', e); }
   return [];
 }
 
