@@ -156,7 +156,7 @@
         <text x="180" y="84" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="20" fill="#1e3a8a" text-anchor="middle" letter-spacing="6">SALES REPORT</text>
         <rect x="70" y="98" width="220" height="4" rx="2" fill="url(#gAccent)"/>
         <text x="260" y="118" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="14" fill="#f59e0b" font-style="italic">by ki</text>
-        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 4.0</text>
+        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 5.0</text>
         <text x="20" y="25" font-size="18" fill="#f59e0b" opacity="0.8">✦</text>
         <text x="335" y="65" font-size="14" fill="#60a5fa" opacity="0.9">✦</text>
         <text x="100" y="125" font-size="10" fill="#93c5fd" opacity="0.7">✦</text>
@@ -170,7 +170,7 @@
       <label class="field-label">PIN (4 digits 4位密码)</label>
       <input type="password" id="login-pin" maxlength="4" placeholder="••••" inputmode="numeric">
     </div>
-    <button class="btn" onclick="doLogin()">Login 登录</button>
+    <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
     <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
   </div>
 </div>
@@ -192,7 +192,7 @@
         <text x="0" y="31" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="10" fill="url(#tgWhite)" opacity="0.9" letter-spacing="2">SALES REPORT</text>
         <rect x="0" y="35" width="105" height="2.5" rx="1.25" fill="url(#tgGold)"/>
         <text x="112" y="32" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="11" fill="url(#tgGold)" font-style="italic">by ki</text>
-        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v4.0</text>
+        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v5.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -517,20 +517,20 @@ async function submitRegisterRequest() {
 function gasGet(action) {
   return new Promise((resolve, reject) => {
     const url = WEB_APP_URL + '?action=' + action + '&t=' + Date.now();
-    fetch(url, { method: 'GET', redirect: 'follow' })
+    fetch(url, { method:'GET', redirect:'follow', credentials:'omit', cache:'no-cache' })
       .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        if(!r.ok) throw new Error('HTTP ' + r.status);
         return r.text();
       })
       .then(text => {
+        if(text.trim().startsWith('<')) {
+          reject(new Error('GAS returned HTML — check: Deploy > Who has access = Anyone'));
+          return;
+        }
         try { resolve(JSON.parse(text)); }
-        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,120))); }
+        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,200))); }
       })
-      .catch(err => {
-        // CORS hard-blocked — fall back to script-tag JSONP trick
-        // GAS doesn't natively support JSONP but we can detect the error clearly
-        reject(err);
-      });
+      .catch(err => { reject(err); });
   });
 }
 
@@ -564,13 +564,14 @@ async function fetchLiveUsers() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
     const users = await gasGet('getUsers');
-    if(users&&typeof users==='object'&&!Array.isArray(users)){
+    if(users&&typeof users==='object'&&!Array.isArray(users)&&Object.keys(users).length>0){
       cachedUsers=users; saveData('cached_users',users);
     }
     return cachedUsers;
   } catch(e){
-    console.error('fetchLiveUsers error:', e);
-    cachedUsers=loadData('cached_users',{});
+    console.warn('fetchLiveUsers:', e.message);
+    const cached = loadData('cached_users',{});
+    if(Object.keys(cached).length>0) cachedUsers=cached;
     return cachedUsers;
   }
 }
@@ -584,26 +585,71 @@ async function fetchLog() {
 }
 
 // ============================================================
-// LOGIN
+// LOGIN — robust: tries live fetch, falls back to cache, shows clear errors
 // ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username||!pin){showToast('Enter username and PIN','error');return;}
-  showToast(lang==='zh'?'正在验证...':'Verifying...','pending');
-  await fetchLiveUsers();
+  if(!username) { showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
+  if(!pin)      { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
+  if(pin.length!==4) { showToast(lang==='zh'?'密码必须是4位数字':'PIN must be 4 digits','error'); return; }
+
+  const loginBtn = document.getElementById('login-btn');
+  if(loginBtn) { loginBtn.disabled=true; loginBtn.textContent = lang==='zh'?'验证中...':'Verifying...'; }
+  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
+
+  // ── Step 1: Try fetching live users ─────────────────────────
+  let fetchedFresh = false;
+  try {
+    const liveUsers = await gasGet('getUsers');
+    if(liveUsers && typeof liveUsers==='object' && !Array.isArray(liveUsers) && Object.keys(liveUsers).length>0) {
+      cachedUsers = liveUsers;
+      saveData('cached_users', liveUsers);
+      fetchedFresh = true;
+    }
+  } catch(e) {
+    console.warn('Live user fetch failed, trying cache:', e.message);
+  }
+
+  // ── Step 2: Fall back to localStorage cache ──────────────────
+  if(!fetchedFresh || Object.keys(cachedUsers).length===0) {
+    const cached = loadData('cached_users', {});
+    if(Object.keys(cached).length > 0) {
+      cachedUsers = cached;
+      if(!fetchedFresh) showToast(lang==='zh'?'服务器连接失败，使用本地缓存登录':'Server offline, using cached data','pending');
+    } else {
+      // Absolutely no data anywhere
+      if(loginBtn) { loginBtn.disabled=false; loginBtn.textContent=lang==='zh'?'登录':'Login 登录'; }
+      showToast(lang==='zh'?'无法连接服务器且无本地缓存，请检查网络或Apps Script部署':'Cannot reach server & no cached data. Check internet & GAS deployment.','error');
+      return;
+    }
+  }
+
+  // ── Step 3: Validate credentials ────────────────────────────
   const userMatch = cachedUsers[username];
-  if(!userMatch||String(userMatch.pin)!==String(pin)){showToast('Wrong username or PIN','error');return;}
-  if(userMatch.status&&userMatch.status!=='active'){showToast('Account pending approval. Contact Admin.','error');return;}
-  currentUser={...userMatch,username};
+  if(loginBtn) { loginBtn.disabled=false; loginBtn.textContent='Login 登录'; }
+
+  if(!userMatch) {
+    showToast(lang==='zh'?'用户名不存在':'Username not found','error'); return;
+  }
+  if(String(userMatch.pin).trim() !== String(pin).trim()) {
+    showToast(lang==='zh'?'密码错误':'Wrong PIN','error'); return;
+  }
+  if(userMatch.status && userMatch.status!=='active') {
+    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending approval. Contact Admin.','error'); return;
+  }
+
+  // ── Step 4: Login success ────────────────────────────────────
+  currentUser = { ...userMatch, username };
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  const isAdmin=['admin','boss'].includes(currentUser.role);
-  const isExec=['admin','boss','manager'].includes(currentUser.role);
-  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
-  document.getElementById('nav-log').style.display=isExec?'flex':'none';
+  const isAdmin = ['admin','boss'].includes(currentUser.role);
+  const isExec  = ['admin','boss','manager'].includes(currentUser.role);
+  document.getElementById('nav-admin').style.display = isAdmin?'flex':'none';
+  document.getElementById('nav-log').style.display   = isExec?'flex':'none';
   updateTopBar(); updateNavLabels();
-  switchTab('submit',document.getElementById('nav-submit'));
+  switchTab('submit', document.getElementById('nav-submit'));
+  // Sync in background — don't block login
   triggerSyncRefresh();
 }
 
