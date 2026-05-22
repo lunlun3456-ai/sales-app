@@ -27,7 +27,7 @@
   .login-logo { text-align: center; margin-bottom: 18px; }
   .field-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: block; }
   .input-wrap { margin-bottom: 16px; }
-  select, input[type=text], input[type=password], input[type=number], input[type=date], input[type=month] { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: var(--font); color: var(--text); background: var(--bg); outline: none; transition: border .2s; }
+  select, input[type=text], input[type=password], input[type=number], input[type=date], input[type=month], input[type=file] { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: var(--font); color: var(--text); background: var(--bg); outline: none; transition: border .2s; }
   select:focus, input:focus { border-color: var(--primary); }
   .btn { display: block; width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; cursor: pointer; text-align: center; margin-top: 6px; font-family: var(--font); }
   .btn:active { background: var(--primary-dark); transform: scale(.98); }
@@ -125,17 +125,12 @@
   .diff-changed { color:var(--danger); font-weight:800; }
   .diff-new { color:var(--success); font-weight:800; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
-  /* EOD / SETTLEMENT */
-  .eod-badge { display:inline-block;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800; }
-  .update-badge { display:inline-block;background:#fff3cd;color:#856404;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800; }
-  .new-badge { display:inline-block;background:#eff6ff;color:#1d4ed8;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800; }
 </style>
 </head>
 <body>
 
 <div id="toast"></div>
 
-<!-- ===================== LOGIN ===================== -->
 <div id="login-screen" class="screen active">
   <div class="login-box">
     <div class="login-logo">
@@ -156,7 +151,7 @@
         <text x="180" y="84" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="20" fill="#1e3a8a" text-anchor="middle" letter-spacing="6">SALES REPORT</text>
         <rect x="70" y="98" width="220" height="4" rx="2" fill="url(#gAccent)"/>
         <text x="260" y="118" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="14" fill="#f59e0b" font-style="italic">by ki</text>
-        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 5.0</text>
+        <text x="350" y="132" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="11" fill="#94a3b8" text-anchor="end">version 3.1</text>
         <text x="20" y="25" font-size="18" fill="#f59e0b" opacity="0.8">✦</text>
         <text x="335" y="65" font-size="14" fill="#60a5fa" opacity="0.9">✦</text>
         <text x="100" y="125" font-size="10" fill="#93c5fd" opacity="0.7">✦</text>
@@ -170,12 +165,11 @@
       <label class="field-label">PIN (4 digits 4位密码)</label>
       <input type="password" id="login-pin" maxlength="4" placeholder="••••" inputmode="numeric">
     </div>
-    <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
+    <button class="btn" onclick="doLogin()">Login 登录</button>
     <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
   </div>
 </div>
 
-<!-- ===================== MAIN APP ===================== -->
 <div id="app-screen" class="screen">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:10px">
@@ -192,7 +186,7 @@
         <text x="0" y="31" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="10" fill="url(#tgWhite)" opacity="0.9" letter-spacing="2">SALES REPORT</text>
         <rect x="0" y="35" width="105" height="2.5" rx="1.25" fill="url(#tgGold)"/>
         <text x="112" y="32" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="11" fill="url(#tgGold)" font-style="italic">by ki</text>
-        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v5.0</text>
+        <text x="188" y="38" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="8" fill="rgba(255,255,255,0.6)" text-anchor="end">v3.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -231,7 +225,6 @@
   </nav>
 </div>
 
-<!-- ===================== REGISTER MODAL ===================== -->
 <div class="modal-overlay" id="register-modal">
   <div class="modal-box">
     <div class="modal-title">📝 Account Registration Request</div>
@@ -282,7 +275,6 @@
   </div>
 </div>
 
-<!-- ===================== CONFIRM SUBMIT MODAL ===================== -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
@@ -294,7 +286,6 @@
   </div>
 </div>
 
-<!-- ===================== USER EDIT MODAL ===================== -->
 <div class="modal-overlay" id="user-edit-modal">
   <div class="modal-box">
     <div class="modal-title" id="user-edit-title">Edit User</div>
@@ -345,7 +336,6 @@
   </div>
 </div>
 
-<!-- ===================== ALL SUBMITTED MODAL ===================== -->
 <div class="modal-overlay" id="all-submitted-modal">
   <div class="modal-box" style="text-align:center">
     <div style="font-size:50px;margin-bottom:10px;">🎉</div>
@@ -356,7 +346,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzYjCUb5GOAczM8XtPlpuAN9zYyjvXy8p0YmQDrZ6h675LhUTkkP7BZgysB9Qk85AMb/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby1Jj4bFmNcYmqbKH4rcl8vpixPGqp5QhSekahfCf7xI28frCHWpgwYV22y_bpc7Y48/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -369,9 +359,6 @@ let selectedMonthValue = new Date().toISOString().slice(0,7);
 let activeRecordStoreFilter = 'all';
 let logStoreFilter = 'all';
 let logActionFilter = 'all';
-let summaryStoreFilter = 'all';
-let summaryViewMode = 'month'; // 'today','yesterday','custom_date','month'
-let summaryCustDate = new Date().toISOString().slice(0,10);
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
@@ -510,27 +497,21 @@ async function submitRegisterRequest() {
 // ============================================================
 // SYNC / REFRESH
 // ============================================================
-// ── Robust GET helper — uses fetch with no-cors fallback via script tag ──────
-// Google Apps Script GETs work fine with plain fetch() AS LONG AS the
-// deployment is set to "Execute as: Me" + "Who has access: Anyone".
-// We add { redirect:'follow' } to chase the redirect GAS always issues.
 function gasGet(action) {
   return new Promise((resolve, reject) => {
     const url = WEB_APP_URL + '?action=' + action + '&t=' + Date.now();
-    fetch(url, { method:'GET', redirect:'follow', credentials:'omit', cache:'no-cache' })
+    fetch(url, { method: 'GET', redirect: 'follow' })
       .then(r => {
-        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.text();
       })
       .then(text => {
-        if(text.trim().startsWith('<')) {
-          reject(new Error('GAS returned HTML — check: Deploy > Who has access = Anyone'));
-          return;
-        }
         try { resolve(JSON.parse(text)); }
-        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,200))); }
+        catch(e) { reject(new Error('Bad JSON: ' + text.slice(0,120))); }
       })
-      .catch(err => { reject(err); });
+      .catch(err => {
+        reject(err);
+      });
   });
 }
 
@@ -543,8 +524,6 @@ async function triggerSyncRefresh() {
     const json = await gasGet('getSales');
     if(json&&json.sales&&Array.isArray(json.sales)){
       saveSales(json.sales); renderCurrentTab(); checkAllStoresSubmitted();
-      // force re-render of records and summary so they reflect latest data
-      if(currentTab!=='records') { const tmp=currentTab; currentTab='records'; currentTab=tmp; }
       showToast(lang==='zh'?'数据已从云端更新 ✓':'Synced from Cloud ✓','success');
     } else if(Array.isArray(json)){
       saveSales(json); renderCurrentTab(); checkAllStoresSubmitted();
@@ -564,14 +543,13 @@ async function fetchLiveUsers() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return null;
   try {
     const users = await gasGet('getUsers');
-    if(users&&typeof users==='object'&&!Array.isArray(users)&&Object.keys(users).length>0){
+    if(users&&typeof users==='object'&&!Array.isArray(users)){
       cachedUsers=users; saveData('cached_users',users);
     }
     return cachedUsers;
   } catch(e){
-    console.warn('fetchLiveUsers:', e.message);
-    const cached = loadData('cached_users',{});
-    if(Object.keys(cached).length>0) cachedUsers=cached;
+    console.error('fetchLiveUsers error:', e);
+    cachedUsers=loadData('cached_users',{});
     return cachedUsers;
   }
 }
@@ -585,71 +563,26 @@ async function fetchLog() {
 }
 
 // ============================================================
-// LOGIN — robust: tries live fetch, falls back to cache, shows clear errors
+// LOGIN
 // ============================================================
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username) { showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
-  if(!pin)      { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
-  if(pin.length!==4) { showToast(lang==='zh'?'密码必须是4位数字':'PIN must be 4 digits','error'); return; }
-
-  const loginBtn = document.getElementById('login-btn');
-  if(loginBtn) { loginBtn.disabled=true; loginBtn.textContent = lang==='zh'?'验证中...':'Verifying...'; }
-  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
-
-  // ── Step 1: Try fetching live users ─────────────────────────
-  let fetchedFresh = false;
-  try {
-    const liveUsers = await gasGet('getUsers');
-    if(liveUsers && typeof liveUsers==='object' && !Array.isArray(liveUsers) && Object.keys(liveUsers).length>0) {
-      cachedUsers = liveUsers;
-      saveData('cached_users', liveUsers);
-      fetchedFresh = true;
-    }
-  } catch(e) {
-    console.warn('Live user fetch failed, trying cache:', e.message);
-  }
-
-  // ── Step 2: Fall back to localStorage cache ──────────────────
-  if(!fetchedFresh || Object.keys(cachedUsers).length===0) {
-    const cached = loadData('cached_users', {});
-    if(Object.keys(cached).length > 0) {
-      cachedUsers = cached;
-      if(!fetchedFresh) showToast(lang==='zh'?'服务器连接失败，使用本地缓存登录':'Server offline, using cached data','pending');
-    } else {
-      // Absolutely no data anywhere
-      if(loginBtn) { loginBtn.disabled=false; loginBtn.textContent=lang==='zh'?'登录':'Login 登录'; }
-      showToast(lang==='zh'?'无法连接服务器且无本地缓存，请检查网络或Apps Script部署':'Cannot reach server & no cached data. Check internet & GAS deployment.','error');
-      return;
-    }
-  }
-
-  // ── Step 3: Validate credentials ────────────────────────────
+  if(!username||!pin){showToast('Enter username and PIN','error');return;}
+  showToast(lang==='zh'?'正在验证...':'Verifying...','pending');
+  await fetchLiveUsers();
   const userMatch = cachedUsers[username];
-  if(loginBtn) { loginBtn.disabled=false; loginBtn.textContent='Login 登录'; }
-
-  if(!userMatch) {
-    showToast(lang==='zh'?'用户名不存在':'Username not found','error'); return;
-  }
-  if(String(userMatch.pin).trim() !== String(pin).trim()) {
-    showToast(lang==='zh'?'密码错误':'Wrong PIN','error'); return;
-  }
-  if(userMatch.status && userMatch.status!=='active') {
-    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending approval. Contact Admin.','error'); return;
-  }
-
-  // ── Step 4: Login success ────────────────────────────────────
-  currentUser = { ...userMatch, username };
+  if(!userMatch||String(userMatch.pin)!==String(pin)){showToast('Wrong username or PIN','error');return;}
+  if(userMatch.status&&userMatch.status!=='active'){showToast('Account pending approval. Contact Admin.','error');return;}
+  currentUser={...userMatch,username};
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  const isAdmin = ['admin','boss'].includes(currentUser.role);
-  const isExec  = ['admin','boss','manager'].includes(currentUser.role);
-  document.getElementById('nav-admin').style.display = isAdmin?'flex':'none';
-  document.getElementById('nav-log').style.display   = isExec?'flex':'none';
+  const isAdmin=['admin','boss'].includes(currentUser.role);
+  const isExec=['admin','boss','manager'].includes(currentUser.role);
+  document.getElementById('nav-admin').style.display=isAdmin?'flex':'none';
+  document.getElementById('nav-log').style.display=isExec?'flex':'none';
   updateTopBar(); updateNavLabels();
-  switchTab('submit', document.getElementById('nav-submit'));
-  // Sync in background — don't block login
+  switchTab('submit',document.getElementById('nav-submit'));
   triggerSyncRefresh();
 }
 
@@ -691,7 +624,6 @@ function renderSubmitTab() {
          ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
-  // ── Date input: Staff/Supervisor locked to TODAY only ────
   let dateInputHtml;
   if(isRestricted){
     dateInputHtml=`
@@ -748,29 +680,26 @@ function renderSubmitTab() {
         <span class="stat-label">🧾 ${t('totalSales')}</span>
         <span class="stat-value big" id="live-total">RM 0.00</span>
       </div>
+      
       <div class="input-wrap" style="margin-top:12px">
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
-        <button class="btn success" onclick="openEODConfirm()" style="font-size:14px;padding:14px 8px;">
-          ✅ ${lang==='zh'?'确认日终销售':'Confirm EOD Sales'}
-        </button>
-        <button class="btn" onclick="openConfirm()" style="font-size:14px;padding:14px 8px;">
-          📤 ${lang==='zh'?'更新提交':'Update & Sync'}
-        </button>
+      
+      <div class="divider"></div>
+      <div class="input-wrap">
+        <label class="field-label">📸 Daily Settlement Upload (Photo/Image)</label>
+        <input type="file" id="s-receipt" accept="image/png, image/jpeg" style="width:100%; padding:10px; border:2px dashed var(--border); border-radius:12px; background:#f8fafc; font-family:var(--font);">
       </div>
-      <button class="btn secondary" onclick="openSettlementUpload()" style="margin-top:8px;font-size:14px;">
-        📎 ${lang==='zh'?'上传日结单 Settlement':'Upload Daily Settlement'}
-      </button>
+      <div class="input-wrap" style="display:flex; align-items:center; gap:10px; margin-top:8px; background:#fff3cd; padding:12px; border-radius:10px; border:1px solid #f59e0b;">
+        <input type="checkbox" id="s-confirm" style="width:20px; height:20px; flex-shrink:0;">
+        <label for="s-confirm" style="font-weight:800; color:#92400e; font-size:14px; cursor:pointer;">Confirm Daily Sales (Finalize End-of-Day)</label>
+      </div>
+
+      <button class="btn" onclick="openConfirm()" style="margin-top:14px;font-size:18px;">${t('submitBtn')}</button>
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
       💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
-    </div>
-    <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:12px 16px;font-size:12px;color:#1d4ed8;font-weight:600;margin-top:0;">
-      <b>${lang==='zh'?'按钮说明：':'Button guide:'}</b><br>
-      📤 <b>${lang==='zh'?'更新提交':'Update & Sync'}</b> — ${lang==='zh'?'实时更新数据（可多次修改）':'Live update, can edit multiple times'}<br>
-      ✅ <b>${lang==='zh'?'确认日终销售':'Confirm EOD Sales'}</b> — ${lang==='zh'?'提交最终日销额，替换所有之前数据':'Submit final EOD total, replaces all previous entries'}
     </div>
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{
@@ -790,9 +719,11 @@ function checkAndLoadExistingSales() {
     document.getElementById('s-card').value   = existing.card  !==undefined?existing.card:'';
     document.getElementById('s-bank').value   = existing.bank  !==undefined?existing.bank:'';
     document.getElementById('s-remark').value = existing.remark||'';
+    if(document.getElementById('s-confirm')) document.getElementById('s-confirm').checked = (existing.isConfirmed === 'YES');
   } else {
     ['s-cash','s-qr','s-card','s-bank'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('s-remark').value='';
+    if(document.getElementById('s-confirm')) document.getElementById('s-confirm').checked = false;
   }
   updateLiveTotal();
 }
@@ -805,26 +736,39 @@ function updateLiveTotal() {
   document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
 }
 
-function openConfirm() {
-  const store     =document.getElementById('submit-store').value;
-  const targetDate=document.getElementById('submit-date').value;
+async function openConfirm() {
+  const store     = document.getElementById('submit-store').value;
+  const targetDate= document.getElementById('submit-date').value;
   if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
 
-  // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
   const todayStr=new Date().toISOString().slice(0,10);
-  if(isRestricted&&targetDate!==todayStr){
-    showToast(t('onlyTodayAllowed'),'error'); return;
+  if(isRestricted&&targetDate!==todayStr){ showToast(t('onlyTodayAllowed'),'error'); return; }
+
+  const cash  = parseFloat(document.getElementById('s-cash').value)||0;
+  const qr    = parseFloat(document.getElementById('s-qr').value)||0;
+  const card  = parseFloat(document.getElementById('s-card').value)||0;
+  const bank  = parseFloat(document.getElementById('s-bank').value)||0;
+  const total = cash+qr+card+bank;
+  const remark= document.getElementById('s-remark').value;
+  const isConfirmed = document.getElementById('s-confirm').checked;
+
+  const fileInput = document.getElementById('s-receipt');
+  let fileBase64 = null; let mimeType = null; let fileName = null;
+  if (fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    mimeType = file.type;
+    fileName = `${store.replace(/\s+/g, '_')}_${targetDate}_${file.name}`;
+    try {
+      fileBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    } catch(e) { showToast("File read error","error"); return; }
   }
 
-  const cash  =parseFloat(document.getElementById('s-cash').value)||0;
-  const qr    =parseFloat(document.getElementById('s-qr').value)||0;
-  const card  =parseFloat(document.getElementById('s-card').value)||0;
-  const bank  =parseFloat(document.getElementById('s-bank').value)||0;
-  const total =cash+qr+card+bank;
-  const remark=document.getElementById('s-remark').value;
-
-  // Check if this is a new submission or an edit
   const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
   const isEdit=!!existingRecord;
 
@@ -832,10 +776,15 @@ function openConfirm() {
     (isEdit?` <span class="log-action-edit">${t('editEntry')}</span>`:`<span class="log-action-new" style="margin-left:8px;">${t('newEntry')}</span>`);
 
   let editWarning='';
-  if(isEdit){
+  if(isEdit && existingRecord.isConfirmed === 'YES') {
+     editWarning=`
+      <div style="background:#fee2e2;border:1.5px solid var(--danger);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#991b1b;font-weight:800;">
+        ⚠️ This date was previously finalized! Proceed with caution.
+      </div>`;
+  } else if(isEdit){
     editWarning=`
       <div style="background:#fff3cd;border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#78350f;font-weight:600;">
-        ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
+        ✏️ You are editing an existing submission.
       </div>`;
   }
 
@@ -843,52 +792,55 @@ function openConfirm() {
     ${editWarning}
     <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
     <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
-    <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-    ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
+    ${isConfirmed ? `<div class="stat-row"><span class="stat-label">🔒 Status</span><span class="stat-value" style="color:var(--danger)">FINALIZED</span></div>` : ''}
+    ${fileName ? `<div class="stat-row"><span class="stat-label">📸 File Attached</span><span class="stat-value" style="font-size:12px">Yes</span></div>` : ''}
   `;
-  window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
+  
+  window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark,isConfirmed,fileBase64,mimeType,fileName};
   document.getElementById('confirm-modal').classList.add('open');
 }
 
 function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
 function confirmSubmit() {
-  const s=window._pendingSubmit;
-  const now=new Date();
+  const s = window._pendingSubmit;
+  const now = new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
   const submissionType=existingRecord?'update':'daily_sales';
+  
   const changeLog={
     before:existingRecord?{cash:existingRecord.cash,qr:existingRecord.qr,card:existingRecord.card,bank:existingRecord.bank,total:existingRecord.total}:null,
     after:{cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total}
   };
+  
   const record={
-    id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
-    total:s.total,remark:s.remark,submitter:currentUser.name,
-    role:currentUser.role,datetime:now.toISOString(),
-    dateKey:s.targetDate,month:s.targetDate.slice(0,7),
-    submissionType,changeLog:JSON.stringify(changeLog)
+    id:Date.now(), store:s.store, cash:s.cash, qr:s.qr, card:s.card, bank:s.bank,
+    total:s.total, remark:s.remark, submitter:currentUser.name,
+    role:currentUser.role, datetime:now.toISOString(),
+    dateKey:s.targetDate, month:s.targetDate.slice(0,7),
+    submissionType, changeLog:JSON.stringify(changeLog), 
+    isConfirmed: s.isConfirmed, fileBase64: s.fileBase64, mimeType: s.mimeType, fileName: s.fileName
   };
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...','pending');
+  
+  showToast(s.fileBase64 ? 'Uploading Image & Data to Cloud...' : 'Uploading to Cloud...', 'pending');
+  document.querySelector('#confirm-modal .btn.success').disabled = true;
+  
   fetch(WEB_APP_URL,{
     method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action:'submitSales',...record})
   }).then(()=>{
-    let sales=getSales().filter(item=>!(item.dateKey===s.targetDate&&item.store===s.store));
-    sales.push(record);
-    saveSales(sales);
     closeModal();
+    document.querySelector('#confirm-modal .btn.success').disabled = false;
     showToast(t('submitted'),'success');
-    renderSubmitTab();
-    checkAllStoresSubmitted();
-    // Also refresh records/summary if currently viewing them
-    if(currentTab==='records') renderRecordsTab();
-    if(currentTab==='summary') renderSummaryTab();
-  }).catch(err=>{showToast('Error: '+err,'error');});
+    if(document.getElementById('s-receipt')) document.getElementById('s-receipt').value = '';
+    if(document.getElementById('s-confirm')) document.getElementById('s-confirm').checked = false;
+    triggerSyncRefresh(); 
+  }).catch(err=>{
+    document.querySelector('#confirm-modal .btn.success').disabled = false;
+    showToast('Error: '+err,'error');
+  });
 }
 
 // ============================================================
@@ -943,6 +895,7 @@ function renderRecordsTab() {
     ?`<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
     :filtered.map(r=>{
       const isUpdate=r.submissionType==='update';
+      const isConfirmed = r.isConfirmed === 'YES';
       return `
         <div class="record-item">
           <div class="record-icon">🏪</div>
@@ -950,15 +903,14 @@ function renderRecordsTab() {
             <div class="record-store">
               ${r.store}
               <span class="badge">${r.submitter||''}</span>
-              <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:${isUpdate?'#fff3cd':'#d1fae5'};color:${isUpdate?'#856404':'#0f5132'};margin-left:4px">
-                ${isUpdate?t('updateSalesLabel'):t('dailySalesLabel')}
-              </span>
+              ${isConfirmed ? `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:#fee2e2;color:#991b1b;margin-left:4px">🔒 Finalized</span>` : ''}
             </div>
             <div class="record-meta">
               💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
               💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
             </div>
             ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
+            ${r.receiptUrl ? `<div style="margin-top:6px;"><a href="${r.receiptUrl}" target="_blank" style="font-size:11px; font-weight:700; color:var(--primary); background:#e0e7ff; padding:4px 8px; border-radius:8px; text-decoration:none;">📸 View Receipt</a></div>` : ''}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
@@ -977,7 +929,7 @@ function renderRecordsTab() {
 }
 
 // ============================================================
-// SUMMARY TAB — with By-Day / By-Month / By-Date store filter
+// SUMMARY TAB
 // ============================================================
 function renderSummaryTab() {
   const isExec=['boss','admin','manager'].includes(currentUser.role);
@@ -989,157 +941,91 @@ function renderSummaryTab() {
         <p style="color:var(--text2)">${t('accessMsg')}</p>
       </div>`; return;
   }
-  const sales = getSales();
-  const todayKey = new Date().toISOString().slice(0,10);
+  const sales=getSales();
+  const todayKey=new Date().toISOString().slice(0,10);
   let yest=new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey = yest.toISOString().slice(0,10);
-  let allowedStores = STORES.filter(s=>s!=='HQ');
-  if(currentUser.role==='admin') allowedStores = STORES;
-
-  // ── Determine which sales to show in the store ranking ──────
-  let rankingSales;
-  const vm = summaryViewMode;
-  if(vm==='month')        rankingSales = sales.filter(s=>s.month===selectedMonthValue);
-  else if(vm==='today')   rankingSales = sales.filter(s=>s.dateKey===todayKey);
-  else if(vm==='yesterday') rankingSales = sales.filter(s=>s.dateKey===yestKey);
-  else if(vm==='custom_date') rankingSales = sales.filter(s=>s.dateKey===summaryCustDate);
-  else rankingSales = sales.filter(s=>s.month===selectedMonthValue);
-
-  // Apply store filter
-  let filteredForTotal = summaryStoreFilter==='all'
-    ? rankingSales
-    : rankingSales.filter(s=>s.store===summaryStoreFilter);
-
-  const rangeTotal = filteredForTotal.reduce((a,s)=>a+parseFloat(s.total||0),0);
-  const monthTotal = sales.filter(s=>s.month===selectedMonthValue)
-                         .reduce((a,s)=>a+parseFloat(s.total||0),0);
-
-  // ── Build store map for ranking bars ────────────────────────
-  const storeMap={};
-  allowedStores.forEach(s=>storeMap[s]=0);
-  rankingSales.forEach(s=>{if(storeMap[s.store]!==undefined) storeMap[s.store]+= parseFloat(s.total||0);});
+  const yestKey=yest.toISOString().slice(0,10);
+  let targetRangeDay=todayKey;
+  if(selectedDateRange==='yesterday')   targetRangeDay=yestKey;
+  if(selectedDateRange==='custom_date') targetRangeDay=customDateValue;
+  const rangeSales=selectedDateRange==='month'?sales.filter(s=>s.month===selectedMonthValue):sales.filter(s=>s.dateKey===targetRangeDay);
+  const monthSales=sales.filter(s=>s.month===selectedMonthValue);
+  const rangeTotal=rangeSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
+  const monthTotal=monthSales.reduce((a,s)=>a+parseFloat(s.total||0),0);
+  
+  let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
+  const storeMap={}; allowedStores.forEach(s=>storeMap[s]=0);
+  
+  rangeSales.forEach(s=>{if(storeMap[s.store]!==undefined) storeMap[s.store]=(storeMap[s.store]||0)+parseFloat(s.total||0);});
   const maxStore=Math.max(...Object.values(storeMap),1);
-
-  // ── 7-day trend ─────────────────────────────────────────────
+  
   const days=[];
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
     const dk=d.toISOString().slice(0,10);
     const label=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
-    const daySales = summaryStoreFilter==='all'
-      ? sales.filter(s=>s.dateKey===dk)
-      : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
-    const val=daySales.reduce((a,s)=>a+parseFloat(s.total||0),0);
-    days.push({label,val,dk});
+    const val=sales.filter(s=>s.dateKey===dk).reduce((a,s)=>a+parseFloat(s.total||0),0);
+    days.push({label,val});
   }
   const maxDay=Math.max(...days.map(d=>d.val),1);
 
-  // ── View mode label ─────────────────────────────────────────
-  const vmLabel = vm==='month' ? selectedMonthValue
-    : vm==='today' ? todayKey
-    : vm==='yesterday' ? yestKey
-    : summaryCustDate;
-
-  // ── Today submission status for each branch ─────────────────
-  const todaySubmitted = new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
-  const confirmedStores = new Set(sales.filter(s=>s.dateKey===todayKey&&s.submissionType==='confirmed_eod').map(s=>s.store));
+  const dynamicStoreLabel = selectedDateRange === 'today' ? t('todayOpt') : (selectedDateRange === 'yesterday' ? t('yestOpt') : (selectedDateRange === 'custom_date' ? customDateValue : selectedMonthValue));
 
   document.getElementById('tab-summary').innerHTML=`
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('summaryTab')}</h2>
       <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
     </div>
-
-    <!-- FILTER CARD -->
-    <div class="card" style="padding:14px;background:#eff6ff;margin-bottom:12px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="card" style="padding:14px;background:#eff6ff;">
+      <div class="control-grid" style="margin-bottom:0">
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">📅 ${lang==='zh'?'门店排行视图':'Store Ranking View'}</label>
-          <select onchange="summaryViewMode=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
-            <option value="today"       ${vm==='today'?'selected':''}>${t('todayOpt')}</option>
-            <option value="yesterday"   ${vm==='yesterday'?'selected':''}>${t('yestOpt')}</option>
-            <option value="custom_date" ${vm==='custom_date'?'selected':''}>${t('customOpt')}</option>
-            <option value="month"       ${vm==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
+          <label class="field-label" style="font-size:12px;margin-bottom:4px">📅 ${t('filterRange')}</label>
+          <select onchange="updateSummaryDateRange(this.value)" style="padding:8px 10px;font-size:14px">
+            <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
+            <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
+            <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
+            <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
           </select>
-          ${vm==='custom_date'?`<input type="date" value="${summaryCustDate}" onchange="summaryCustDate=this.value;renderSummaryTab()" style="padding:6px;font-size:12px;margin-top:6px">`:''}
-          ${vm==='month'?`<input type="month" value="${selectedMonthValue}" onchange="selectedMonthValue=this.value;renderSummaryTab()" style="padding:6px;font-size:12px;margin-top:6px">`:''}
+          ${selectedDateRange==='custom_date'?`<input type="date" value="${customDateValue}" onchange="updateSummaryCustomDate(this.value)" style="padding:6px;font-size:12px;margin-top:6px">`:''}
         </div>
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">🏪 ${lang==='zh'?'门店筛选':'Filter Store'}</label>
-          <select onchange="summaryStoreFilter=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
-            <option value="all" ${summaryStoreFilter==='all'?'selected':''}>${t('allStores')}</option>
-            ${allowedStores.map(s=>`<option value="${s}" ${summaryStoreFilter===s?'selected':''}>${s}</option>`).join('')}
-          </select>
+          <label class="field-label" style="font-size:12px;margin-bottom:4px">🗓️ ${t('selectMonthLabel')}</label>
+          <input type="month" value="${selectedMonthValue}" onchange="updateSummaryMonth(this.value)" style="padding:8px 10px;font-size:14px">
         </div>
       </div>
     </div>
-
-    <!-- TOTAL CARDS -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-      <div class="card" style="margin:0;text-align:center;padding:14px">
-        <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px">📊 ${vmLabel}</div>
-        <div style="font-size:18px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
-        <div style="font-size:10px;color:var(--text2);margin-top:2px">${summaryStoreFilter==='all'?t('allStores'):summaryStoreFilter}</div>
+      <div class="card" style="margin:0;text-align:center">
+        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">📊 ${t('todayTotal')}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
       </div>
-      <div class="card" style="margin:0;text-align:center;padding:14px">
-        <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px">🗓️ ${selectedMonthValue} ${lang==='zh'?'月度':'Month'}</div>
-        <div style="font-size:18px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(2)}</div>
-        <div style="font-size:10px;color:var(--text2);margin-top:2px">${t('allStores')}</div>
+      <div class="card" style="margin:0;text-align:center">
+        <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">🗓️ ${selectedMonthValue}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthTotal.toFixed(2)}</div>
       </div>
     </div>
-
-    <!-- TODAY SUBMISSION STATUS -->
-    <div class="card" style="padding:14px;margin-bottom:14px">
-      <div class="card-title" style="margin-bottom:10px">📋 ${lang==='zh'?'今日提交状态':'Today's Submission Status'} (${todayKey})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${BRANCHES.map(b=>{
-          const submitted = todaySubmitted.has(b);
-          const confirmed = confirmedStores.has(b);
-          const bg = confirmed?'#d1fae5':submitted?'#eff6ff':'#fee2e2';
-          const color = confirmed?'#065f46':submitted?'#1d4ed8':'#b91c1c';
-          const icon = confirmed?'✅':submitted?'🔄':'⏳';
-          return `<div style="background:${bg};color:${color};border-radius:10px;padding:5px 10px;font-size:11px;font-weight:800">${icon} ${b.replace(' Sabindo','').replace(' Eastern','')}</div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    <!-- 7-DAY TREND -->
     <div class="card">
-      <div class="card-title">📈 ${t('daily')}${summaryStoreFilter!=='all'?' — '+summaryStoreFilter:''}</div>
+      <div class="card-title">📈 ${t('daily')}</div>
       <div class="bar-chart">
-        ${days.map(d=>`<div class="bar-col">
-          <div style="font-size:9px;color:var(--primary);font-weight:800;margin-bottom:2px">${d.val>0?'RM'+(d.val>=1000?(d.val/1000).toFixed(1)+'k':d.val.toFixed(0)):''}</div>
-          <div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*70)}px;background:${d.dk===todayKey?'linear-gradient(180deg,#10b981,#059669)':'linear-gradient(180deg,#3b82f6,#1d4ed8)'}"></div>
-          <div class="bar-label">${d.label}</div>
-        </div>`).join('')}
+        ${days.map(d=>`<div class="bar-col"><div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*80)}px"></div><div class="bar-label">${d.label}</div></div>`).join('')}
       </div>
     </div>
-
-    <!-- STORE RANKING -->
     <div class="card">
       <div class="card-header-flex" style="margin-bottom:10px">
-        <div>
-          <div class="card-title" style="margin:0">🏪 ${t('byStore')}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">${vmLabel}</div>
-        </div>
+        <div class="card-title" style="margin:0">🏪 ${t('byStore')} (${dynamicStoreLabel})</div>
         <button class="btn warn" onclick="sendReminder()" style="width:auto;padding:6px 12px;font-size:12px;margin:0;border-radius:10px">${t('remindBtn')}</button>
       </div>
-      ${allowedStores.filter(s=>s!=='HQ').sort((a,b)=>(storeMap[b]||0)-(storeMap[a]||0)).map((s,i)=>`
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:4px">
-            <span style="display:flex;align-items:center;gap:6px">
-              <span style="background:${i===0?'#fef3c7':i===1?'#f1f5f9':i===2?'#fde8e8':'#f8fafc'};color:${i===0?'#92400e':i===1?'#475569':i===2?'#991b1b':'#64748b'};border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900">${i+1}</span>
-              ${s}
-              ${confirmedStores.has(s)?'<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:10px;padding:1px 6px">✅ EOD</span>':''}
-            </span>
-            <span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
+      ${allowedStores.filter(s=>s!=='HQ').map(s=>`
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">
+            <span>${s}</span><span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
           </div>
           <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${((storeMap[s]||0)/maxStore*100).toFixed(1)}%"></div></div>
         </div>`).join('')}
     </div>`;
 }
-function updateSummaryDateRange(val){summaryViewMode=val;renderSummaryTab();}
-function updateSummaryCustomDate(val){summaryCustDate=val;renderSummaryTab();}
+function updateSummaryDateRange(val){selectedDateRange=val;renderSummaryTab();}
+function updateSummaryCustomDate(val){customDateValue=val;renderSummaryTab();}
 function updateSummaryMonth(val){selectedMonthValue=val;renderSummaryTab();}
 
 // ============================================================
@@ -1182,7 +1068,6 @@ async function refreshLog() {
 
   let allowedStores=STORES; if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
 
-  // Filter
   let filtered=cachedLog.filter(r=>r.store&&r.store!=='Testing');
   if(logStoreFilter!=='all') filtered=filtered.filter(r=>r.store===logStoreFilter);
   if(logActionFilter!=='all') filtered=filtered.filter(r=>{
@@ -1191,7 +1076,6 @@ async function refreshLog() {
     if(logActionFilter==='edit') return a.includes('EDIT');
     return true;
   });
-  // Sort newest first
   filtered=filtered.slice().sort((a,b)=>String(b.timestamp).localeCompare(String(a.timestamp)));
 
   const filterHtml=`
@@ -1213,9 +1097,7 @@ async function refreshLog() {
       </div>
     </div>`;
 
-  // Save filtered for renderLogEntries
   window._logFiltered=filtered;
-
   contentEl.innerHTML=filterHtml+`<div id="log-list"></div>`;
   renderLogEntries();
 }
@@ -1249,7 +1131,6 @@ function renderLogEntries() {
 
     const ts=r.timestamp?new Date(r.timestamp).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):r.dateKey||'';
 
-    // Build diff display for edits
     let diffHtml='';
     if(edit){
       const fields=[
@@ -1272,7 +1153,6 @@ function renderLogEntries() {
         </div>`;
       }
     } else {
-      // New submission — just show totals
       diffHtml=`<div class="log-diff">
         💵 RM${parseFloat(r.after_cash||0).toFixed(2)} &nbsp;
         📱 RM${parseFloat(r.after_qr||0).toFixed(2)} &nbsp;
@@ -1585,197 +1465,6 @@ function sendReminder() {
     document.body.appendChild(overlay);
   } else {
     window.open('https://wa.me/?text='+encodeURIComponent(lang==='zh'?msgZh:msgEn),'_blank');
-  }
-}
-
-// ============================================================
-// EOD CONFIRM — final end-of-day total, submissionType='confirmed_eod'
-// ============================================================
-function openEODConfirm() {
-  const store     = document.getElementById('submit-store').value;
-  const targetDate= document.getElementById('submit-date').value;
-  if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
-  const isRestricted=['staff','supervisor'].includes(currentUser.role);
-  const todayStr=new Date().toISOString().slice(0,10);
-  if(isRestricted&&targetDate!==todayStr){showToast(t('onlyTodayAllowed'),'error');return;}
-  const cash =parseFloat(document.getElementById('s-cash').value)||0;
-  const qr   =parseFloat(document.getElementById('s-qr').value)||0;
-  const card =parseFloat(document.getElementById('s-card').value)||0;
-  const bank =parseFloat(document.getElementById('s-bank').value)||0;
-  const total=cash+qr+card+bank;
-  const remark=document.getElementById('s-remark').value;
-  const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open'; overlay.id='eod-modal';
-  overlay.innerHTML=`
-    <div class="modal-box">
-      <div class="modal-title">✅ ${lang==='zh'?'确认日终销售':'Confirm EOD Sales'}</div>
-      <div style="background:#d1fae5;border:1.5px solid #6ee7b7;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#064e3b;font-weight:600;">
-        ⚠️ ${lang==='zh'?'此操作将提交本日最终销售额，作为当天正式数据，并替换之前所有更新记录。':'This will submit the FINAL end-of-day figures as the official daily record, replacing all previous updates.'}
-      </div>
-      <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
-      <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
-      <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
-      <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
-      <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
-      <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
-      <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
-      ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
-      <div style="display:flex;gap:10px;margin-top:20px;">
-        <button class="btn secondary" style="flex:1" onclick="document.getElementById('eod-modal').remove()">Cancel 取消</button>
-        <button class="btn success"   style="flex:1" onclick="confirmEOD('${store}','${targetDate}',${cash},${qr},${card},${bank},${total},'${remark.replace(/'/g,"\\'")}')">✅ ${lang==='zh'?'确认提交':'Confirm EOD'}</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-}
-
-function confirmEOD(store,targetDate,cash,qr,card,bank,total,remark) {
-  document.getElementById('eod-modal')?.remove();
-  const now=new Date();
-  const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
-  const changeLog={
-    before:existingRecord?{cash:existingRecord.cash,qr:existingRecord.qr,card:existingRecord.card,bank:existingRecord.bank,total:existingRecord.total}:null,
-    after:{cash,qr,card,bank,total}
-  };
-  const record={
-    id:Date.now(),store,cash,qr,card,bank,total,remark,
-    submitter:currentUser.name,role:currentUser.role,
-    datetime:now.toISOString(),dateKey:targetDate,
-    month:targetDate.slice(0,7),
-    submissionType:'confirmed_eod',
-    changeLog:JSON.stringify(changeLog)
-  };
-  showToast(lang==='zh'?'正在提交日终数据...':'Submitting EOD data...','pending');
-  fetch(WEB_APP_URL,{
-    method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'submitSales',...record})
-  }).then(()=>{
-    let sales=getSales().filter(item=>!(item.dateKey===targetDate&&item.store===store));
-    sales.push(record);
-    saveSales(sales);
-    showToast(lang==='zh'?'日终销售已确认 ✅':'EOD Sales Confirmed ✅','success');
-    renderSubmitTab();
-    checkAllStoresSubmitted();
-  }).catch(err=>{showToast('Error: '+err,'error');});
-}
-
-// ============================================================
-// SETTLEMENT UPLOAD — photo to Google Drive via Apps Script
-// ============================================================
-function openSettlementUpload() {
-  const store     = document.getElementById('submit-store')?.value;
-  const targetDate= document.getElementById('submit-date')?.value;
-  if(!store||!store.trim()){showToast(lang==='zh'?'请先选择门店':'Select a store first','error');return;}
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open'; overlay.id='settlement-modal';
-  overlay.innerHTML=`
-    <div class="modal-box">
-      <div class="modal-title">📎 ${lang==='zh'?'上传日结单':'Upload Daily Settlement'}</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
-        🏪 <b>${store}</b> &nbsp;·&nbsp; 📅 ${targetDate}<br>
-        ${lang==='zh'?'请拍摄或选择日结凭证图片（JPG/PNG）':'Take or select a settlement photo (JPG/PNG)'}
-      </div>
-      <div id="upload-preview" style="display:none;margin-bottom:14px;text-align:center">
-        <img id="preview-img" style="max-width:100%;max-height:200px;border-radius:10px;border:2px solid var(--border)">
-        <div id="preview-name" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
-      </div>
-      <label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px">
-        <input type="file" id="settlement-file" accept="image/*" capture="environment" style="display:none" onchange="previewSettlement(this)">
-        <div style="font-size:36px;margin-bottom:8px">📷</div>
-        <div style="font-weight:800;color:var(--primary)">${lang==='zh'?'点击拍摄 / 选择图片':'Tap to take photo or choose image'}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px">JPG, PNG</div>
-      </label>
-      <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'备注（选填）':'Note (optional)'}</label>
-        <input type="text" id="settlement-note" placeholder="${lang==='zh'?'如：收银机小票、银行对账单...':'e.g. POS receipt, bank slip...'}">
-      </div>
-      <div id="upload-progress" style="display:none;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px" id="upload-progress-label">${lang==='zh'?'正在上传...':'Uploading...'}</div>
-        <div style="background:var(--border);border-radius:8px;height:8px;overflow:hidden">
-          <div id="upload-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--primary),#60a5fa);border-radius:8px;width:0%;transition:width 0.3s"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn secondary" style="flex:1" onclick="document.getElementById('settlement-modal').remove()">Cancel 取消</button>
-        <button class="btn success" style="flex:1" id="upload-btn" onclick="uploadSettlement('${store}','${targetDate}')">
-          📤 ${lang==='zh'?'上传':'Upload'}
-        </button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-}
-
-function previewSettlement(input) {
-  const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    document.getElementById('preview-img').src=e.target.result;
-    document.getElementById('preview-name').textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
-    document.getElementById('upload-preview').style.display='block';
-  };
-  reader.readAsDataURL(file);
-}
-
-async function uploadSettlement(store, dateKey) {
-  const fileInput=document.getElementById('settlement-file');
-  const note=document.getElementById('settlement-note')?.value||'';
-  if(!fileInput||!fileInput.files||!fileInput.files[0]){
-    showToast(lang==='zh'?'请先选择图片':'Please select an image first','error'); return;
-  }
-  const file=fileInput.files[0];
-  const btn=document.getElementById('upload-btn');
-  const progressWrap=document.getElementById('upload-progress');
-  const progressBar=document.getElementById('upload-progress-bar');
-  const progressLabel=document.getElementById('upload-progress-label');
-  if(btn) btn.disabled=true;
-  if(progressWrap) progressWrap.style.display='block';
-
-  // Animate progress
-  let pct=0;
-  const ticker=setInterval(()=>{
-    pct=Math.min(pct+8,85);
-    if(progressBar) progressBar.style.width=pct+'%';
-  },200);
-
-  try {
-    // Convert to base64
-    const b64=await new Promise((res,rej)=>{
-      const reader=new FileReader();
-      reader.onload=e=>res(e.target.result.split(',')[1]);
-      reader.onerror=rej;
-      reader.readAsDataURL(file);
-    });
-
-    const payload={
-      action:'uploadSettlement',
-      store, dateKey,
-      submitter:currentUser.name,
-      role:currentUser.role,
-      note,
-      fileName:file.name,
-      mimeType:file.type,
-      fileData:b64
-    };
-
-    await fetch(WEB_APP_URL,{
-      method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-
-    clearInterval(ticker);
-    if(progressBar) progressBar.style.width='100%';
-    if(progressLabel) progressLabel.textContent=lang==='zh'?'上传成功！':'Upload successful!';
-    setTimeout(()=>{
-      document.getElementById('settlement-modal')?.remove();
-      showToast(lang==='zh'?'日结单已上传至Google Drive ✅':'Settlement uploaded to Google Drive ✅','success');
-    },800);
-  } catch(e) {
-    clearInterval(ticker);
-    if(btn) btn.disabled=false;
-    if(progressWrap) progressWrap.style.display='none';
-    showToast('Upload failed: '+e,'error');
   }
 }
 
