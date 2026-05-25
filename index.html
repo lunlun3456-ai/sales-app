@@ -260,8 +260,8 @@
       <input type="password" id="reg-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
     </div>
     <div style="background:#fff8e1;border:1.5px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#78350f;font-weight:600;">
-      ⚠️ Your request will be sent to Admin for approval. You can login only after Admin approves it.<br>
-      <span style="font-size:12px;opacity:.8">管理员审批后方可登录。</span>
+      ⚠️ Registration is for <strong>Staff</strong> only. Your request will be sent to Admin for approval. You can login only after approval.<br>
+      <span style="font-size:12px;opacity:.8">注册仅限员工申请，管理员审批后方可登录。</span>
     </div>
     <div style="display:flex;gap:10px;">
       <button class="btn secondary" style="flex:1" onclick="closeRegisterModal()">Cancel 取消</button>
@@ -514,14 +514,14 @@ async function submitRegisterRequest() {
   const name     = document.getElementById('reg-name').value.trim();
   const phone    = document.getElementById('reg-phone').value.trim();
   const store    = document.getElementById('reg-store').value;
-  const role     = document.getElementById('reg-role').value;
+  const role     = 'staff'; // Registration is always Staff — Admin can change role after approval
   const pin      = document.getElementById('reg-pin').value.trim();
-  if(!username||!name||!store||!pin||!phone){showToast('Please fill all fields','error');return;}
-  if(pin.length!==6){showToast('PIN must be 6 digits','error');return;}
-  showToast('Sending request...','pending');
+  if(!username||!name||!store||!pin||!phone){showToast('Please fill all fields 请填写所有栏位','error');return;}
+  if(!/^\d{6}$/.test(pin)){showToast('PIN must be exactly 6 digits 密码必须为6位数字','error');return;}
+  showToast('Sending request... 发送中...','pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'registerRequest',username,name,phone,store,role,pin})});
-    showToast('Registration sent! Waiting for Admin approval.','success');
+    showToast('Registration sent! Waiting for Admin approval. 已提交，等待管理员审批。','success');
     closeRegisterModal();
     ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('reg-store').value='';
