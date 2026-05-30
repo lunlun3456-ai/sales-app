@@ -155,6 +155,11 @@
   #tab-submit .stat-label { font-size: 13px; }
   #tab-submit .stat-value.big { font-size: 22px; }
   #tab-submit .btn { padding: 13px; font-size: 15px; margin-top: 6px; }
+  /* ── Cash in Drawer ── */
+  .drawer-card { background:#fff7ed;border:2px solid #f59e0b;border-radius:var(--radius);padding:14px;margin-bottom:10px; }
+  .drawer-badge { display:inline-block;background:#f59e0b;color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800; }
+  .drawer-amount { font-size:28px;font-weight:900;color:#92400e; }
+  input.drawer-input { padding-left:54px;font-size:26px;font-weight:900;height:58px;background:#fffbeb;border-color:#f59e0b; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -508,6 +513,8 @@ function getSales() {
 function saveSales(arr) {
   saveData('sales_records', arr.filter(item => item && item.store !== 'Testing'));
 }
+function getCashDrawer() { return loadData('cash_drawer_records', []); }
+function saveCashDrawer(arr) { saveData('cash_drawer_records', arr); }
 
 // ============================================================
 // TRANSLATIONS
@@ -544,6 +551,12 @@ const T = {
     oldPinLabel:'Current PIN', newPinLabel:'New PIN (6 digits)', confirmNewPinLabel:'Confirm New PIN',
     pinSubmitBtn:'Update PIN',
     onlyTodayAllowed:'Staff & Supervisors can only submit today\'s sales.',
+    cashDrawer:'Cash in Drawer',
+    cashDrawerDesc:'Record physical cash counted in the register at end of day',
+    cashDrawerBtn:'Submit Cash Count',
+    cashDrawerNote:'Note (optional)',
+    cashDrawerConfirmTitle:'Confirm Cash in Drawer',
+    cashDrawerSubmitted:'Cash in Drawer submitted ✓',
     logTab:'Sales Audit Log', logDesc:'Immutable history of all submissions & edits',
     newEntry:'NEW SUBMISSION', editEntry:'EDITED',
     beforeLabel:'Before', afterLabel:'After',
@@ -581,6 +594,12 @@ const T = {
     oldPinLabel:'当前密码', newPinLabel:'新密码（6位）', confirmNewPinLabel:'确认新密码',
     pinSubmitBtn:'确认更新密码',
     onlyTodayAllowed:'员工和主管仅可提报今日销售数据。',
+    cashDrawer:'收银机现金',
+    cashDrawerDesc:'记录每日营业结束时收银机内的实际现金金额',
+    cashDrawerBtn:'提交现金盘点',
+    cashDrawerNote:'备注（选填）',
+    cashDrawerConfirmTitle:'确认现金盘点',
+    cashDrawerSubmitted:'现金盘点已提交 ✓',
     logTab:'销售审计日志', logDesc:'所有提交与修改的不可更改历史记录',
     newEntry:'首次提交', editEntry:'已修改',
     beforeLabel:'修改前', afterLabel:'修改后',
@@ -675,6 +694,11 @@ async function triggerSyncRefresh() {
       renderCurrentTab();
       checkAllStoresSubmitted();
       showToast(lang==='zh'?'云端同步成功 ✓':'Synced from Cloud ✓','success');
+      // Also pull cash drawer records
+      try {
+        const cdJson = await gasGet('getCashDrawer');
+        if(cdJson && Array.isArray(cdJson.cashDrawer)) saveCashDrawer(cdJson.cashDrawer);
+      } catch(e2){ console.warn('CashDrawer sync skipped:', e2.message); }
     } else {
       console.error('Unexpected sync response:', JSON.stringify(json).slice(0,200));
       showToast('Sync error — unexpected server response','error');
@@ -820,6 +844,7 @@ function renderSubmitTab() {
     dateInputHtml=`<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
   }
 
+  const storeVal = !isManagerial ? currentUser.store : '';
   document.getElementById('tab-submit').innerHTML=`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
@@ -876,6 +901,9 @@ function renderSubmitTab() {
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
       💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
+
+    <!-- ── CASH IN DRAWER CARD ── -->
+    ${renderCashDrawerCard(storeVal, todayStr)}
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{
     document.getElementById(id).addEventListener('input',updateLiveTotal);
@@ -1071,13 +1099,43 @@ function renderRecordsTab() {
         </div>`;
     }).join('');
 
+  // Cash drawer records for this filter
+  const allCd = getCashDrawer();
+  let cdFiltered = isExec ? allCd : allCd.filter(s=>s.store===currentUser.store);
+  if(selectedDateRange==='month'){
+    cdFiltered = cdFiltered.filter(s=>s.month===selectedMonthValue);
+  } else {
+    cdFiltered = cdFiltered.filter(s=>s.dateKey===targetDate);
+  }
+  if(isExec && activeRecordStoreFilter!=='all') cdFiltered=cdFiltered.filter(r=>r.store===activeRecordStoreFilter);
+
+  const cdHtml = cdFiltered.length===0 ? '' : `
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+        🗄️ ${lang==='zh'?'收银机现金盘点':'Cash in Drawer'}
+      </div>
+      ${cdFiltered.map(r=>`
+        <div class="record-item">
+          <div class="record-icon">🗄️</div>
+          <div class="record-info">
+            <div class="record-store">${r.store} <span class="badge" style="background:#fff7ed;color:#92400e">${r.submitter||''}</span></div>
+            <div class="record-meta">${lang==='zh'?'盘点时间':'Counted at'}: ${r.datetime?new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
+            ${r.note?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.note}</div>`:''}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:20px;font-weight:900;color:#92400e">RM ${parseFloat(r.amount||0).toFixed(2)}</div>
+            <div class="record-sub">${r.dateKey||''}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
   document.getElementById('tab-records').innerHTML=`
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
       <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 ${t('refresh')}</button>
     </div>
     ${filterHtml}
-    <div class="card">${listHtml}</div>`;
+    <div class="card">${listHtml}${cdHtml}</div>`;
 }
 
 // ============================================================
@@ -1831,6 +1889,112 @@ async function uploadSettlement() {
     if(progressWrap) progressWrap.style.display = 'none';
     showToast('Upload failed: ' + e.message, 'error');
   }
+}
+
+// ============================================================
+// CASH IN DRAWER — functions
+// ============================================================
+function renderCashDrawerCard(store, dateKey) {
+  const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
+  const existingAmt = existing ? parseFloat(existing.amount||0).toFixed(2) : '';
+  const existingNote = existing ? (existing.note||'') : '';
+  return `
+    <div class="drawer-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${t('cashDrawer')}</span>
+          ${existing?`<span class="drawer-badge" style="margin-left:6px">✓ ${lang==='zh'?'已盘点':'Recorded'}</span>`:''}
+        </div>
+      </div>
+      <div style="font-size:12px;color:#92400e;margin-bottom:10px;font-weight:600">
+        ${t('cashDrawerDesc')}
+      </div>
+      <div class="amount-input-wrap">
+        <span class="amount-prefix" style="color:#92400e">RM</span>
+        <input type="number" class="amount-input drawer-input" id="cd-amount"
+          placeholder="0.00" min="0" step="0.01" inputmode="decimal"
+          value="${existingAmt}">
+      </div>
+      <div class="input-wrap" style="margin-top:8px;margin-bottom:0">
+        <label class="field-label" style="color:#92400e">📝 ${t('cashDrawerNote')}</label>
+        <input type="text" id="cd-note" placeholder="..." value="${existingNote}"
+          style="border-color:#f59e0b">
+      </div>
+      <button class="btn warn" onclick="openCashDrawerConfirm()"
+        style="margin-top:10px;font-size:15px;background:#f59e0b">
+        🗄️ ${t('cashDrawerBtn')}
+      </button>
+    </div>`;
+}
+
+function openCashDrawerConfirm() {
+  const storeEl  = document.getElementById('submit-store');
+  const dateEl   = document.getElementById('submit-date');
+  const amountEl = document.getElementById('cd-amount');
+  const noteEl   = document.getElementById('cd-note');
+
+  if(!storeEl||!dateEl||!amountEl) { showToast(lang==='zh'?'请先选择门店':'Select a store first','error'); return; }
+  const store   = storeEl.value;
+  const dateKey = dateEl.value;
+  const amount  = parseFloat(amountEl.value)||0;
+  const note    = noteEl ? noteEl.value : '';
+
+  if(!store) { showToast(lang==='zh'?'请选择门店':'Select a store','error'); return; }
+
+  // Restrict staff/supervisor to today only
+  const isRestricted = ['staff','supervisor'].includes(currentUser.role);
+  const todayStr = new Date().toISOString().slice(0,10);
+  if(isRestricted && dateKey !== todayStr) { showToast(t('onlyTodayAllowed'),'error'); return; }
+
+  const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'cd-modal';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title" style="color:#92400e">🗄️ ${t('cashDrawerConfirmTitle')}</div>
+      ${existing?`<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#92400e;font-weight:600;">
+        ✏️ ${lang==='zh'?'您正在更新已提交的现金盘点数据。':'You are updating a previously submitted cash count.'}</div>`:''}
+      <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
+      <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${dateKey}</span></div>
+      <div class="stat-row">
+        <span class="stat-label">🗄️ ${t('cashDrawer')}</span>
+        <span class="stat-value" style="font-size:26px;font-weight:900;color:#92400e">RM ${amount.toFixed(2)}</span>
+      </div>
+      ${note?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${note}</span></div>`:''}
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="btn secondary" style="flex:1" onclick="document.getElementById('cd-modal').remove()">Cancel 取消</button>
+        <button class="btn warn" style="flex:1;background:#f59e0b" onclick="confirmCashDrawer('${store}','${dateKey}',${amount},'${note.replace(/'/g,"\\'")}')">
+          ✓ ${t('cashDrawerBtn')}
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function confirmCashDrawer(store, dateKey, amount, note) {
+  document.getElementById('cd-modal')?.remove();
+  const now = new Date();
+  const record = {
+    id: Date.now(), store, amount, note,
+    submitter: currentUser.name, role: currentUser.role,
+    datetime: now.toISOString(),
+    dateKey, month: dateKey.slice(0,7)
+  };
+  showToast(lang==='zh'?'正在提交现金盘点...':'Submitting cash count...','pending');
+  fetch(WEB_APP_URL, {
+    method:'POST', mode:'no-cors', cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'submitCashDrawer', ...record})
+  }).then(()=>{
+    let cd = getCashDrawer().filter(r=>!(r.dateKey===dateKey&&r.store===store));
+    cd.push(record);
+    saveCashDrawer(cd);
+    showToast(t('cashDrawerSubmitted'),'success');
+    renderSubmitTab();
+    if(currentTab==='records') renderRecordsTab();
+  }).catch(err=>{ showToast('Error: '+err,'error'); });
 }
 
 window.addEventListener('DOMContentLoaded',fetchLiveUsers);
