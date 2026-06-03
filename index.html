@@ -190,6 +190,20 @@
   .drawer-badge { display:inline-block;background:#f59e0b;color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:800; }
   .drawer-amount { font-size:28px;font-weight:900;color:#92400e; }
   input.drawer-input { padding-left:54px;font-size:26px;font-weight:900;height:58px;background:#fffbeb;border-color:#f59e0b; }
+  .status-pill { display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:800; }
+  .status-present { background:#d1fae5;color:#065f46; }
+  .status-late { background:#fef3c7;color:#92400e; }
+  .status-early_leave, .status-absent, .status-rejected { background:#fee2e2;color:#b91c1c; }
+  .ops-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+  .ops-grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px; }
+  .attendance-result-box { background:#fff;border-radius:26px 26px 0 0;padding:34px 24px 42px;width:100%;max-width:520px;text-align:center;box-shadow:0 -8px 36px rgba(15,23,42,.22); }
+  .attendance-result-icon { font-size:62px;margin-bottom:12px; }
+  .attendance-result-title { font-size:25px;font-weight:900;margin-bottom:8px; }
+  .attendance-result-msg { font-size:15px;line-height:1.45;color:var(--text2);font-weight:700;margin-bottom:18px; }
+  .attendance-result-box.rejected { background:#fff1f2;border-top:8px solid #ef4444; }
+  .attendance-result-box.rejected .attendance-result-title { color:#b91c1c; }
+  .attendance-result-box.pending { background:#fffbeb;border-top:8px solid #f59e0b; }
+  .attendance-result-box.success { background:#f0fdf4;border-top:8px solid #10b981; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
 </style>
 </head>
@@ -275,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -288,7 +302,8 @@
       <label class="field-label">PIN (6 digits 6位密码)</label>
       <input type="password" id="login-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
     </div>
-    <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
+    <button class="btn" onclick="doLogin()" id="login-btn">Login</button>
+    <button class="btn secondary" onclick="biometricLogin()" id="biometric-login-btn" style="margin-top:10px;display:none">Use Face ID / Fingerprint</button>
     <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
   </div>
 </div>
@@ -325,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -338,6 +353,7 @@
   <div class="content" id="tab-submit"  style="display:block"></div>
   <div class="content" id="tab-records" style="display:none"></div>
   <div class="content" id="tab-summary" style="display:none"></div>
+  <div class="content" id="tab-attendance" style="display:none"></div>
   <div class="content" id="tab-log"     style="display:none"></div>
   <div class="content" id="tab-admin"   style="display:none"></div>
   <div class="content" id="tab-profile" style="display:none"></div>
@@ -351,6 +367,9 @@
     </button>
     <button class="nav-item" onclick="switchTab('summary',this)" id="nav-summary">
       <span class="nav-icon">📊</span><span id="nav-summary-lbl">Summary</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('attendance',this)" id="nav-attendance">
+      <span class="nav-icon">AT</span><span id="nav-attendance-lbl">Attendance</span>
     </button>
     <button class="nav-item" onclick="switchTab('log',this)" id="nav-log" style="display:none">
       <span class="nav-icon">📜</span><span id="nav-log-lbl">Log</span>
@@ -514,13 +533,23 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby6IEj5tXfXGIR7zzxXx-PvjMUHyVLnCU3x70Gg1J2PmbW1y5i5rzNUIa9-s2mUvH2FVA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
 
 let lang = 'en';
 let currentUser = null;
 let currentTab = 'submit';
 let cachedUsers = {};
 let cachedLog = [];
+let cachedSettlementLocks = [];
+let cachedApprovals = [];
+let cachedAttendance = [];
+let cachedWorkZones = [];
+let cachedWorkSchedules = [];
+let cachedBackups = [];
+let cachedUserDevices = [];
+let attendanceDateFilter = new Date().toISOString().slice(0,10);
+let attendanceStoreFilter = 'all';
+let attendanceReportMode = 'weekly';
 let selectedDateRange  = 'today';
 let customDateValue    = new Date().toISOString().slice(0,10);
 let selectedMonthValue = new Date().toISOString().slice(0,7);
@@ -534,6 +563,53 @@ let summaryCustDate    = new Date().toISOString().slice(0,10);
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
+function getDeviceId(){
+  let id = localStorage.getItem('attendance_device_id');
+  if(!id){
+    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10);
+    localStorage.setItem('attendance_device_id', id);
+  }
+  return id;
+}
+function getDeviceName(){
+  const parts = [];
+  if(navigator.platform) parts.push(navigator.platform);
+  if(navigator.userAgentData && navigator.userAgentData.platform) parts.push(navigator.userAgentData.platform);
+  const ua = navigator.userAgent || '';
+  const brand = ua.includes('iPhone') ? 'iPhone' : ua.includes('Android') ? 'Android' : ua.includes('Windows') ? 'Windows' : ua.includes('Mac') ? 'Mac' : 'Browser';
+  parts.push(brand);
+  return [...new Set(parts)].filter(Boolean).join(' - ');
+}
+function recordLoginDevice(){
+  if(!currentUser) return;
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    action:'recordLogin',
+    username:currentUser.username,
+    name:currentUser.name,
+    role:currentUser.role,
+    store:currentUser.store,
+    deviceId:getDeviceId(),
+    deviceName:getDeviceName(),
+    userAgent:navigator.userAgent || '',
+    platform:navigator.platform || '',
+    result:'success'
+  })}).catch(e=>console.warn('Login device record failed:',e));
+}
+function showAttendanceResult(kind,title,message,details){
+  document.getElementById('attendance-result-modal')?.remove();
+  const ov=document.createElement('div');
+  ov.className='modal-overlay open';
+  ov.id='attendance-result-modal';
+  const icon = kind==='rejected' ? '!' : kind==='pending' ? '?' : 'OK';
+  ov.innerHTML=`<div class="attendance-result-box ${kind}">
+    <div class="attendance-result-icon">${icon}</div>
+    <div class="attendance-result-title">${title}</div>
+    <div class="attendance-result-msg">${message}</div>
+    ${details?`<div style="background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--text);font-weight:800;margin-bottom:14px">${details}</div>`:''}
+    <button class="btn ${kind==='rejected'?'danger':kind==='pending'?'warn':'success'}" onclick="document.getElementById('attendance-result-modal').remove()">OK</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
@@ -547,6 +623,20 @@ function getCashDrawer() { return loadData('cash_drawer_records', []); }
 function saveCashDrawer(arr) { saveData('cash_drawer_records', arr); }
 function getCashMovements() { return loadData('cash_movements', []); }
 function saveCashMovements(arr) { saveData('cash_movements', arr); }
+function getSettlementLocks(){ return loadData('settlement_locks', []); }
+function saveSettlementLocks(arr){ cachedSettlementLocks = arr || []; saveData('settlement_locks', cachedSettlementLocks); }
+function getApprovals(){ return loadData('approval_requests', []); }
+function saveApprovals(arr){ cachedApprovals = arr || []; saveData('approval_requests', cachedApprovals); }
+function getAttendance(){ return loadData('attendance_records', []); }
+function saveAttendance(arr){ cachedAttendance = arr || []; saveData('attendance_records', cachedAttendance); }
+function saveWorkZones(arr){ cachedWorkZones = arr || []; saveData('work_zones', cachedWorkZones); }
+function saveWorkSchedules(arr){ cachedWorkSchedules = arr || []; saveData('work_schedules', cachedWorkSchedules); }
+function saveBackups(arr){ cachedBackups = arr || []; saveData('backup_log', cachedBackups); }
+function saveUserDevices(arr){ cachedUserDevices = arr || []; saveData('user_devices', cachedUserDevices); }
+function isExecutiveRole(role){ return ['boss','admin','manager'].includes(String(role||'').toLowerCase()); }
+function canManageUsers(){ return currentUser && ['boss','admin'].includes(currentUser.role); }
+function isCashMovementApproved(r){ return !r.status || r.status === 'approved'; }
+function isSalesLocked(store,dateKey){ return getSettlementLocks().some(r=>String(r.store)===String(store)&&String(r.dateKey)===String(dateKey)&&String(r.locked).toLowerCase()!=='false'); }
 
 // ============================================================
 // TRANSLATIONS
@@ -651,6 +741,7 @@ function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
   document.getElementById('nav-records-lbl').textContent = t('records');
   document.getElementById('nav-summary-lbl').textContent = t('summary');
+  document.getElementById('nav-attendance-lbl').textContent = lang==='zh'?'Attendance':'Attendance';
   document.getElementById('nav-log-lbl').textContent     = t('log');
   document.getElementById('nav-admin-lbl').textContent   = t('admin');
   document.getElementById('nav-profile-lbl').textContent = t('me');
@@ -732,6 +823,18 @@ async function triggerSyncRefresh() {
         if(cdJson && Array.isArray(cdJson.cashDrawer)) saveCashDrawer(cdJson.cashDrawer);
         if(cdJson && Array.isArray(cdJson.movements)) saveCashMovements(cdJson.movements);
       } catch(e2){ console.warn('CashDrawer sync skipped:', e2.message); }
+      try {
+        const appJson = await gasGet('getAppData');
+        if(appJson){
+          if(Array.isArray(appJson.settlementLocks)) saveSettlementLocks(appJson.settlementLocks);
+          if(Array.isArray(appJson.approvals)) saveApprovals(appJson.approvals);
+          if(Array.isArray(appJson.attendance)) saveAttendance(appJson.attendance);
+          if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
+          if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
+          if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
+          if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
+        }
+      } catch(e3){ console.warn('App data sync skipped:', e3.message); }
     } else {
       console.error('Unexpected sync response:', JSON.stringify(json).slice(0,200));
       showToast('Sync error — unexpected server response','error');
@@ -805,6 +908,7 @@ async function doLogin() {
 
   // ✅ Login success
   currentUser={...userMatch, username};
+  recordLoginDevice();
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   const isAdmin=['admin','boss'].includes(currentUser.role);
@@ -816,7 +920,7 @@ async function doLogin() {
   currentTab='submit';
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-submit').classList.add('active');
-  ['submit','records','summary','log','admin','profile'].forEach(tt=>{
+  ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
     document.getElementById('tab-'+tt).style.display=tt==='submit'?'block':'none';
   });
   renderSubmitTab();
@@ -831,7 +935,7 @@ function switchTab(tab,btn) {
   currentTab=tab;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  ['submit','records','summary','log','admin','profile'].forEach(tt=>{
+  ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
     document.getElementById('tab-'+tt).style.display=tt===tab?'block':'none';
   });
   renderCurrentTab();
@@ -842,6 +946,7 @@ function renderCurrentTab() {
   if(currentTab==='submit')  renderSubmitTab();
   if(currentTab==='records') renderRecordsTab();
   if(currentTab==='summary') renderSummaryTab();
+  if(currentTab==='attendance') renderAttendanceTab();
   if(currentTab==='log')     renderLogTab();
   if(currentTab==='admin')   renderAdminTab();
   if(currentTab==='profile') renderProfileTab();
@@ -926,7 +1031,8 @@ function renderSubmitTab() {
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
       </div>
-      <button class="btn" onclick="openConfirm()" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
+            <div id="sales-lock-note"></div>
+      <button class="btn" onclick="openConfirm()" id="sales-submit-btn" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
       <button class="btn secondary" onclick="openSettlementUpload()" style="margin-top:10px;font-size:15px;border:2px solid var(--primary);">
         📎 ${lang==='zh'?'上传日结单 / 收据':'Upload Settlement Receipt'}
       </button>
@@ -960,8 +1066,17 @@ function checkAndLoadExistingSales() {
     document.getElementById('s-remark').value='';
   }
   updateLiveTotal();
+  const locked = isSalesLocked(storeVal, dateVal);
+  const restricted = ['staff','supervisor'].includes(currentUser.role);
+  const note = document.getElementById('sales-lock-note');
+  const submitBtn = document.getElementById('sales-submit-btn');
+  ['s-cash','s-qr','s-card','s-bank','s-remark'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled = locked && restricted;
+  });
+  if(note) note.innerHTML = locked ? '<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:#3730a3;font-weight:700">Settlement uploaded. Daily sales is locked; Manager/Admin/Boss approval is required for changes.</div>' : '';
+  if(submitBtn) submitBtn.disabled = locked && restricted;
 }
-
 function updateLiveTotal() {
   const c=parseFloat(document.getElementById('s-cash').value)||0;
   const q=parseFloat(document.getElementById('s-qr').value)||0;
@@ -980,6 +1095,11 @@ function openConfirm() {
   const todayStr=new Date().toISOString().slice(0,10);
   if(isRestricted&&targetDate!==todayStr){
     showToast(t('onlyTodayAllowed'),'error'); return;
+  }
+
+  const locked = isSalesLocked(store, targetDate);
+  if(locked && ['staff','supervisor'].includes(currentUser.role)){
+    showToast('Settlement already uploaded. Manager/Admin/Boss approval required.','error'); return;
   }
 
   const cash  =parseFloat(document.getElementById('s-cash').value)||0;
@@ -1135,7 +1255,7 @@ function renderRecordsTab() {
   // Cash drawer records for this filter
   // Cash movements for this filter period
   const allMv = getCashMovements();
-  let mvFiltered = isExec ? allMv : allMv.filter(s=>s.store===currentUser.store);
+  let mvFiltered = (isExec ? allMv : allMv.filter(s=>s.store===currentUser.store)).filter(isCashMovementApproved);
   if(selectedDateRange==='month'){
     mvFiltered = mvFiltered.filter(s=>s.month===selectedMonthValue);
   } else {
@@ -1529,16 +1649,155 @@ function renderLogEntries() {
   listEl.innerHTML=`<div class="card" style="padding:14px">${entries}</div>`;
 }
 
+
+// ============================================================
+// BIOMETRIC LOGIN + ATTENDANCE + OPS DASHBOARD
+// ============================================================
+function updateBiometricButton(){
+  const btn=document.getElementById('biometric-login-btn');
+  if(btn) btn.style.display=(window.PublicKeyCredential && localStorage.getItem('bio_user'))?'block':'none';
+}
+
+async function enableBiometricLogin(){
+  if(!window.PublicKeyCredential){ showToast('Face ID / fingerprint is not supported on this device.','error'); return; }
+  if(!currentUser) return;
+  try{
+    const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
+    const userId=new TextEncoder().encode(currentUser.username.padEnd(16,'0')).slice(0,16);
+    const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'Daily Sales'},user:{id:userId,name:currentUser.username,displayName:currentUser.name},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});
+    localStorage.setItem('bio_user',currentUser.username);
+    localStorage.setItem('bio_cred_id',arrayBufferToBase64(cred.rawId));
+    updateBiometricButton();
+    showToast('Face ID / fingerprint enabled.','success');
+  }catch(e){ showToast('Biometric setup cancelled or failed.','error'); }
+}
+
+async function biometricLogin(){
+  if(!window.PublicKeyCredential){ showToast('Biometric login not supported.','error'); return; }
+  const username=localStorage.getItem('bio_user');
+  const credId=localStorage.getItem('bio_cred_id');
+  if(!username||!credId){ showToast('Login with PIN once, then enable biometric in Me.','error'); return; }
+  await fetchLiveUsers();
+  const userMatch=cachedUsers[username];
+  if(!userMatch||userMatch.status!=='active'){ showToast('Saved biometric user is not active.','error'); return; }
+  try{
+    const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
+    await navigator.credentials.get({publicKey:{challenge,allowCredentials:[{type:'public-key',id:base64ToArrayBuffer(credId)}],userVerification:'required',timeout:60000}});
+    currentUser={...userMatch,username};
+    recordLoginDevice();
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('app-screen').classList.add('active');
+    const isExec=isExecutiveRole(currentUser.role);
+    document.getElementById('nav-admin').style.display=isExec?'flex':'none';
+    document.getElementById('nav-log').style.display=isExec?'flex':'none';
+    updateTopBar(); updateNavLabels(); switchTab('attendance',document.getElementById('nav-attendance')); triggerSyncRefresh();
+  }catch(e){ showToast('Biometric login cancelled.','error'); }
+}
+function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
+
+function renderAttendanceTab(){
+  const today=new Date().toISOString().slice(0,10);
+  const mine=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===today).sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
+  const lastIn=mine.find(r=>r.type==='check_in');
+  const lastOut=mine.find(r=>r.type==='check_out');
+  document.getElementById('tab-attendance').innerHTML=`
+    <div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">Attendance</h2><button class="btn refresh-inline" onclick="triggerSyncRefresh()">Refresh</button></div>
+    <div class="card">
+      <div class="card-title">Today - ${today}</div>
+      <div class="ops-grid" style="margin-top:12px">
+        <button class="btn success" onclick="submitAttendance('check_in')">Check In</button>
+        <button class="btn warn" onclick="submitAttendance('check_out')">Check Out</button>
+      </div>
+      <div class="input-wrap" style="margin-top:12px"><label class="field-label">Remark</label><input type="text" id="att-remark" placeholder="Optional remark"></div>
+      <div class="divider"></div>
+      <div class="stat-row"><span class="stat-label">Check In</span><span class="stat-value">${lastIn?new Date(lastIn.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'-'}</span></div>
+      <div class="stat-row"><span class="stat-label">Check Out</span><span class="stat-value">${lastOut?new Date(lastOut.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'-'}</span></div>
+    </div>
+    <div class="card"><div class="card-title">Recent Attendance</div>${mine.length?mine.map(attendanceRowHtml).join(''):'<div class="empty-state"><p>No attendance today.</p></div>'}</div>`;
+}
+
+async function submitAttendance(type){
+  const remark=document.getElementById('att-remark')?.value||'';
+  const label=type==='check_in'?'Check In':'Check Out';
+  showToast('Getting location...','pending');
+  try{
+    const loc=await getBestLocation();
+    const now=new Date();
+    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:now.toISOString().slice(0,10),datetime:now.toISOString(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
+    fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submitAttendance',...record})}).catch(e=>console.warn('Attendance sync failed:',e));
+    const zone=nearestLocalZone(record.store,record.lat,record.lng);
+    if(zone && zone.distanceMeters>zone.radiusMeters){
+      record.status='rejected';
+      showAttendanceResult('rejected',label+' Rejected','RED NOTICE: You are outside the allowed check in / check out compound.',`Distance ${zone.distanceMeters}m / Allowed ${zone.radiusMeters}m`);
+    } else {
+      const localConflict=getLocalDeviceUsers().some(u=>String(u).toLowerCase()!==String(currentUser.username).toLowerCase());
+      const cloudConflict=(cachedUserDevices.length?cachedUserDevices:loadData('user_devices',[])).some(d=>String(d.deviceId)===record.deviceId&&String(d.username).toLowerCase()!==String(currentUser.username).toLowerCase());
+      const deviceConflict=localConflict||cloudConflict;
+      if(deviceConflict){
+        record.status='pending_approval';
+        showAttendanceResult('pending',label+' Pending Approval','This device was used with another username. Store Supervisor, Manager or Admin must approve it.',record.deviceName);
+      } else {
+        record.status='present';
+        showAttendanceResult('success',label+' Saved','Attendance recorded for '+currentUser.name+'.',record.deviceName);
+      }
+    }
+    const arr=getAttendance(); arr.push(record); saveAttendance(arr); renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
+  }catch(e){
+    showAttendanceResult('rejected',label+' Failed','RED NOTICE: Location is required before check in / check out.',e.message);
+  }
+}
+
+function getBestLocation(){
+  return new Promise((resolve,reject)=>{
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(pos=>resolve({lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy||0),source:'gps_wifi'}),async()=>{
+        try{ const j=await fetch('https://ipapi.co/json/').then(r=>r.json()); resolve({lat:j.latitude,lng:j.longitude,accuracy:5000,source:'ip'}); }
+        catch(e){ reject(new Error('Please allow GPS location.')); }
+      },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    } else reject(new Error('Geolocation not supported.'));
+  });
+}
+function nearestLocalZone(store,lat,lng){ const zones=(cachedWorkZones.length?cachedWorkZones:loadData('work_zones',[])).filter(z=>z.store===store&&String(z.status||'active')==='active'); if(!zones.length) return null; return zones.map(z=>({radiusMeters:parseFloat(z.radiusMeters)||500,distanceMeters:distanceMeters(lat,lng,parseFloat(z.latitude),parseFloat(z.longitude))})).sort((a,b)=>a.distanceMeters-b.distanceMeters)[0]; }
+function distanceMeters(lat1,lon1,lat2,lon2){ const R=6371000,toRad=n=>n*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))); }
+function attendanceRowHtml(r){ return `<div class="record-item"><div class="record-icon">AT</div><div class="record-info"><div class="record-store">${r.name||r.username} <span class="status-pill status-${r.status||'present'}">${String(r.status||'present').replace('_',' ')}</span></div><div class="record-meta">${r.store||''} - ${r.type||''} - ${r.datetime?new Date(r.datetime).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):''}<br>${r.lat?('Location: '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' - '+(r.accuracy||'')+'m'):''}</div>${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px">${r.remark}</div>`:''}</div></div>`; }
+
+function renderOperationsDashboard(){
+  const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
+  let att=getAttendance();
+  if(attendanceStoreFilter!=='all') att=att.filter(r=>r.store===attendanceStoreFilter);
+  att=att.filter(r=>r.dateKey===attendanceDateFilter);
+  const pending=getApprovals().filter(r=>r.status==='pending');
+  const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
+  const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.username));
+  const absent=users.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
+  return `<div class="card"><div class="card-title">Manager Dashboard</div>
+    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Attendance Records</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No attendance records.</div>'}</div>
+    <div style="margin-top:12px">${renderAttendanceReport(users)}</div>
+    ${renderZoneScheduleTools(branches,users)}
+    <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>
+  </div>`;
+}
+function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
+async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
+function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
+function renderZoneScheduleTools(branches,users){ return `<div class="divider"></div><div class="card-title">Work Zone & Schedule</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Branch</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">Radius</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">Save Allowed Zone</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Staff</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">Day</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`; }
+async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast('Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Zone saved.','success'); triggerSyncRefresh(); }
+async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Schedule saved.','success'); triggerSyncRefresh(); }
+async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast('Backup created in Google Drive.','success'); setTimeout(()=>triggerSyncRefresh(),1500); }
 // ============================================================
 // ADMIN TAB
 // ============================================================
 async function renderAdminTab() {
-  const isAdmin=['admin','boss'].includes(currentUser.role);
+  const isAdmin=['admin','boss','manager'].includes(currentUser.role);
   if(!isAdmin){
-    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">🔒 No access</div>`;
+    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
     return;
   }
-  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>`;
+  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
   await fetchLiveUsers();
   const allUsers=cachedUsers;
   const pending=[]; const active=[];
@@ -1546,58 +1805,21 @@ async function renderAdminTab() {
     if(u.status==='pending') pending.push({...u,username:uname});
     else active.push({...u,username:uname});
   });
-
-  let pendingHtml='';
-  if(pending.length>0){
-    pendingHtml=`
-      <div class="pending-card">
-        <div class="card-title" style="color:#92400e">⏳ ${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
-        ${pending.map(u=>`
-          <div class="user-row">
-            <div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div>
-            <div class="user-info">
-              <div class="user-name">@${u.username}</div>
-              <div class="user-meta">${u.name||''} · ${u.store||''} · 📱 ${u.phone||'N/A'} · ${u.role||'staff'}</div>
-            </div>
-            <div class="user-actions">
-              <button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button>
-              <button class="btn-sm reject"  onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button>
-            </div>
-          </div>`).join('')}
-      </div>`;
-  } else {
-    pendingHtml=`
-      <div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px">
-        <div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">✅ ${t('noRequests')}</div>
-      </div>`;
-  }
-
+  const pendingHtml=pending.length>0?`
+    <div class="pending-card">
+      <div class="card-title" style="color:#92400e">${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
+      ${pending.map(u=>`
+        <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
+    </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row">
-      <div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div>
-      <div class="user-info">
-        <div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div>
-        <div class="user-meta">@${u.username} · ${u.store||''} · 📱 ${u.phone||'N/A'}</div>
-      </div>
-      <div class="user-actions">
-        <button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>
-        ${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}
-      </div>
-    </div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
-    <div class="card-header-flex" style="margin-bottom:14px">
-      <h2 style="font-size:18px;font-weight:900">⚙️ ${t('adminTab')}</h2>
-      <button class="btn refresh-inline" onclick="renderAdminTab()">🔄 ${t('refresh')}</button>
-    </div>
-    ${pendingHtml}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:15px;font-weight:800">${t('userMgmt')}</div>
-      <button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button>
-    </div>
-    <div class="card">${activeHtml||`<div class="empty-state"><div class="e-icon">👥</div><p>No active users</p></div>`}</div>`;
+    <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
+    ${renderOperationsDashboard()}
+    ${canManageUsers()?pendingHtml:''}
+    ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}`;
 }
-
 async function approveUser(username) {
   showToast(lang==='zh'?'正在审批...':'Approving...','pending');
   try {
@@ -1702,6 +1924,7 @@ function renderProfileTab() {
         <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
       </div>
     </div>
+    <button class="btn secondary" onclick="enableBiometricLogin()" style="margin-top:8px">Enable Face ID / Fingerprint</button>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>`;
 }
 
@@ -1942,7 +2165,7 @@ async function uploadSettlement() {
 
     setTimeout(() => {
       closeSettlementModal();
-      showToast(lang==='zh'?'日结单已上传至 Google Drive ✅':'Settlement receipt uploaded to Google Drive ✅','success');
+      showToast(lang==='zh'?'Settlement Receipt uploaded to Cloud ✅':'Settlement Receipt uploaded to Cloud ✅','success');
     }, 900);
 
   } catch(e) {
@@ -1982,8 +2205,8 @@ function renderCashDrawerCard(store, dateKey) {
   const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
   const today = new Date().toISOString().slice(0,10);
   const mvToday = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
-  const totalIn  = mvToday.filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const totalOut = mvToday.filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalIn  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalOut = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
 
   let drawerTotal = 0;
   if(existing && existing.breakdown) {
@@ -2051,7 +2274,8 @@ function openCashDrawerModal() {
 function renderCashDrawerModal() {
   document.getElementById('cd-main-modal')?.remove();
   const isExec = ['boss','admin','manager'].includes(currentUser.role);
-  const movements = getCashMovements().filter(r=>r.dateKey===_cdDate&&r.store===_cdStore);
+  const movements = getCashMovements().filter(r=>r.dateKey===_cdDate&&r.store===_cdStore&&isCashMovementApproved(r));
+  const pendingOuts = getApprovals().filter(r=>r.type==='cash_out'&&r.status==='pending'&&r.dateKey===_cdDate&&r.store===_cdStore);
   const ins  = movements.filter(r=>r.type==='in');
   const outs = movements.filter(r=>r.type==='out');
   const totalIn  = ins.reduce((a,r)=>a+parseFloat(r.amount||0),0);
@@ -2163,7 +2387,7 @@ function renderCashDrawerModal() {
       </div>
 
       <!-- CASH OUT SECTION — manager/boss/admin only -->
-      ${isExec ? `
+      ${true ? `
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
@@ -2174,7 +2398,7 @@ function renderCashDrawerModal() {
             + ${lang==='zh'?'添加':'Add'}
           </button>
         </div>
-        <div id="cd-out-list">${mvListHtml(outs,'out')}</div>
+        <div id="cd-out-list">${mvListHtml(outs,'out')}${pendingOuts.length?`<div style="margin-top:8px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:10px;padding:8px;font-weight:700">${pendingOuts.length} cash out request(s) waiting approval.</div>`:''}</div>
       </div>` : `
       <div class="cd-section" style="background:#f8fafc">
         <div style="font-size:13px;color:var(--text2);font-weight:600;text-align:center;padding:6px">
@@ -2274,23 +2498,29 @@ function openAddMovement(type) {
 function saveCashMovementEntry(type) {
   const amount = parseFloat(document.getElementById('mv-amount')?.value)||0;
   const reason = document.getElementById('mv-reason')?.value||'';
-  if(amount<=0) { showToast(lang==='zh'?'请输入金额':'Enter an amount','error'); return; }
+  if(amount<=0) { showToast('Enter an amount','error'); return; }
 
+  const restrictedOut = type==='out' && !isExecutiveRole(currentUser.role);
   const record = {
     id: String(Date.now()),
     dateKey: _cdDate, store: _cdStore,
     type, amount, reason,
     submitter: currentUser.name, role: currentUser.role,
     datetime: new Date().toISOString(),
-    month: _cdDate.slice(0,7)
+    month: _cdDate.slice(0,7),
+    status: restrictedOut ? 'pending' : 'approved'
   };
 
-  // Save locally
-  const mvs = getCashMovements();
-  mvs.push(record);
-  saveCashMovements(mvs);
+  if(restrictedOut){
+    const reqs = getApprovals();
+    reqs.push({id:record.id,type:'cash_out',status:'pending',dateKey:_cdDate,store:_cdStore,amount,reason,requester:currentUser.name,requesterRole:currentUser.role,requestedAt:new Date().toISOString(),payload:JSON.stringify(record)});
+    saveApprovals(reqs);
+  } else {
+    const mvs = getCashMovements();
+    mvs.push(record);
+    saveCashMovements(mvs);
+  }
 
-  // Push to DB
   fetch(WEB_APP_URL, {
     method:'POST', mode:'no-cors', cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -2298,10 +2528,9 @@ function saveCashMovementEntry(type) {
   }).catch(e=>console.warn('Movement sync failed:',e));
 
   document.getElementById('cd-add-mv-modal')?.remove();
-  showToast(lang==='zh'?'已记录':'Saved','success');
+  showToast(restrictedOut ? 'Cash out sent for approval.' : 'Saved','success');
   renderCashDrawerModal();
 }
-
 function deleteCashMovement(id) {
   if(!confirm(lang==='zh'?'删除此记录？':'Delete this entry?')) return;
   const mvs = getCashMovements().filter(r=>r.id!==String(id));
@@ -2345,8 +2574,7 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
-window.addEventListener('DOMContentLoaded',fetchLiveUsers);
-window.addEventListener('DOMContentLoaded',fetchLiveUsers);
+window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
 </body>
 </html>
