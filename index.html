@@ -339,7 +339,11 @@
       <input type="password" id="login-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
     </div>
     <button class="btn" onclick="doLogin()" id="login-btn">Login 登录</button>
-    <button class="btn secondary" onclick="openRegisterModal()" style="margin-top:10px;">📝 Register Account 注册申请</button>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn secondary" onclick="openRegisterModal()" style="flex:1">📝 Register 注册</button>
+      <button class="btn secondary" onclick="testServerConnection()" style="flex:1;background:#f0fdf4;color:#065f46;border-color:#bbf7d0">🔌 Test Server</button>
+    </div>
+    <div id="login-status" style="margin-top:8px;font-size:12px;color:#64748b;text-align:center;min-height:16px"></div>
   </div>
 </div>
 
@@ -570,7 +574,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGkPAsOmy2OdjzluONo0lmLepeEbhkMRAZ-RzR0D9aY5Jo-6q58-JBUE04wlt7W-xzpQ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNP64YnVCY1KzBw1KojU7Fmsfo3stu8kzKqd-KvfLGo_fQIamHILImsU-JpRpOy9feXA/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -794,25 +798,38 @@ async function submitRegisterRequest() {
 // Google Apps Script GETs work fine with plain fetch() AS LONG AS the
 // deployment is set to "Execute as: Me" + "Who has access: Anyone".
 // We add { redirect:'follow' } to chase the redirect GAS always issues.
-function gasGet(action) {
-  return new Promise((resolve, reject) => {
-    const url = WEB_APP_URL + '?action=' + action + '&t=' + Date.now();
-    fetch(url, { method:'GET', redirect:'follow', credentials:'omit', cache:'no-cache' })
-      .then(r => {
-        // GAS returns 302 then 200 — follow redirect automatically
-        return r.text();
-      })
-      .then(text => {
-        if(!text || !text.trim()) { reject(new Error('Empty response from server')); return; }
-        if(text.trim().startsWith('<')) {
-          reject(new Error('Server returned HTML — check Apps Script deploy: "Who has access" must be Anyone'));
-          return;
-        }
-        try { resolve(JSON.parse(text)); }
-        catch(e) { reject(new Error('JSON parse failed: ' + text.slice(0,150))); }
-      })
-      .catch(err => { reject(err); });
-  });
+async function gasGet(action) {
+  const url = WEB_APP_URL + '?action=' + encodeURIComponent(action) + '&t=' + Date.now();
+  let text = '';
+  try {
+    const r = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      credentials: 'omit',
+      cache: 'no-cache'
+    });
+    text = await r.text();
+  } catch(netErr) {
+    throw new Error('Network error — check internet connection: ' + netErr.message);
+  }
+
+  // Strip BOM and whitespace
+  text = text.replace(/^﻿/, '').trim();
+
+  if (!text) throw new Error('Server returned empty response');
+
+  if (text.startsWith('<')) {
+    // Detect the specific GAS error message if present
+    if (text.includes('Service Unavailable')) throw new Error('GAS Service Unavailable — redeploy the script');
+    if (text.includes('Authorization')) throw new Error('Authorization required — set deploy to "Anyone"');
+    throw new Error('Server returned HTML — deploy setting must be: Execute as Me, Who has access: Anyone');
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    throw new Error('Invalid JSON from server: ' + text.slice(0, 120));
+  }
 }
 
 async function triggerSyncRefresh() {
@@ -867,20 +884,63 @@ async function triggerSyncRefresh() {
 }
 
 async function fetchLiveUsers() {
-  if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return {};
+  if (!WEB_APP_URL || WEB_APP_URL.includes('PASTE_YOUR')) {
+    setLoginStatus('⚠️ No server URL configured', 'orange');
+    return {};
+  }
   try {
+    setLoginStatus('Connecting to server…', '#2563eb');
     const users = await gasGet('getUsers');
-    if(users && typeof users==='object' && !Array.isArray(users) && Object.keys(users).length>0){
-      cachedUsers = users;
-      saveData('cached_users', users);
-      console.log('✅ Live users loaded:', Object.keys(users).length);
+
+    if (users && typeof users === 'object' && !Array.isArray(users)) {
+      const count = Object.keys(users).length;
+      if (count > 0) {
+        cachedUsers = users;
+        saveData('cached_users', users);
+        setLoginStatus('✅ Server connected — ' + count + ' user(s) loaded', 'green');
+        console.log('✅ Live users:', count);
+      } else {
+        // Server reachable but Users sheet is empty
+        setLoginStatus('⚠️ Server reached but no users found — contact Admin', 'orange');
+        console.warn('Server returned empty users object');
+      }
     }
-  } catch(e){
-    console.warn('fetchLiveUsers failed, using cache:', e.message);
+  } catch(e) {
     const cached = loadData('cached_users', {});
-    if(Object.keys(cached).length > 0) cachedUsers = cached;
+    if (Object.keys(cached).length > 0) {
+      cachedUsers = cached;
+      setLoginStatus('📴 Offline — using cached data', 'orange');
+      console.warn('Server error, using cache:', e.message);
+    } else {
+      setLoginStatus('❌ ' + e.message, 'red');
+      console.error('fetchLiveUsers failed:', e.message);
+    }
   }
   return cachedUsers;
+}
+
+function setLoginStatus(msg, color) {
+  const el = document.getElementById('login-status');
+  if (el) { el.textContent = msg; el.style.color = color || '#64748b'; }
+}
+
+async function testServerConnection() {
+  setLoginStatus('🔌 Testing connection…', '#2563eb');
+  const btn = event.target;
+  btn.disabled = true;
+  try {
+    const result = await gasGet('test');
+    if (result && result.ok) {
+      setLoginStatus('✅ Server reachable! Now try logging in.', 'green');
+      showToast('Server connected ✓', 'success');
+    } else {
+      setLoginStatus('⚠️ Server responded: ' + JSON.stringify(result).slice(0,80), 'orange');
+    }
+  } catch(e) {
+    setLoginStatus('❌ ' + e.message, 'red');
+    showToast(e.message, 'error');
+  }
+  btn.disabled = false;
 }
 
 async function fetchLog() {
@@ -897,33 +957,53 @@ async function fetchLog() {
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username){ showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
-  if(!pin)     { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
-  if(pin.length!==6){ showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits','error'); return; }
 
-  const loginBtn=document.getElementById('login-btn');
-  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=lang==='zh'?'连接中...':'Connecting...'; }
-  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
+  if (!username) { showToast('Enter your username / 请输入用户名', 'error'); return; }
+  if (!pin)      { showToast('Enter your PIN / 请输入密码', 'error'); return; }
+  if (pin.length !== 6) { showToast('PIN must be exactly 6 digits / 密码必须是6位数字', 'error'); return; }
 
-  // Try live fetch first, fall back to cache
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = 'Connecting…'; }
+
+  // ── Step 1: Fetch live users (also fills cachedUsers from cache on fail) ──
   await fetchLiveUsers();
 
-  if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Login 登录'; }
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Login 登录'; }
 
-  // Validate
-  if(Object.keys(cachedUsers).length===0){
-    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
+  // ── Step 2: Check users loaded ──────────────────────────────────────────
+  if (Object.keys(cachedUsers).length === 0) {
+    showToast('❌ Cannot reach server and no cached data.
+
+Tip: Tap "Test Server" to diagnose.', 'error');
     return;
   }
+
+  // ── Step 3: Find user ────────────────────────────────────────────────────
   const userMatch = cachedUsers[username];
-  if(!userMatch){
-    showToast(lang==='zh'?'用户名不存在':'Username not found — check spelling','error'); return;
+  if (!userMatch) {
+    const allNames = Object.keys(cachedUsers).join(', ');
+    showToast('Username "' + username + '" not found.
+Registered users: ' + allNames, 'error');
+    return;
   }
-  if(String(userMatch.pin).trim() !== String(pin).trim()){
-    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
+
+  // ── Step 4: Check PIN — handle numeric storage in Google Sheets ─────────
+  const storedPin = String(userMatch.pin || '').trim().replace(/\.0$/, '');
+  const enteredPin = String(pin).trim();
+  if (storedPin !== enteredPin) {
+    showToast('Wrong PIN. Please try again. / 密码错误，请重试', 'error');
+    return;
   }
-  if(userMatch.status && userMatch.status!=='active'){
-    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
+
+  // ── Step 5: Check status ─────────────────────────────────────────────────
+  const status = String(userMatch.status || 'active').trim().toLowerCase();
+  if (status === 'pending') {
+    showToast('Account pending Admin approval. / 账号待审批，请联系管理员', 'error');
+    return;
+  }
+  if (status === 'inactive' || status === 'disabled') {
+    showToast('Account is disabled. Contact your Admin.', 'error');
+    return;
   }
 
   // ✅ Login success
