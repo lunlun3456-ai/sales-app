@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -533,7 +533,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz0K3Qmmm3VWl851pBIFO6jdLeEBnahxiIiDFcbn-mFoJSWqF5ZEtuBY0ibtQ2lybGkNQ/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -899,11 +899,19 @@ async function doLogin() {
   if(!userMatch){
     showToast(lang==='zh'?'用户名不存在':'Username not found — check spelling','error'); return;
   }
-  if(String(userMatch.pin).trim() !== String(pin).trim()){
-    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
+  // Normalize PIN — Google Sheets may store as number (123456.0 → "123456")
+  const storedPin  = String(userMatch.pin  ?? '').trim().replace(/\.0$/, '');
+  const enteredPin = String(pin).trim();
+  if(storedPin !== enteredPin){
+    showToast('Wrong PIN. Try again. / 密码错误，请重试','error'); return;
   }
-  if(userMatch.status && userMatch.status!=='active'){
-    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
+  // Normalize status — handle "Active", " active ", "ACTIVE" etc.
+  const userStatus = String(userMatch.status ?? 'active').trim().toLowerCase();
+  if(userStatus === 'pending'){
+    showToast('Account pending Admin approval. / 账号待审批','error'); return;
+  }
+  if(userStatus === 'inactive' || userStatus === 'disabled'){
+    showToast('Account disabled. Contact Admin. / 账号已停用','error'); return;
   }
 
   // ✅ Login success
@@ -1731,16 +1739,22 @@ async function submitAttendance(type){
       record.status='rejected';
       showAttendanceResult('rejected',label+' Rejected','RED NOTICE: You are outside the allowed check in / check out compound.',`Distance ${zone.distanceMeters}m / Allowed ${zone.radiusMeters}m`);
     } else {
-      const localConflict=getLocalDeviceUsers().some(u=>String(u).toLowerCase()!==String(currentUser.username).toLowerCase());
-      const cloudConflict=(cachedUserDevices.length?cachedUserDevices:loadData('user_devices',[])).some(d=>String(d.deviceId)===record.deviceId&&String(d.username).toLowerCase()!==String(currentUser.username).toLowerCase());
-      const deviceConflict=localConflict||cloudConflict;
-      if(deviceConflict){
-        record.status='pending_approval';
-        showAttendanceResult('pending',label+' Pending Approval','This device was used with another username. Store Supervisor, Manager or Admin must approve it.',record.deviceName);
-      } else {
-        record.status='present';
-        showAttendanceResult('success',label+' Saved','Attendance recorded for '+currentUser.name+'.',record.deviceName);
+      // Device binding: each staff must use their own registered device
+      const boundUser = getDeviceBoundUser(record.deviceId);
+      if(boundUser && boundUser.toLowerCase() !== currentUser.username.toLowerCase()){
+        // Hard block — rejected, no approval needed
+        record.status = 'rejected';
+        const arr2 = getAttendance(); arr2.push(record); saveAttendance(arr2);
+        renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
+        showAttendanceResult('rejected', label+' Blocked',
+          'This device is registered to '+boundUser+'. Each staff must use their own device. Contact Admin to reset device.',
+          record.deviceName);
+        return;
       }
+      // First check-in on this device → bind device to this user
+      bindDeviceToUser(record.deviceId, currentUser.username);
+      record.status = 'present';
+      showAttendanceResult('success', label+' Saved', 'Attendance recorded for '+currentUser.name+'.', record.deviceName);
     }
     const arr=getAttendance(); arr.push(record); saveAttendance(arr); renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
   }catch(e){
@@ -1812,7 +1826,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e" onclick="adminResetDeviceBinding('${u.username}')">📱 Reset Device</button>${u.username!=='admin'?` <button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2573,6 +2587,42 @@ function submitCashDrawerFull() {
 // kept for backwards compat
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
+
+// ── Device Binding Helpers ───────────────────────────────────────────────
+// Prevents one staff member checking in for another person.
+// On first check-in, the device is bound to that user.
+// Any other user trying to check in on the same device is blocked.
+// Admin can reset via the "Reset Device" button in the user list.
+function _deviceBindings(){ return loadData('device_binding',{}); }
+
+function getDeviceBoundUser(deviceId){
+  return _deviceBindings()[deviceId] || null;
+}
+
+function bindDeviceToUser(deviceId, username){
+  const b = _deviceBindings();
+  if(!b[deviceId]){   // only bind on first use
+    b[deviceId] = username.toLowerCase();
+    saveData('device_binding', b);
+    console.log('[DeviceBind] Device bound to:', username);
+  }
+}
+
+function adminResetDeviceBinding(username){
+  if(!confirm('Reset device binding for "'+username+'"?
+They will be able to register a new device on their next check-in.')) return;
+  const b = _deviceBindings();
+  let removed = 0;
+  Object.keys(b).forEach(k=>{
+    if(String(b[k]).toLowerCase()===String(username).toLowerCase()){ delete b[k]; removed++; }
+  });
+  saveData('device_binding', b);
+  showToast(removed
+    ? 'Device binding cleared for '+username+'. They can now check in from a new device.'
+    : 'No device binding found for '+username,
+    removed ? 'success' : 'error');
+  renderAdminTab();
+}
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
