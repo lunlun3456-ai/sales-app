@@ -502,7 +502,7 @@
       </select>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">'+t('cancelBtn')+'</button>
+      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">${t('cancelBtn')}</button>
       <button class="btn success"   style="flex:1" onclick="saveUserEdit()">Save 保存</button>
     </div>
   </div>
@@ -1189,8 +1189,8 @@ function openConfirm() {
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 '+t('storeLabel')+'</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 '+t('dateLabel')+'</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 ${t('storeLabel')}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 ${t('dateLabel')}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
@@ -1776,11 +1776,11 @@ function renderAttendanceTab(){
     .sort((a,b)=>b.dateKey.localeCompare(a.dateKey)).slice(0,14);
 
   const inCard = inTime
-    ? `<div class="att-time-card in-done"><div class="att-time-label">'+t('checkIn').toUpperCase()+'</div><div class="att-time-value">${inTime}</div><div class="att-time-date">${lastIn.status==='late'?t('lateStatus'):('✅ '+t('onTime'))}</div></div>`
-    : `<div class="att-time-card in-wait"><div class="att-time-label">'+t('checkIn').toUpperCase()+'</div><div class="att-time-value">--:--</div><div class="att-time-date">'+t('notYet')+'</div></div>`;
+    ? `<div class="att-time-card in-done"><div class="att-time-label">${t('checkIn').toUpperCase()}</div><div class="att-time-value">${inTime}</div><div class="att-time-date">${lastIn.status==='late'?t('lateStatus'):('✅ ${t('onTime'))}</div></div>`
+    : `<div class="att-time-card in-wait"><div class="att-time-label">${t('checkIn').toUpperCase()}</div><div class="att-time-value">--:--</div><div class="att-time-date">${t('notYet')}</div></div>`;
   const outCard = outTime
-    ? `<div class="att-time-card out-done"><div class="att-time-label">'+t('checkOut').toUpperCase()+'</div><div class="att-time-value">${outTime}</div><div class="att-time-date">${lastOut.status==='early_leave'?t('earlyLeave'):('✅ '+t('done'))}</div></div>`
-    : `<div class="att-time-card out-wait"><div class="att-time-label">'+t('checkOut').toUpperCase()+'</div><div class="att-time-value">--:--</div><div class="att-time-date">'+t('notYet')+'</div></div>`;
+    ? `<div class="att-time-card out-done"><div class="att-time-label">${t('checkOut').toUpperCase()}</div><div class="att-time-value">${outTime}</div><div class="att-time-date">${lastOut.status==='early_leave'?t('earlyLeave'):('✅ ${t('done'))}</div></div>`
+    : `<div class="att-time-card out-wait"><div class="att-time-label">${t('checkOut').toUpperCase()}</div><div class="att-time-value">--:--</div><div class="att-time-date">${t('notYet')}</div></div>`;
   const ciDisabled = inTime  ? 'disabled' : '';
   const coDisabled = (!inTime||outTime) ? 'disabled' : '';
   const ciLabel = inTime  ? '✅ '+t('checkIn')  : '🟢 '+t('checkIn');
@@ -1807,7 +1807,7 @@ function renderAttendanceTab(){
       </div>
       <div class="att-time-grid">${inCard}${outCard}</div>
       <div class="input-wrap" style="margin-top:8px;margin-bottom:8px">
-        <label class="field-label">'+t('remarkLabel')+'</label>
+        <label class="field-label">${t('remarkLabel')}</label>
         <input type="text" id="att-remark" placeholder="e.g. Doctor visit, Late bus…">
       </div>
       <div class="att-btn-row">
@@ -1816,40 +1816,44 @@ function renderAttendanceTab(){
       </div>
       ${!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">Tap Check In to start your day</div>':''}
     </div>
-    ${recent.length?`<div class="card"><div class="card-title">'+t('recentHistory')+'</div>${recentHtml}</div>`:''}
+    ${recent.length?`<div class="card"><div class="card-title">${t('recentHistory')}</div>${recentHtml}</div>`:''}
   `;
 }
 
 // ── Confirmation popup before check-in/out ──────────────────────────────
 function confirmAttendance(type){
-  const label  = type==='check_in' ? t('checkIn') : t('checkOut');
-  const icon   = type==='check_in' ? '🟢' : '🔴';
-  const remark = document.getElementById('att-remark')?.value || '';
-  const now    = new Date();
+  const label   = type==='check_in' ? t('checkIn') : t('checkOut');
+  const icon    = type==='check_in' ? '🟢' : '🔴';
+  const btnCls  = type==='check_in' ? 'success' : 'warn';
+  const remark  = (document.getElementById('att-remark') || {value:''}).value || '';
+  const now     = new Date();
   const timeStr = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const dateStr = now.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+
+  const remarkRow = remark
+    ? '<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+remark+'</span></div>'
+    : '';
+
   const ov = document.createElement('div');
-  ov.className='modal-overlay open'; ov.id='att-confirm-modal';
-  ov.innerHTML=`
-    <div class="modal-box" style="text-align:center">
-      <div style="font-size:40px;margin-bottom:8px">${icon}</div>
-      <div class="modal-title" style="font-size:20px">${label}</div>
-      <div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:14px 0;text-align:left">
-        <div class="stat-row"><span class="stat-label">👤 '+t('nameLabel')+'</span><span class="stat-value">${currentUser.name||currentUser.username}</span></div>
-        <div class="stat-row"><span class="stat-label">🏪 '+t('storeLabel')+'</span><span class="stat-value">${currentUser.store}</span></div>
-        <div class="stat-row"><span class="stat-label">📅 '+t('dateLabel')+'</span><span class="stat-value">${dateStr}</span></div>
-        <div class="stat-row"><span class="stat-label">🕐 '+t('timeLabel')+'</span><span class="stat-value" style="font-size:20px;font-weight:900;color:#1e3a8a">${timeStr}</span></div>
-        ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">${remark}</span></div>`:''}
-      </div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:14px">📍 Location captured automatically</div>
-      <div style="display:flex;gap:10px">
-        <button class="btn secondary" style="flex:1" onclick="document.getElementById('att-confirm-modal').remove()">'+t('cancelBtn')+'</button>
-        <button class="btn ${type==='check_in'?'success':'warn'}" style="flex:2"
-          onclick="document.getElementById('att-confirm-modal').remove();submitAttendance('${type}')">
-          Confirm ${label}
-        </button>
-      </div>
-    </div>`;
+  ov.className = 'modal-overlay open';
+  ov.id = 'att-confirm-modal';
+  ov.innerHTML =
+    '<div class="modal-box" style="text-align:center">'+
+      '<div style="font-size:40px;margin-bottom:8px">'+icon+'</div>'+
+      '<div class="modal-title" style="font-size:20px">'+label+'</div>'+
+      '<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:14px 0;text-align:left">'+
+        '<div class="stat-row"><span class="stat-label">👤 '+t('nameLabel')+'</span><span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'+
+        '<div class="stat-row"><span class="stat-label">🏪 '+t('storeLabel')+'</span><span class="stat-value">'+currentUser.store+'</span></div>'+
+        '<div class="stat-row"><span class="stat-label">📅 '+t('dateLabel')+'</span><span class="stat-value">'+dateStr+'</span></div>'+
+        '<div class="stat-row"><span class="stat-label">🕐 '+t('timeLabel')+'</span><span class="stat-value" style="font-size:20px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'+
+        remarkRow+
+      '</div>'+
+      '<div style="font-size:12px;color:#64748b;margin-bottom:14px">'+t('locationAuto')+'</div>'+
+      '<div style="display:flex;gap:10px">'+
+        '<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'att-confirm-modal\').remove()">'+t('cancelBtn')+'</button>'+
+        '<button class="btn '+btnCls+'" style="flex:2" onclick="document.getElementById(\'att-confirm-modal\').remove();submitAttendance(\''+type+'\')">'+t('cancelBtn'===''?'confirmBtn':'confirmBtn')+' '+label+'</button>'+
+      '</div>'+
+    '</div>';
   document.body.appendChild(ov);
 }
 
@@ -2370,49 +2374,38 @@ function renderCashDrawerCard(store, dateKey) {
   const expected  = opening + totalIn - totalOut;
   const diff      = existing ? (drawerTotal - expected) : null;
   const diffColor = diff===null?'#94a3b8':diff>0?'#10b981':diff<0?'#ef4444':'#10b981';
-  const diffLabel = diff===null?'-':diff>0?'+RM '+diff.toFixed(2)+' ↑':diff<0?'-RM '+Math.abs(diff).toFixed(2)+' ↓':'RM 0.00 ✓';
+  const diffLabel = diff===null?'-':diff>0?'+RM '+diff.toFixed(2)+' \u2191':diff<0?'-RM '+Math.abs(diff).toFixed(2)+' \u2193':'RM 0.00 \u2713';
+  const prevLabel = prevDay ? '('+prevDay.dateKey+')' : '('+t('noPrevDay')+')';
+  const countedBadge = existing
+    ? '<span class="drawer-badge">\u2713 '+t('counted')+'</span>'
+    : '<span style="font-size:11px;color:#b45309">'+t('notCounted')+'</span>';
+  const diffBg = diff===null?'#f8fafc':diff>=0?'#f0fdf4':'#fff1f2';
 
-  return `
-    <div class="drawer-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer'}</span>
-        ${existing?'<span class="drawer-badge">✓ Counted</span>':`<span style="font-size:11px;color:#b45309">${t('notCounted')}</span>`}
-      </div>
-      <!-- Carry-forward breakdown -->
-      <div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">
-        <div class="cd-carry-row">
-          <span class="cd-carry-label">📂 ${t('openingBal')} ${prevDay?'('+prevDay.dateKey+')':'('+t('noPrevDay')+')'}
-          </span><span class="cd-carry-val">RM ${opening.toFixed(2)}</span>
-        </div>
-        <div class="cd-carry-row">
-          <span class="cd-carry-label">➕ Cash In</span>
-          <span class="cd-carry-val" style="color:#10b981">+RM ${totalIn.toFixed(2)}</span>
-        </div>
-        <div class="cd-carry-row">
-          <span class="cd-carry-label">➖ Cash Out</span>
-          <span class="cd-carry-val" style="color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
-        </div>
-        <div class="cd-carry-row" style="border-bottom:none">
-          <span class="cd-carry-label" style="font-weight:800">📊 Expected</span>
-          <span class="cd-carry-val">RM ${expected.toFixed(2)}</span>
-        </div>
-      </div>
-      <!-- Actual vs Gain/Loss -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a">
-          <div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div>
-          <div style="font-size:20px;font-weight:900;color:#92400e">RM ${drawerTotal.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid ${diffColor};background:${diff===null?'#f8fafc':diff>=0?'#f0fdf4':'#fff1f2'}">
-          <div style="font-size:10px;font-weight:700;color:${diffColor}">'+t('gainLoss')+'</div>
-          <div style="font-size:20px;font-weight:900;color:${diffColor}">${diffLabel}</div>
-        </div>
-      </div>
-      <button class="btn warn" onclick="openCashDrawerModal()"
-        style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">
-        🗄️ Open Cash Drawer Manager
-      </button>
-    </div>`;
+  return '<div class="drawer-card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<span style="font-size:15px;font-weight:800;color:#92400e">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</span>'
+      +countedBadge
+    +'</div>'
+    +'<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
+      +'<div class="cd-carry-row"><span class="cd-carry-label">\uD83D\uDCC2 '+t('openingBal')+' '+prevLabel+'</span><span class="cd-carry-val">RM '+opening.toFixed(2)+'</span></div>'
+      +'<div class="cd-carry-row"><span class="cd-carry-label">\u2795 '+t('cashInToday')+'</span><span class="cd-carry-val" style="color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
+      +'<div class="cd-carry-row"><span class="cd-carry-label">\u2796 '+t('cashOutToday')+'</span><span class="cd-carry-val" style="color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
+      +'<div class="cd-carry-row" style="border-bottom:none"><span class="cd-carry-label" style="font-weight:800">\uD83D\uDCCA '+t('expectedBal')+'</span><span class="cd-carry-val">RM '+expected.toFixed(2)+'</span></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a">'
+        +'<div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div>'
+        +'<div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div>'
+      +'</div>'
+      +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+diffColor+';background:'+diffBg+'">'
+        +'<div style="font-size:10px;font-weight:700;color:'+diffColor+'">'+t('gainLoss')+'</div>'
+        +'<div style="font-size:20px;font-weight:900;color:'+diffColor+'">'+diffLabel+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">'
+      +'\uD83D\uDDC4\uFE0F '+t('cashDrawer')
+    +'</button>'
+    +'</div>';
 }
 
 function openCashDrawerModal() {
