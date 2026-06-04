@@ -2816,7 +2816,7 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
-function // ── Sales submission approval workflow for Staff/Supervisor ──────────────
+// ── Sales submission approval workflow for Staff/Supervisor ──────────────
 function submitForApprovalFlow(withUpload=false){
   const s=window._pendingSubmit;
   if(!s){showToast('No pending submit data','error');return;}
@@ -2843,7 +2843,7 @@ function submitForApprovalFlow(withUpload=false){
   else setTimeout(()=>triggerSyncRefresh(),1500);
 }
 
-_db(){ return loadData('device_binding',{}); }
+function _db(){ return loadData('device_binding',{}); }
 function getDeviceBoundUser(id){ return _db()[id]||null; }
 function bindDeviceToUser(id,u){ const b=_db(); if(!b[id]){b[id]=u.toLowerCase();saveData('device_binding',b);} }
 function adminResetDeviceBinding(u){
