@@ -402,7 +402,7 @@
     <div class="input-wrap">
       <label class="field-label">Target Store Location 门店</label>
       <select id="reg-store">
-        <option value="">-- Select Store --</option>
+        <option value="">${t('selectStore')}</option>
         <option value="Bonia Sabindo">Bonia Sabindo</option>
         <option value="Bonia Eastern">Bonia Eastern</option>
         <option value="Polo Sabindo">Polo Sabindo</option>
@@ -431,10 +431,13 @@
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
     <div id="modal-body"></div>
-    <div style="display:flex;gap:10px;margin-top:20px;">
-      <button class="btn secondary" style="flex:1" onclick="closeModal()">Cancel 取消</button>
-      <button class="btn success"   style="flex:1" onclick="confirmSubmit()">Confirm & Submit ✓</button>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn secondary" style="flex:1" onclick="closeModal()" id="modal-cancel-btn">${lang==='zh'?'取消':'Cancel'}</button>
+      <button class="btn success"   style="flex:1" onclick="confirmSubmit(false)" id="modal-submit-btn">${lang==='zh'?'确认提交 ✓':'Confirm & Submit ✓'}</button>
     </div>
+    <button class="btn" style="margin-top:8px;background:#f59e0b;font-size:14px" onclick="confirmSubmit(true)" id="modal-upload-btn">
+      📎 ${lang==='zh'?'提交并上传日结单（确认当日销售）':'Submit + Upload Receipt = Confirm Daily Sales'}
+    </button>
   </div>
 </div>
 
@@ -503,7 +506,7 @@
 <!-- ===================== SETTLEMENT UPLOAD MODAL ===================== -->
 <div class="modal-overlay" id="settlement-modal">
   <div class="modal-box">
-    <div class="modal-title">📎 <span id="settlement-modal-title">Upload Settlement Receipt</span></div>
+    <div class="modal-title">📎 <span id="settlement-modal-title">${t('settleTitle')}</span></div>
     <div id="settlement-modal-info" style="font-size:13px;color:var(--text2);margin-bottom:14px;padding:10px;background:#f8fafc;border-radius:10px;"></div>
     <div id="upload-preview" style="display:none;margin-bottom:14px;text-align:center">
       <img id="preview-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid var(--border);object-fit:cover">
@@ -533,7 +536,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwca-4nAmS6fzZAY8hKUNZV7w9kuRq7sum_MNO8s5JCZWw9a4MUw1wZB-xPpWmgFgO01w/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -696,7 +699,30 @@ const T = {
     expectedBal:'Expected',actualCount:'Actual Count',gainLoss:'Gain / Loss',
     notCounted:'Not counted yet',counted:'Counted',noPrevDay:'no prev day',
     locationAuto:'Location captured automatically',
-    deviceResetMsg:'Reset device binding?'
+    deviceResetMsg:'Reset device binding?',
+    managerDash:'Manager Dashboard',present:'Present',absent:'Absent',
+    approval:'Approvals',pendingApproval:'Pending Approvals',
+    noApproval:'No pending approvals.',attRecords:'Attendance Records',
+    noAttRecords:'No attendance records.',backupBtn:'Create Database Backup',
+    backupDone:'Backup created in Google Drive.',
+    dateLabel2:'Date',storeLabel2:'Store',allStoresOpt:'All Stores',
+    approveBtn2:'Approve',rejectBtn2:'Reject',
+    outsideZone2:'Outside allowed zone',attBlocked:'Attendance Blocked',
+    uploadReceiptBtn:'Submit + Upload Receipt (Confirms Daily Sales)',
+    uploadAndConfirm:'Receipt uploaded — Daily sales confirmed & locked',
+    salesLockedNote:'Settlement uploaded. Daily sales locked.',
+    loadingMsg:'Loading...',noAccess:'No access',
+    workZone:'Work Zone & Schedule',branch:'Branch',radius:'Radius',
+    saveZone:'Save Allowed Zone',saveSched:'Save Work Schedule',
+    day:'Day',startTime:'Start',endTime:'End',
+    weekly:'Weekly',monthly:'Monthly',
+    selectStore:'-- Select Store --',
+    settleTitle:'Upload Settlement Receipt',
+    settleInfo:'Take a photo or select the settlement receipt image (JPG/PNG)',
+    settleTapPhoto:'Tap to take photo or select image',
+    settleNote:'Note (optional)',settleUploading:'Uploading...',
+    settleUpload:'📤 Upload',settleSelected:'✅ Image selected — tap to change',
+    enterAmounts:'All amounts can be 0.00 (no sales for that type)'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
@@ -752,7 +778,30 @@ const T = {
     expectedBal:'预期余额',actualCount:'实际盘点',gainLoss:'盈亏',
     notCounted:'尚未盘点',counted:'已盘点',noPrevDay:'无前日记录',
     locationAuto:'自动获取位置',
-    deviceResetMsg:'重置设备绑定？'
+    deviceResetMsg:'重置设备绑定？',
+    managerDash:'管理仪表板',present:'出勤',absent:'缺勤',
+    approval:'审批',pendingApproval:'待审批',
+    noApproval:'暂无待审批项目。',attRecords:'考勤记录',
+    noAttRecords:'暂无考勤记录。',backupBtn:'创建数据库备份',
+    backupDone:'备份已创建至 Google Drive。',
+    dateLabel2:'日期',storeLabel2:'门店',allStoresOpt:'所有门店',
+    approveBtn2:'批准',rejectBtn2:'拒绝',
+    outsideZone2:'超出允许区域',attBlocked:'考勤已拦截',
+    uploadReceiptBtn:'提交并上传日结单（确认当日销售）',
+    uploadAndConfirm:'日结单已上传，当日销售已确认锁定',
+    salesLockedNote:'日结单已上传，当日销售已锁定。',
+    loadingMsg:'加载中...',noAccess:'无权限',
+    workZone:'工作区域与排班',branch:'门店',radius:'半径',
+    saveZone:'保存允许区域',saveSched:'保存工作排班',
+    day:'星期',startTime:'开始时间',endTime:'结束时间',
+    weekly:'每周',monthly:'每月',
+    selectStore:'-- 请选择门店 --',
+    settleTitle:'上传日结单',
+    settleInfo:'请拍摄或选择日结凭证图片（JPG/PNG）',
+    settleTapPhoto:'点击拍摄或选择图片',
+    settleNote:'备注（选填）',settleUploading:'上传中...',
+    settleUpload:'📤 上传',settleSelected:'✅ 图片已选择，点击更换',
+    enterAmounts:'所有金额均可填写为 0.00（表示无该类型销售）'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -1002,7 +1051,7 @@ function renderSubmitTab() {
   let storeOptions=!isManagerial
     ?`<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
     :`<select id="submit-store" onchange="checkAndLoadExistingSales()">
-         <option value="">-- Select Store --</option>
+         <option value="">${t('selectStore')}</option>
          ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
@@ -1070,12 +1119,10 @@ function renderSubmitTab() {
       </div>
             <div id="sales-lock-note"></div>
       <button class="btn" onclick="openConfirm()" id="sales-submit-btn" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-      <button class="btn secondary" onclick="openSettlementUpload()" style="margin-top:10px;font-size:15px;border:2px solid var(--primary);">
-        📎 ${lang==='zh'?'上传日结单 / 收据':'Upload Settlement Receipt'}
-      </button>
+
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
+      💡 ${t('enterAmounts')}
     </div>
 
     <!-- ── CASH IN DRAWER CARD ── -->
@@ -1178,7 +1225,7 @@ function openConfirm() {
 
 function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
-function confirmSubmit() {
+function confirmSubmit(withUpload=false) {
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1209,7 +1256,8 @@ function confirmSubmit() {
     renderSubmitTab();
     checkAllStoresSubmitted();
     // Pull fresh data from DB in background to confirm sync
-    setTimeout(()=>triggerSyncRefresh(), 1500);
+    if(withUpload) setTimeout(()=>openSettlementUpload(),600);
+    else setTimeout(()=>triggerSyncRefresh(),1500);
   }).catch(err=>{showToast('Error: '+err,'error');});
 }
 
@@ -1884,33 +1932,35 @@ function renderOperationsDashboard(){
   const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
   const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.username));
   const absent=users.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">Manager Dashboard</div>
-    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Attendance Records</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No attendance records.</div>'}</div>
-    <div style="margin-top:12px">${renderAttendanceReport(users)}</div>
+  return `<div class="card"><div class="card-title">${t('managerDash')}</div>
+    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('dateLabel2')}</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">${t('storeLabel2')}</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">${t('allStoresOpt')}</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('present')}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('absent')}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('approval')}</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">${t('pendingApproval')}</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">'+t('noApproval')+'</div>'}</div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">${t('attRecords')}</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">'+t('noAttRecords')+'</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
-    <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>
+    <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">${t('backupBtn')}</button>
   </div>`;
 }
-function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
-async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
+function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">${t('approveBtn2')}</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">${t('rejectBtn2')}</button></div></div>`; }
+async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?t('approvedMsg'):t('rejectedMsg'),'success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
-function renderZoneScheduleTools(branches,users){ return `<div class="divider"></div><div class="card-title">Work Zone & Schedule</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Branch</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">Radius</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">Save Allowed Zone</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Staff</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">Day</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`; }
-async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast('Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Zone saved.','success'); triggerSyncRefresh(); }
-async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Schedule saved.','success'); triggerSyncRefresh(); }
-async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast('Backup created in Google Drive.','success'); setTimeout(()=>triggerSyncRefresh(),1500); }
+function renderZoneScheduleTools(branches,users){
+  // Only admin can set work zones — boss and manager cannot
+  if(currentUser.role !== 'admin') return '';
+  return `<div class="divider"></div><div class="card-title">${t('workZone')}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('branch')}</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">${t('radius')}</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">${t('saveZone')}</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('staff')}</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">${t('day')}</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">${t('saveSched')}</button>`; }
+async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast(lang==='zh'?'请输入经纬度坐标':'Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(lang==='zh'?'区域已保存':'Zone saved.','success'); triggerSyncRefresh(); }
+async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(lang==='zh'?'排班已保存':'Schedule saved.','success'); triggerSyncRefresh(); }
+async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast(t('backupDone'),'success'); setTimeout(()=>triggerSyncRefresh(),1500); }
 // ============================================================
 // ADMIN TAB
 // ============================================================
 async function renderAdminTab() {
   const isAdmin=['admin','boss','manager'].includes(currentUser.role);
   if(!isAdmin){
-    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
+    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">${t('noAccess')}</div>`;
     return;
   }
-  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
+  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>${t('loadingMsg')}</div>`;
   await fetchLiveUsers();
   const allUsers=cachedUsers;
   const pending=[]; const active=[];
@@ -2168,16 +2218,16 @@ function openSettlementUpload() {
 
   // Update modal text language
   document.getElementById('settlement-modal-title').textContent =
-    lang==='zh' ? '上传日结单 / 收据' : 'Upload Settlement Receipt';
+    t('settleTitle');
   document.getElementById('settlement-modal-info').innerHTML =
     `🏪 <strong>${store}</strong> &nbsp;·&nbsp; 📅 <strong>${dateKey}</strong><br>
-     <span style="font-size:12px">${lang==='zh'?'请拍摄或选择日结凭证图片（JPG/PNG）':'Take a photo or select the settlement receipt image (JPG/PNG)'}</span>`;
+     <span style="font-size:12px">${t('settleInfo')}</span>`;
   document.getElementById('upload-label-text').textContent =
-    lang==='zh' ? '点击拍摄 / 选择图片' : 'Tap to take photo or select image';
+    t('settleTapPhoto');
   document.getElementById('settlement-note-label').textContent =
-    lang==='zh' ? '备注（选填）' : 'Note (optional)';
+    t('settleNote');
   document.getElementById('upload-progress-label').textContent =
-    lang==='zh' ? '正在上传...' : 'Uploading...';
+    t('settleUploading');
 
   // Reset state
   document.getElementById('settlement-file').value = '';
@@ -2211,7 +2261,7 @@ function previewSettlement(input) {
         : Math.round(file.size/1024)+'KB');
     document.getElementById('upload-preview').style.display = 'block';
     document.getElementById('upload-label-text').textContent =
-      lang==='zh' ? '✅ 图片已选择，点击更换' : '✅ Image selected — tap to change';
+      t('settleSelected');
   };
   reader.readAsDataURL(file);
 }
@@ -2233,7 +2283,7 @@ async function uploadSettlement() {
   const progressBar  = document.getElementById('upload-progress-bar');
   const progressLabel= document.getElementById('upload-progress-label');
 
-  if(btn) { btn.disabled=true; btn.textContent = lang==='zh'?'上传中...':'Uploading...'; }
+  if(btn) { btn.disabled=true; btn.textContent = t('settleUploading'); }
   if(progressWrap) progressWrap.style.display = 'block';
 
   // Animate progress bar
@@ -2278,7 +2328,7 @@ async function uploadSettlement() {
 
     setTimeout(() => {
       closeSettlementModal();
-      showToast(lang==='zh'?'Settlement Receipt uploaded to Cloud ✅':'Settlement Receipt uploaded to Cloud ✅','success');
+      confirmAndLockAfterUpload(store, dateKey);
     }, 900);
 
   } catch(e) {
