@@ -536,7 +536,92 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzS3ty7r5onPB_87QWFexXUsadiAoZfHnVe_qpQ4ogGDw19p_4XlCw4H7VRskcvL7GB7Q/exec";
+
+// ════════════════════════════════════════════════════════════
+// UTC+8 TIMEZONE HELPERS  (Malaysia / Singapore / China)
+// All times stored and displayed in UTC+8
+// ════════════════════════════════════════════════════════════
+const _UTC8_MS = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+/** Current UTC+8 date string YYYY-MM-DD */
+function dateKeyUTC8() {
+  return new Date(Date.now() + _UTC8_MS).toISOString().slice(0, 10);
+}
+
+/** Current UTC+8 month string YYYY-MM */
+function monthUTC8() {
+  return new Date(Date.now() + _UTC8_MS).toISOString().slice(0, 7);
+}
+
+/** Current datetime as ISO string anchored to UTC+8 */
+function nowUTC8() {
+  const d = new Date(Date.now() + _UTC8_MS);
+  return d.toISOString().slice(0, 19) + '+08:00';
+}
+
+/** Format any stored ISO timestamp as HH:MM in UTC+8 */
+function fmtTimeUTC8(isoStr) {
+  if (!isoStr) return '--:--';
+  try {
+    const d = new Date(isoStr);
+    const u = new Date(d.getTime() + _UTC8_MS);
+    const h = String(u.getUTCHours()).padStart(2, '0');
+    const m = String(u.getUTCMinutes()).padStart(2, '0');
+    return h + ':' + m;
+  } catch(e) { return '--:--'; }
+}
+
+/** Format stored ISO timestamp as HH:MM:SS in UTC+8 */
+function fmtTimeSUTC8(isoStr) {
+  if (!isoStr) return '--:--:--';
+  try {
+    const d = new Date(isoStr);
+    const u = new Date(d.getTime() + _UTC8_MS);
+    const h = String(u.getUTCHours()).padStart(2,'0');
+    const m = String(u.getUTCMinutes()).padStart(2,'0');
+    const s = String(u.getUTCSeconds()).padStart(2,'0');
+    return h+':'+m+':'+s;
+  } catch(e){ return '--:--:--'; }
+}
+
+/** Format stored ISO timestamp as short date+time in UTC+8 */
+function fmtDateTimeUTC8(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    const u = new Date(d.getTime() + _UTC8_MS);
+    const date = u.toISOString().slice(0, 10);
+    const time = u.toISOString().slice(11, 16);
+    return date + ' ' + time;
+  } catch(e) { return ''; }
+}
+
+/** Today's full date label in UTC+8 (e.g. "Monday, 4 June 2025") */
+function todayLabelUTC8() {
+  const u = new Date(Date.now() + _UTC8_MS);
+  // Build manually to avoid locale issues
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const daysCN = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const monthsCN = ['1月','2月','3月','4月','5月','6月',
+                    '7月','8月','9月','10月','11月','12月'];
+  const d = u.getUTCDay(), mo = u.getUTCMonth(), day = u.getUTCDate(), yr = u.getUTCFullYear();
+  return lang === 'zh'
+    ? yr+'年'+monthsCN[mo]+day+'日 '+daysCN[d]
+    : days[d]+', '+day+' '+months[mo]+' '+yr;
+}
+
+/** Weekday abbreviation in UTC+8 */
+function weekdayUTC8(isoDateStr) {
+  const d = new Date(isoDateStr + 'T00:00:00+08:00');
+  const daysCN = ['日','一','二','三','四','五','六'];
+  const daysEN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const idx = new Date(d.getTime() + _UTC8_MS).getUTCDay();
+  return lang === 'zh' ? daysCN[idx] : daysEN[idx];
+}
+
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -550,18 +635,18 @@ let cachedWorkZones = [];
 let cachedWorkSchedules = [];
 let cachedBackups = [];
 let cachedUserDevices = [];
-let attendanceDateFilter = new Date().toISOString().slice(0,10);
+let attendanceDateFilter = dateKeyUTC8();
 let attendanceStoreFilter = 'all';
 let attendanceReportMode = 'weekly';
 let selectedDateRange  = 'today';
-let customDateValue    = new Date().toISOString().slice(0,10);
-let selectedMonthValue = new Date().toISOString().slice(0,7);
+let customDateValue    = dateKeyUTC8();
+let selectedMonthValue = monthUTC8();
 let activeRecordStoreFilter = 'all';
 let logStoreFilter = 'all';
 let logActionFilter = 'all';
 let summaryStoreFilter = 'all';   // 'all' or store name
 let summaryViewMode    = 'today'; // 'today','yesterday','custom_date','month'
-let summaryCustDate    = new Date().toISOString().slice(0,10);
+let summaryCustDate    = dateKeyUTC8();
 
 const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
@@ -1070,7 +1155,7 @@ function renderCurrentTab() {
 function renderSubmitTab() {
   const isManagerial=['boss','admin','manager'].includes(currentUser.role);
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=dateKeyUTC8();
   let allowedStores=STORES;
   if(currentUser.role!=='admin') allowedStores=STORES.filter(s=>s!=='HQ');
 
@@ -1202,7 +1287,7 @@ function openConfirm() {
 
   // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=dateKeyUTC8();
   if(isRestricted&&targetDate!==todayStr){
     showToast(t('onlyTodayAllowed'),'error'); return;
   }
@@ -1268,7 +1353,7 @@ function confirmSubmit(withUpload=false) {
   const record={
     id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
     total:s.total,remark:s.remark,submitter:currentUser.name,
-    role:currentUser.role,datetime:now.toISOString(),
+    role:currentUser.role,datetime:nowUTC8(),
     dateKey:s.targetDate,month:s.targetDate.slice(0,7),
     submissionType,changeLog:JSON.stringify(changeLog)
   };
@@ -1298,9 +1383,8 @@ function confirmSubmit(withUpload=false) {
 function renderRecordsTab() {
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
-  const todayKey=new Date().toISOString().slice(0,10);
-  let yest=new Date(); yest.setDate(yest.getDate()-1);
-  const yestKey=yest.toISOString().slice(0,10);
+  const todayKey=dateKeyUTC8();
+  const yestKey=(()=>{ const d=new Date(Date.now()+_UTC8_MS-86400000); return d.toISOString().slice(0,10); })();
   let targetDate=todayKey;
   if(selectedDateRange==='yesterday')   targetDate=yestKey;
   if(selectedDateRange==='custom_date') targetDate=customDateValue;
@@ -1417,7 +1501,7 @@ function renderRecordsTab() {
           <div class="record-icon">🗄️</div>
           <div class="record-info">
             <div class="record-store">${r.store} <span class="badge" style="background:#fff7ed;color:#92400e">${r.submitter||''}</span></div>
-            <div class="record-meta">${lang==='zh'?'盘点时间':'Counted at'}: ${r.datetime?new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
+            <div class="record-meta">${lang==='zh'?'盘点时间':'Counted at'}: ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
             ${r.note?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.note}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
@@ -1450,9 +1534,8 @@ function renderSummaryTab() {
       </div>`; return;
   }
   const sales = getSales();
-  const todayKey = new Date().toISOString().slice(0,10);
-  let yestD=new Date(); yestD.setDate(yestD.getDate()-1);
-  const yestKey = yestD.toISOString().slice(0,10);
+  const todayKey = dateKeyUTC8();
+  const yestKey=(()=>{ const d=new Date(Date.now()+_UTC8_MS-86400000); return d.toISOString().slice(0,10); })();
   let allowedStores = currentUser.role==='admin' ? STORES : STORES.filter(s=>s!=='HQ');
   const branches = allowedStores.filter(s=>s!=='HQ');
 
@@ -1479,9 +1562,8 @@ function renderSummaryTab() {
   // ── 7-day trend ──────────────────────────────────────────────
   const days=[];
   for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const dk=d.toISOString().slice(0,10);
-    const lbl=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
+    const dk=(()=>{ const d=new Date(Date.now()+_UTC8_MS-i*86400000); return d.toISOString().slice(0,10); })();
+    const lbl=weekdayUTC8(dk);
     const daySales = summaryStoreFilter==='all'
       ? sales.filter(s=>s.dateKey===dk)
       : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
@@ -1710,7 +1792,7 @@ function renderLogEntries() {
       ?`<span class="log-action-edit">✏️ ${t('editEntry')}</span>`
       :`<span class="log-action-new">✅ ${t('newEntry')}</span>`;
 
-    const ts=r.timestamp?new Date(r.timestamp).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):r.dateKey||'';
+    const ts=r.timestamp?fmtDateTimeUTC8(r.timestamp):r.dateKey||'';
 
     // Build diff display for edits
     let diffHtml='';
@@ -1813,13 +1895,13 @@ function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8A
 function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
 
 function renderAttendanceTab(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=dateKeyUTC8();
   const mine=getAttendance()
     .filter(r=>r.username===currentUser.username&&r.dateKey===today&&r.status!=='rejected')
     .sort((a,b)=>String(a.datetime).localeCompare(String(b.datetime)));
   const lastIn =mine.find(r=>r.type==='check_in');
   const lastOut=mine.find(r=>r.type==='check_out');
-  const fmt=dt=>dt?new Date(dt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):null;
+  const fmt=dt=>dt?fmtTimeUTC8(dt):null;
   const inTime =fmt(lastIn &&lastIn.datetime);
   const outTime=fmt(lastOut&&lastOut.datetime);
   const inSt =lastIn ?(lastIn.status==='late' ?('⚠️ '+t('lateStatus')):('✅ '+t('onTime'))):t('notYet');
@@ -1833,7 +1915,7 @@ function renderAttendanceTab(){
       +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
         +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'+(ci?t('checkIn'):t('checkOut'))+'</span></div>'
         +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
-      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</div>'
+      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+fmtTimeUTC8(r.datetime)+'</div>'
       +'</div>';
   }).join('');
   const css='att-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}';
@@ -1856,7 +1938,7 @@ function renderAttendanceTab(){
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
     +'<div class="card" style="margin-bottom:10px">'
       +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '
-        +new Date().toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</div>'
+        +todayLabelUTC8()+'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">'+inCard+outCard+'</div>'
       +'<div class="input-wrap" style="margin-top:8px;margin-bottom:8px">'
         +'<label class="field-label">'+t('remarkLabel')+'</label>'
@@ -1873,9 +1955,8 @@ function renderAttendanceTab(){
 function confirmAttendance(type){
   const lbl=type==='check_in'?t('checkIn'):t('checkOut');
   const rem=(document.getElementById('att-remark')||{value:''}).value||'';
-  const now=new Date();
-  const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const dateStr=now.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  const timeStr=fmtTimeSUTC8(nowUTC8());
+  const dateStr=todayLabelUTC8();
   const ov=document.createElement('div'); ov.className='modal-overlay open'; ov.id='att-confirm-modal';
   ov.innerHTML='<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:40px;margin-bottom:8px">'+(type==='check_in'?'🟢':'🔴')+'</div>'
@@ -1899,7 +1980,7 @@ function confirmAttendance(type){
 async function submitAttendance(type){
   const remark=document.getElementById('att-remark')?.value||'';
   const label=type==='check_in'?t('checkIn'):t('checkOut');
-  const _td=new Date().toISOString().slice(0,10);
+  const _td=dateKeyUTC8();
   const _att=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===_td&&r.status!=='rejected');
   if(type==='check_in'&&_att.find(r=>r.type==='check_in')){
     const _t=new Date(_att.find(r=>r.type==='check_in').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -1913,7 +1994,7 @@ async function submitAttendance(type){
   try{
     const loc=await getBestLocation();
     const now=new Date();
-    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:now.toISOString().slice(0,10),datetime:now.toISOString(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
+    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:nowUTC8().slice(0,10),datetime:nowUTC8(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submitAttendance',...record})}).catch(e=>console.warn('Attendance sync failed:',e));
     const zone=nearestLocalZone(record.store,record.lat,record.lng);
     if(zone && zone.distanceMeters>zone.radiusMeters){
@@ -1952,7 +2033,7 @@ function getBestLocation(){
 }
 function nearestLocalZone(store,lat,lng){ const zones=(cachedWorkZones.length?cachedWorkZones:loadData('work_zones',[])).filter(z=>z.store===store&&String(z.status||'active')==='active'); if(!zones.length) return null; return zones.map(z=>({radiusMeters:parseFloat(z.radiusMeters)||500,distanceMeters:distanceMeters(lat,lng,parseFloat(z.latitude),parseFloat(z.longitude))})).sort((a,b)=>a.distanceMeters-b.distanceMeters)[0]; }
 function distanceMeters(lat1,lon1,lat2,lon2){ const R=6371000,toRad=n=>n*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))); }
-function attendanceRowHtml(r){ return `<div class="record-item"><div class="record-icon">AT</div><div class="record-info"><div class="record-store">${r.name||r.username} <span class="status-pill status-${r.status||'present'}">${String(r.status||'present').replace('_',' ')}</span></div><div class="record-meta">${r.store||''} - ${r.type||''} - ${r.datetime?new Date(r.datetime).toLocaleString([],{dateStyle:'short',timeStyle:'short'}):''}<br>${r.lat?('Location: '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' - '+(r.accuracy||'')+'m'):''}</div>${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px">${r.remark}</div>`:''}</div></div>`; }
+function attendanceRowHtml(r){ return `<div class="record-item"><div class="record-icon">AT</div><div class="record-info"><div class="record-store">${r.name||r.username} <span class="status-pill status-${r.status||'present'}">${String(r.status||'present').replace('_',' ')}</span></div><div class="record-meta">${r.store||''} - ${r.type||''} - ${r.datetime?fmtDateTimeUTC8(r.datetime):''}<br>${r.lat?('Location: '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' - '+(r.accuracy||'')+'m'):''}</div>${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px">${r.remark}</div>`:''}</div></div>`; }
 
 function renderOperationsDashboard(){
   const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
@@ -2115,7 +2196,7 @@ function renderProfileTab() {
       </div>
       <div class="stat-row">
         <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
-        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
+        <span class="stat-value" style="font-size:13px">${fmtTimeUTC8(nowUTC8())}</span>
       </div>
     </div>
     <button class="btn secondary" onclick="enableBiometricLogin()" style="margin-top:8px">Enable Face ID / Fingerprint</button>
@@ -2169,7 +2250,7 @@ function setRecordStoreFilter(val){activeRecordStoreFilter=val;renderRecordsTab(
 // ============================================================
 function checkAllStoresSubmitted() {
   if(!currentUser||!['admin','boss','manager'].includes(currentUser.role)) return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=dateKeyUTC8();
   const notifiedKey='notified_all_submitted_'+today;
   if(sessionStorage.getItem(notifiedKey)) return;
   const todaySales=getSales().filter(s=>s.dateKey===today);
@@ -2185,7 +2266,7 @@ function checkAllStoresSubmitted() {
 }
 
 function sendReminder() {
-  const today=new Date().toISOString().slice(0,10);
+  const today=dateKeyUTC8();
   const todaySales=getSales().filter(s=>s.dateKey===today);
   const submittedStores=new Set(todaySales.map(s=>s.store));
   const pending=BRANCHES.filter(b=>!submittedStores.has(b));
@@ -2240,7 +2321,7 @@ function openSettlementUpload() {
   const storeEl = document.getElementById('submit-store');
   const dateEl  = document.getElementById('submit-date');
   const store   = storeEl ? storeEl.value : '';
-  const dateKey = dateEl  ? dateEl.value  : new Date().toISOString().slice(0,10);
+  const dateKey = dateEl  ? dateEl.value  : dateKeyUTC8();
 
   if(!store) {
     showToast(lang==='zh'?'请先选择门店':'Please select a store first','error');
@@ -2474,7 +2555,7 @@ function requestCashDrawerAdjustment(store,dateKey,variance){
   const req={id:String(Date.now()),type:'cash_variance',store,dateKey,
     requester:currentUser.name,role:currentUser.role,
     amount:Math.abs(variance),reason:'Variance: '+variance.toFixed(2)+' — '+reason,
-    status:'pending',createdAt:new Date().toISOString()};
+    status:'pending',createdAt:nowUTC8()};
   const approvals=getApprovals(); approvals.push(req); saveApprovals(approvals);
   fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -2496,7 +2577,7 @@ function openCashDrawerModal() {
   }
 
   const isRestricted = ['staff','supervisor'].includes(currentUser.role);
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = dateKeyUTC8();
   if(isRestricted && dateKey !== todayStr) { showToast(t('onlyTodayAllowed'),'error'); return; }
 
   _cdStore = store; _cdDate = dateKey; _cdQty = {};
@@ -2561,7 +2642,7 @@ function renderCashDrawerModal() {
       <div class="move-item">
         <div>
           <div style="font-size:13px;font-weight:700">${r.reason||'-'}</div>
-          <div style="font-size:11px;color:var(--text2)">${r.submitter||''} · ${r.datetime?new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
+          <div style="font-size:11px;color:var(--text2)">${r.submitter||''} · ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="${type==='in'?'move-in':'move-out'}">${type==='in'?'+':'-'}RM ${parseFloat(r.amount||0).toFixed(2)}</span>
@@ -2748,14 +2829,14 @@ function saveCashMovementEntry(type) {
     dateKey: _cdDate, store: _cdStore,
     type, amount, reason,
     submitter: currentUser.name, role: currentUser.role,
-    datetime: new Date().toISOString(),
+    datetime: nowUTC8(),
     month: _cdDate.slice(0,7),
     status: restrictedOut ? 'pending' : 'approved'
   };
 
   if(restrictedOut){
     const reqs = getApprovals();
-    reqs.push({id:record.id,type:'cash_out',status:'pending',dateKey:_cdDate,store:_cdStore,amount,reason,requester:currentUser.name,requesterRole:currentUser.role,requestedAt:new Date().toISOString(),payload:JSON.stringify(record)});
+    reqs.push({id:record.id,type:'cash_out',status:'pending',dateKey:_cdDate,store:_cdStore,amount,reason,requester:currentUser.name,requesterRole:currentUser.role,requestedAt:nowUTC8(),payload:JSON.stringify(record)});
     saveApprovals(reqs);
   } else {
     const mvs = getCashMovements();
@@ -2793,7 +2874,7 @@ function submitCashDrawerFull() {
     month: _cdDate.slice(0,7), amount: total, total, note,
     breakdown: JSON.stringify(breakdown),
     submitter: currentUser.name, role: currentUser.role,
-    datetime: new Date().toISOString()
+    datetime: nowUTC8()
   };
 
   showToast(lang==='zh'?'正在保存...':'Saving...','pending');
@@ -2826,7 +2907,7 @@ function submitForApprovalFlow(withUpload=false){
     store:s.store, dateKey:s.targetDate,
     requester:currentUser.name, role:currentUser.role,
     amount:s.total, reason:'Staff sales submission',
-    status:'pending', createdAt:new Date().toISOString(),
+    status:'pending', createdAt:nowUTC8(),
     payload:JSON.stringify({cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total,remark:s.remark})
   };
   // Save pending locally
