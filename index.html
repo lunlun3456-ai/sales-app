@@ -205,25 +205,6 @@
   .attendance-result-box.pending { background:#fffbeb;border-top:8px solid #f59e0b; }
   .attendance-result-box.success { background:#f0fdf4;border-top:8px solid #10b981; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
-
-  .att-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
-  .att-time-card{border-radius:14px;padding:14px 12px;text-align:center;border:2px solid}
-  .att-time-card.in-done{background:#f0fdf4;border-color:#10b981}
-  .att-time-card.in-wait{background:#f8fafc;border-color:#e2e8f0}
-  .att-time-card.out-done{background:#fff7ed;border-color:#f59e0b}
-  .att-time-card.out-wait{background:#f8fafc;border-color:#e2e8f0}
-  .att-time-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-  .att-time-value{font-size:26px;font-weight:900;line-height:1}
-  .att-time-date{font-size:10px;margin-top:3px;opacity:.65}
-  .att-time-card.in-done .att-time-label,.att-time-card.in-done .att-time-value{color:#10b981}
-  .att-time-card.out-done .att-time-label,.att-time-card.out-done .att-time-value{color:#f59e0b}
-  .att-time-card.in-wait .att-time-value,.att-time-card.out-wait .att-time-value{color:#cbd5e1;font-size:20px}
-  .att-time-card.in-wait .att-time-label,.att-time-card.out-wait .att-time-label{color:#94a3b8}
-  .att-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-  .att-btn-row button:disabled{opacity:.4;cursor:not-allowed}
-  .cd-carry-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid #fde68a;font-size:13px}
-  .cd-carry-label{color:#92400e;font-weight:600}
-  .cd-carry-val{font-weight:900;color:#92400e}
 </style>
 </head>
 <body>
@@ -308,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -359,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -502,7 +483,7 @@
       </select>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">${t('cancelBtn')}</button>
+      <button class="btn secondary" style="flex:1" onclick="closeUserEditModal()">Cancel</button>
       <button class="btn success"   style="flex:1" onclick="saveUserEdit()">Save 保存</button>
     </div>
   </div>
@@ -552,7 +533,7 @@
 </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwca-4nAmS6fzZAY8hKUNZV7w9kuRq7sum_MNO8s5JCZWw9a4MUw1wZB-xPpWmgFgO01w/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -704,18 +685,18 @@ const T = {
     noLog:'No log entries found', logFilter:'Filter Log',
     logAccessDenied:'Only Boss, Admin & Manager can view the audit log.',
     attendance:'Attendance',checkIn:'Check In',checkOut:'Check Out',
-    onTime:'On time',lateStatus:'Late',earlyLeave:'Early leave',done:'Done',
     notYet:'Not yet',tapCheckIn:'Tap Check In to start your day',
-    gettingLocation:'Getting location...',attendanceSaved:'Attendance recorded',
-    alreadyCheckedIn:'Already checked in today at',
+    recentHistory:'Recent History',cancelBtn:'Cancel',confirmBtn:'Confirm',
+    remarkLabel:'Remark (optional)',nameLabel:'Name',storeLabel:'Store',
+    dateLabel:'Date',timeLabel:'Time',onTime:'On time',lateStatus:'Late',
+    earlyLeave:'Early leave',done:'Done',gettingLocation:'Getting location...',
+    attendanceSaved:'Attendance recorded',alreadyCheckedIn:'Already checked in today at',
     alreadyCheckedOut:'Already checked out today at',checkInFirst:'Please check in first',
-    recentHistory:'Recent History',openingBal:'Opening',cashInToday:'Cash In today',
-    cashOutToday:'Cash Out today',expectedBal:'Expected',actualCount:'Actual Count',
-    gainLoss:'Gain / Loss',notCounted:'Not counted yet',counted:'Counted',
-    cancelBtn:'Cancel',noPrevDay:'no prev day',dateLabel:'Date',timeLabel:'Time',
-    nameLabel:'Name',storeLabel:'Store',remarkLabel:'Remark (optional)',
-    locationAuto:'Location captured automatically',deviceResetConfirm:'Reset device for',
-    deviceResetMsg:'They can now use a new device.'
+    openingBal:'Opening',cashInToday:'Cash In today',cashOutToday:'Cash Out today',
+    expectedBal:'Expected',actualCount:'Actual Count',gainLoss:'Gain / Loss',
+    notCounted:'Not counted yet',counted:'Counted',noPrevDay:'no prev day',
+    locationAuto:'Location captured automatically',
+    deviceResetMsg:'Reset device binding?'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
@@ -760,18 +741,18 @@ const T = {
     noLog:'暂无日志记录', logFilter:'筛选日志',
     logAccessDenied:'仅老板、管理员及经理可查看审计日志。',
     attendance:'考勤',checkIn:'签到',checkOut:'签退',
-    onTime:'准时',lateStatus:'迟到',earlyLeave:'早退',done:'已完成',
     notYet:'未记录',tapCheckIn:'点击签到开始今日工作',
-    gettingLocation:'正在获取位置...',attendanceSaved:'考勤已记录',
-    alreadyCheckedIn:'今日已于此时签到：',
+    recentHistory:'近期记录',cancelBtn:'取消',confirmBtn:'确认',
+    remarkLabel:'备注（选填）',nameLabel:'姓名',storeLabel:'门店',
+    dateLabel:'日期',timeLabel:'时间',onTime:'准时',lateStatus:'迟到',
+    earlyLeave:'早退',done:'已完成',gettingLocation:'正在获取位置...',
+    attendanceSaved:'考勤已记录',alreadyCheckedIn:'今日已于此时签到：',
     alreadyCheckedOut:'今日已于此时签退：',checkInFirst:'请先签到再签退',
-    recentHistory:'近期记录',openingBal:'开盘金额',cashInToday:'今日入款',
-    cashOutToday:'今日出款',expectedBal:'预期余额',actualCount:'实际盘点',
-    gainLoss:'盈亏',notCounted:'尚未盘点',counted:'已盘点',
-    cancelBtn:'取消',noPrevDay:'无前日记录',dateLabel:'日期',timeLabel:'时间',
-    nameLabel:'姓名',storeLabel:'门店',remarkLabel:'备注（选填）',
-    locationAuto:'自动获取位置',deviceResetConfirm:'重置设备绑定：',
-    deviceResetMsg:'重置后可从新设备签到。'
+    openingBal:'开盘金额',cashInToday:'今日入款',cashOutToday:'今日出款',
+    expectedBal:'预期余额',actualCount:'实际盘点',gainLoss:'盈亏',
+    notCounted:'尚未盘点',counted:'已盘点',noPrevDay:'无前日记录',
+    locationAuto:'自动获取位置',
+    deviceResetMsg:'重置设备绑定？'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -937,32 +918,24 @@ async function doLogin() {
 
   // Validate
   if(Object.keys(cachedUsers).length===0){
-    showToast(
-      'Server unreachable and no cached users.\n\n' +
-      'Steps to fix:\n' +
-      '1. Open Apps Script → Deploy → Manage deployments\n' +
-      '2. Make sure: Execute as = Me, Who has access = Anyone\n' +
-      '3. Copy the latest deployment URL into WEB_APP_URL in the HTML',
-      'error');
+    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
     return;
   }
   const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
   if(!userMatch){
-    const knownUsers = Object.keys(cachedUsers).join(', ');
-    showToast('Username "'+username+'" not found.\nKnown users: '+knownUsers,'error');
-    return;
+    const known = Object.keys(cachedUsers).slice(0,5).join(', ');
+    showToast('Username not found. Loaded users: '+known,'error'); return;
   }
-  const _storedPin = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
-  const _enteredPin = String(pin).trim();
-  if(_storedPin !== _enteredPin){
+  const _pin = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
+  if(_pin !== String(pin).trim()){
     showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
   }
-  const _status = String(userMatch.status ?? 'active').trim().toLowerCase();
-  if(_status === 'pending'){
+  const _st = String(userMatch.status ?? 'active').trim().toLowerCase();
+  if(_st === 'pending'){
     showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
   }
-  if(_status === 'inactive' || _status === 'disabled'){
-    showToast('Account disabled. Contact Admin.','error'); return;
+  if(_st === 'inactive' || _st === 'disabled'){
+    showToast('Account disabled — contact Admin','error'); return;
   }
 
   // ✅ Login success
@@ -973,6 +946,7 @@ async function doLogin() {
   const isBoss  = currentUser.role === 'boss';
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   const isExec  = ['admin','boss','manager'].includes(currentUser.role);
+  // Boss sees only: Summary, Admin, Me
   document.getElementById('nav-submit').style.display     = isBoss ? 'none' : 'flex';
   document.getElementById('nav-records').style.display    = isBoss ? 'none' : 'flex';
   document.getElementById('nav-attendance').style.display = isBoss ? 'none' : 'flex';
@@ -980,12 +954,12 @@ async function doLogin() {
   document.getElementById('nav-summary').style.display    = isExec  ? 'flex' : 'none';
   document.getElementById('nav-admin').style.display      = isAdmin ? 'flex' : 'none';
   updateTopBar(); updateNavLabels();
-  const startTab = isBoss ? 'summary' : 'submit';
-  currentTab = startTab;
+  const _startTab = isBoss ? 'summary' : 'submit';
+  currentTab = _startTab;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-'+startTab).classList.add('active');
+  document.getElementById('nav-'+_startTab).classList.add('active');
   ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
-    document.getElementById('tab-'+tt).style.display=tt===startTab?'block':'none';
+    document.getElementById('tab-'+tt).style.display=tt===_startTab?'block':'none';
   });
   if(isBoss) renderSummaryTab(); else renderSubmitTab();
   triggerSyncRefresh();
@@ -1189,8 +1163,8 @@ function openConfirm() {
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 ${t('storeLabel')}</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 ${t('dateLabel')}</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
@@ -1761,118 +1735,101 @@ function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Arr
 
 function renderAttendanceTab(){
   const today=new Date().toISOString().slice(0,10);
-  // Only non-rejected records for today
   const mine=getAttendance()
     .filter(r=>r.username===currentUser.username&&r.dateKey===today&&r.status!=='rejected')
     .sort((a,b)=>String(a.datetime).localeCompare(String(b.datetime)));
-  const lastIn  = mine.find(r=>r.type==='check_in');
-  const lastOut = mine.find(r=>r.type==='check_out');
-  const fmt = dt => dt ? new Date(dt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : null;
-  const inTime  = fmt(lastIn?.datetime);
-  const outTime = fmt(lastOut?.datetime);
-  // Recent history (last 7 days)
-  const recent = getAttendance()
+  const lastIn =mine.find(r=>r.type==='check_in');
+  const lastOut=mine.find(r=>r.type==='check_out');
+  const fmt=dt=>dt?new Date(dt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):null;
+  const inTime =fmt(lastIn &&lastIn.datetime);
+  const outTime=fmt(lastOut&&lastOut.datetime);
+  const inSt =lastIn ?(lastIn.status==='late' ?('⚠️ '+t('lateStatus')):('✅ '+t('onTime'))):t('notYet');
+  const outSt=lastOut?(lastOut.status==='early_leave'?('⚠️ '+t('earlyLeave')):('✅ '+t('done'))):t('notYet');
+  const recent=getAttendance()
     .filter(r=>r.username===currentUser.username&&r.dateKey<today)
     .sort((a,b)=>b.dateKey.localeCompare(a.dateKey)).slice(0,14);
-
-  const inCard = inTime
-    ? `<div class="att-time-card in-done"><div class="att-time-label">${t('checkIn').toUpperCase()}</div><div class="att-time-value">${inTime}</div><div class="att-time-date">${lastIn.status==='late'?t('lateStatus'):('✅ ${t('onTime'))}</div></div>`
-    : `<div class="att-time-card in-wait"><div class="att-time-label">${t('checkIn').toUpperCase()}</div><div class="att-time-value">--:--</div><div class="att-time-date">${t('notYet')}</div></div>`;
-  const outCard = outTime
-    ? `<div class="att-time-card out-done"><div class="att-time-label">${t('checkOut').toUpperCase()}</div><div class="att-time-value">${outTime}</div><div class="att-time-date">${lastOut.status==='early_leave'?t('earlyLeave'):('✅ ${t('done'))}</div></div>`
-    : `<div class="att-time-card out-wait"><div class="att-time-label">${t('checkOut').toUpperCase()}</div><div class="att-time-value">--:--</div><div class="att-time-date">${t('notYet')}</div></div>`;
-  const ciDisabled = inTime  ? 'disabled' : '';
-  const coDisabled = (!inTime||outTime) ? 'disabled' : '';
-  const ciLabel = inTime  ? '✅ '+t('checkIn')  : '🟢 '+t('checkIn');
-  const coLabel = outTime ? '🟡 '+t('checkOut') : '🔴 '+t('checkOut');
-
-  const recentHtml = recent.length ? recent.map(r=>{
+  const recRows=recent.map(r=>{
     const ci=r.type==='check_in';
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">
-      <div><div style="font-size:13px;font-weight:700">${r.dateKey}
-        <span style="font-size:10px;background:${ci?'#d1fae5':'#fff7ed'};color:${ci?'#065f46':'#92400e'};border-radius:20px;padding:1px 7px">${ci?'IN':'OUT'}</span></div>
-        <div style="font-size:11px;color:var(--text2)">${r.store||''} · ${r.status||''}</div></div>
-      <div style="font-size:18px;font-weight:900;color:${ci?'#10b981':'#f59e0b'}">${new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
-    </div>`;
-  }).join('') : '';
-
-  document.getElementById('tab-attendance').innerHTML=`
-    <div class="card-header-flex">
-      <h2 style="font-size:18px;font-weight:900">📍 Attendance</h2>
-      <button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>
-    </div>
-    <div class="card" style="margin-bottom:10px">
-      <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">
-        📅 ${new Date().toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
-      </div>
-      <div class="att-time-grid">${inCard}${outCard}</div>
-      <div class="input-wrap" style="margin-top:8px;margin-bottom:8px">
-        <label class="field-label">${t('remarkLabel')}</label>
-        <input type="text" id="att-remark" placeholder="e.g. Doctor visit, Late bus…">
-      </div>
-      <div class="att-btn-row">
-        <button class="btn success" id="att-ci-btn" ${ciDisabled} onclick="confirmAttendance('check_in')">${ciLabel}</button>
-        <button class="btn warn"    id="att-co-btn" ${coDisabled} onclick="confirmAttendance('check_out')">${coLabel}</button>
-      </div>
-      ${!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">Tap Check In to start your day</div>':''}
-    </div>
-    ${recent.length?`<div class="card"><div class="card-title">${t('recentHistory')}</div>${recentHtml}</div>`:''}
-  `;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
+      +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
+        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'+(ci?t('checkIn'):t('checkOut'))+'</span></div>'
+        +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
+      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+new Date(r.datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</div>'
+      +'</div>';
+  }).join('');
+  const css='att-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}';
+  const inCard='<div style="border-radius:14px;padding:14px 12px;text-align:center;border:2px solid '+(inTime?'#10b981':'#e2e8f0')+';background:'+(inTime?'#f0fdf4':'#f8fafc')+'">'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:'+(inTime?'#10b981':'#94a3b8')+'">'+t('checkIn')+'</div>'
+    +'<div style="font-size:26px;font-weight:900;line-height:1;color:'+(inTime?'#10b981':'#cbd5e1')+'">'+(inTime||'--:--')+'</div>'
+    +'<div style="font-size:10px;margin-top:3px;opacity:.8">'+inSt+'</div>'
+    +'</div>';
+  const outCard='<div style="border-radius:14px;padding:14px 12px;text-align:center;border:2px solid '+(outTime?'#f59e0b':'#e2e8f0')+';background:'+(outTime?'#fff7ed':'#f8fafc')+'">'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:'+(outTime?'#f59e0b':'#94a3b8')+'">'+t('checkOut')+'</div>'
+    +'<div style="font-size:26px;font-weight:900;line-height:1;color:'+(outTime?'#f59e0b':'#cbd5e1')+'">'+(outTime||'--:--')+'</div>'
+    +'<div style="font-size:10px;margin-top:3px;opacity:.8">'+outSt+'</div>'
+    +'</div>';
+  const ciDis=inTime?'disabled':'';
+  const coDis=(!inTime||outTime)?'disabled':'';
+  const ciLbl=(inTime?'✅ ':'🟢 ')+t('checkIn');
+  const coLbl=(outTime?'🟡 ':'🔴 ')+t('checkOut');
+  document.getElementById('tab-attendance').innerHTML=
+    '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+t('attendance')+'</h2>'
+    +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
+    +'<div class="card" style="margin-bottom:10px">'
+      +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '
+        +new Date().toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">'+inCard+outCard+'</div>'
+      +'<div class="input-wrap" style="margin-top:8px;margin-bottom:8px">'
+        +'<label class="field-label">'+t('remarkLabel')+'</label>'
+        +'<input type="text" id="att-remark" placeholder="'+(lang==='zh'?'如：看医生':'e.g. Doctor visit')+'"></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'
+        +'<button class="btn success" '+ciDis+' onclick="confirmAttendance(\'check_in\')">'+ciLbl+'</button>'
+        +'<button class="btn warn"    '+coDis+' onclick="confirmAttendance(\'check_out\')">'+coLbl+'</button>'
+      +'</div>'
+      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+t('tapCheckIn')+'</div>':'')
+    +'</div>'
+    +(recent.length?'<div class="card"><div class="card-title">'+t('recentHistory')+'</div>'+recRows+'</div>':'');
 }
 
-// ── Confirmation popup before check-in/out ──────────────────────────────
 function confirmAttendance(type){
-  const label   = type==='check_in' ? t('checkIn') : t('checkOut');
-  const icon    = type==='check_in' ? '🟢' : '🔴';
-  const btnCls  = type==='check_in' ? 'success' : 'warn';
-  const remark  = (document.getElementById('att-remark') || {value:''}).value || '';
-  const now     = new Date();
-  const timeStr = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const dateStr = now.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
-
-  const remarkRow = remark
-    ? '<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+remark+'</span></div>'
-    : '';
-
-  const ov = document.createElement('div');
-  ov.className = 'modal-overlay open';
-  ov.id = 'att-confirm-modal';
-  ov.innerHTML =
-    '<div class="modal-box" style="text-align:center">'+
-      '<div style="font-size:40px;margin-bottom:8px">'+icon+'</div>'+
-      '<div class="modal-title" style="font-size:20px">'+label+'</div>'+
-      '<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:14px 0;text-align:left">'+
-        '<div class="stat-row"><span class="stat-label">👤 '+t('nameLabel')+'</span><span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'+
-        '<div class="stat-row"><span class="stat-label">🏪 '+t('storeLabel')+'</span><span class="stat-value">'+currentUser.store+'</span></div>'+
-        '<div class="stat-row"><span class="stat-label">📅 '+t('dateLabel')+'</span><span class="stat-value">'+dateStr+'</span></div>'+
-        '<div class="stat-row"><span class="stat-label">🕐 '+t('timeLabel')+'</span><span class="stat-value" style="font-size:20px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'+
-        remarkRow+
-      '</div>'+
-      '<div style="font-size:12px;color:#64748b;margin-bottom:14px">'+t('locationAuto')+'</div>'+
-      '<div style="display:flex;gap:10px">'+
-        '<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'att-confirm-modal\').remove()">'+t('cancelBtn')+'</button>'+
-        '<button class="btn '+btnCls+'" style="flex:2" onclick="document.getElementById(\'att-confirm-modal\').remove();submitAttendance(\''+type+'\')">'+t('cancelBtn'===''?'confirmBtn':'confirmBtn')+' '+label+'</button>'+
-      '</div>'+
-    '</div>';
+  const lbl=type==='check_in'?t('checkIn'):t('checkOut');
+  const rem=(document.getElementById('att-remark')||{value:''}).value||'';
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const dateStr=now.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  const ov=document.createElement('div'); ov.className='modal-overlay open'; ov.id='att-confirm-modal';
+  ov.innerHTML='<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:40px;margin-bottom:8px">'+(type==='check_in'?'🟢':'🔴')+'</div>'
+    +'<div class="modal-title" style="font-size:20px">'+lbl+'</div>'
+    +'<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:14px 0;text-align:left">'
+      +'<div class="stat-row"><span class="stat-label">'+t('nameLabel')+'</span><span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">'+t('storeLabel')+'</span><span class="stat-value">'+currentUser.store+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">'+t('dateLabel')+'</span><span class="stat-value">'+dateStr+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">'+t('timeLabel')+'</span><span class="stat-value" style="font-size:20px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'
+      +(rem?'<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+rem+'</span></div>':'')
+    +'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:14px">'+t('locationAuto')+'</div>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'att-confirm-modal\').remove()">'+t('cancelBtn')+'</button>'
+      +'<button class="btn '+(type==='check_in'?'success':'warn')+'" style="flex:2" onclick="document.getElementById(\'att-confirm-modal\').remove();submitAttendance(\''+type+'\');">'+t('confirmBtn')+' '+lbl+'</button>'
+    +'</div>'
+  +'</div>';
   document.body.appendChild(ov);
 }
 
 async function submitAttendance(type){
   const remark=document.getElementById('att-remark')?.value||'';
-  const label=type==='check_in'?'Check In':'Check Out';
-  const _today=new Date().toISOString().slice(0,10);
-  const _mine=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected');
-  if(type==='check_in'&&_mine.find(r=>r.type==='check_in')){
-    const _t=new Date(_mine.find(r=>r.type==='check_in').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    showToast(t('alreadyCheckedIn')+' '+_t,'error'); renderAttendanceTab(); return;
-  }
+  const label=type==='check_in'?t('checkIn'):t('checkOut');
+  const _td=new Date().toISOString().slice(0,10);
+  const _att=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===_td&&r.status!=='rejected');
+  if(type==='check_in'&&_att.find(r=>r.type==='check_in')){
+    const _t=new Date(_att.find(r=>r.type==='check_in').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    showToast(t('alreadyCheckedIn')+' '+_t,'error'); return; }
   if(type==='check_out'){
-    if(!_mine.find(r=>r.type==='check_in')){showToast(t('checkInFirst'),'error');return;}
-    if(_mine.find(r=>r.type==='check_out')){
-      const _t=new Date(_mine.find(r=>r.type==='check_out').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      showToast(t('alreadyCheckedOut')+' '+_t,'error'); renderAttendanceTab(); return;
-    }
-  }
+    if(!_att.find(r=>r.type==='check_in')){showToast(t('checkInFirst'),'error');return;}
+    if(_att.find(r=>r.type==='check_out')){
+      const _t=new Date(_att.find(r=>r.type==='check_out').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      showToast(t('alreadyCheckedOut')+' '+_t,'error'); return; }}
   showToast(t('gettingLocation'),'pending');
   try{
     const loc=await getBestLocation();
@@ -1884,19 +1841,19 @@ async function submitAttendance(type){
       record.status='rejected';
       showAttendanceResult('rejected',label+' Rejected','RED NOTICE: You are outside the allowed check in / check out compound.',`Distance ${zone.distanceMeters}m / Allowed ${zone.radiusMeters}m`);
     } else {
-      const boundUser = getDeviceBoundUser(record.deviceId);
-      if(boundUser && boundUser !== currentUser.username.toLowerCase()){
+      const _bound = getDeviceBoundUser(record.deviceId);
+      if(_bound && _bound !== currentUser.username.toLowerCase()){
         record.status='rejected';
         const arr2=getAttendance(); arr2.push(record); saveAttendance(arr2);
         renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
         showAttendanceResult('rejected',label+' Blocked',
-          'Device registered to '+boundUser+'. Use your own device. Contact Admin to reset.',
-          record.deviceName);
-        return;
+          'Device registered to '+_bound+'. Use your own device. Admin can reset.',
+          record.deviceName); return;
       }
       bindDeviceToUser(record.deviceId,currentUser.username);
       record.status='present';
-      showAttendanceResult('success',label+' Saved',t('attendanceSaved')+' — '+currentUser.name,record.deviceName);
+      showAttendanceResult('success',label+' '+t('attendanceSaved'),
+        t('attendanceSaved')+' — '+currentUser.name,record.deviceName);
     }
     const arr=getAttendance(); arr.push(record); saveAttendance(arr); renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
   }catch(e){
@@ -1968,7 +1925,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e" title="Reset device binding" onclick="adminResetDeviceBinding('${u.username}')">📱</button>${u.username!=='admin'?` <button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e" onclick="adminResetDeviceBinding('${u.username}')">📱</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2364,48 +2321,51 @@ const ALL_DENOMS = [...BILLS, ...COINS];
 let _cdStore='', _cdDate='', _cdQty={};
 
 function renderCashDrawerCard(store, dateKey) {
-  const existing  = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
-  const mvToday   = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
-  const totalIn   = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in') .reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const totalOut  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const drawerTotal = existing ? parseFloat(existing.total||existing.amount||0) : 0;
-  const prevDay   = getPreviousDayClosing(store, dateKey);
-  const opening   = prevDay ? prevDay.amount : 0;
-  const expected  = opening + totalIn - totalOut;
-  const diff      = existing ? (drawerTotal - expected) : null;
-  const diffColor = diff===null?'#94a3b8':diff>0?'#10b981':diff<0?'#ef4444':'#10b981';
-  const diffLabel = diff===null?'-':diff>0?'+RM '+diff.toFixed(2)+' \u2191':diff<0?'-RM '+Math.abs(diff).toFixed(2)+' \u2193':'RM 0.00 \u2713';
-  const prevLabel = prevDay ? '('+prevDay.dateKey+')' : '('+t('noPrevDay')+')';
-  const countedBadge = existing
-    ? '<span class="drawer-badge">\u2713 '+t('counted')+'</span>'
-    : '<span style="font-size:11px;color:#b45309">'+t('notCounted')+'</span>';
-  const diffBg = diff===null?'#f8fafc':diff>=0?'#f0fdf4':'#fff1f2';
+  const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
+  const today = new Date().toISOString().slice(0,10);
+  const mvToday = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
+  const totalIn  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalOut = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
 
-  return '<div class="drawer-card">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-      +'<span style="font-size:15px;font-weight:800;color:#92400e">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</span>'
-      +countedBadge
-    +'</div>'
-    +'<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
-      +'<div class="cd-carry-row"><span class="cd-carry-label">\uD83D\uDCC2 '+t('openingBal')+' '+prevLabel+'</span><span class="cd-carry-val">RM '+opening.toFixed(2)+'</span></div>'
-      +'<div class="cd-carry-row"><span class="cd-carry-label">\u2795 '+t('cashInToday')+'</span><span class="cd-carry-val" style="color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
-      +'<div class="cd-carry-row"><span class="cd-carry-label">\u2796 '+t('cashOutToday')+'</span><span class="cd-carry-val" style="color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
-      +'<div class="cd-carry-row" style="border-bottom:none"><span class="cd-carry-label" style="font-weight:800">\uD83D\uDCCA '+t('expectedBal')+'</span><span class="cd-carry-val">RM '+expected.toFixed(2)+'</span></div>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-      +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a">'
-        +'<div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div>'
-        +'<div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div>'
-      +'</div>'
-      +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+diffColor+';background:'+diffBg+'">'
-        +'<div style="font-size:10px;font-weight:700;color:'+diffColor+'">'+t('gainLoss')+'</div>'
-        +'<div style="font-size:20px;font-weight:900;color:'+diffColor+'">'+diffLabel+'</div>'
-      +'</div>'
-    +'</div>'
-    +'<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">'
-      +'\uD83D\uDDC4\uFE0F '+t('cashDrawer')
-    +'</button>'
-    +'</div>';
+  let drawerTotal = 0;
+  if(existing && existing.breakdown) {
+    try {
+      const bd = typeof existing.breakdown==='string'?JSON.parse(existing.breakdown):existing.breakdown;
+      drawerTotal = parseFloat(existing.total||0);
+    } catch(e) { drawerTotal = parseFloat(existing.amount||existing.total||0); }
+  } else if(existing) {
+    drawerTotal = parseFloat(existing.amount||existing.total||0);
+  }
+
+  return `
+    <div class="drawer-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer'}</span>
+        ${existing?`<span class="drawer-badge">✓ ${lang==='zh'?'已盘点':'Counted'}</span>`:''}
+      </div>
+      ${(()=>{
+        const _prev=getPreviousDayClosing(store,dateKey);
+        const _op=_prev?_prev.amount:0;
+        const _exp=_op+totalIn-totalOut;
+        const _diff=existing?(drawerTotal-_exp):null;
+        const _dc=_diff===null?'#94a3b8':_diff>0?'#10b981':_diff<0?'#ef4444':'#10b981';
+        const _dl=_diff===null?'-':_diff>0?'+RM '+_diff.toFixed(2)+' ↑':_diff<0?'-RM '+Math.abs(_diff).toFixed(2)+' ↓':'RM 0.00 ✓';
+        return '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
+          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+t('openingBal')+' '+(_prev?'('+_prev.dateKey+')':'')+'</span><span style="font-weight:900;color:#92400e">RM '+_op.toFixed(2)+'</span></div>'
+          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashInToday')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
+          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+t('cashOutToday')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
+          +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+t('expectedBal')+'</span><span style="color:#92400e">RM '+_exp.toFixed(2)+'</span></div>'
+          +'</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+          +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div></div>'
+          +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+_dc+';background:'+(_diff===null?'#f8fafc':_diff>=0?'#f0fdf4':'#fff1f2')+'"><div style="font-size:10px;font-weight:700;color:'+_dc+'">'+t('gainLoss')+'</div><div style="font-size:20px;font-weight:900;color:'+_dc+'">'+_dl+'</div></div>'
+          +'</div>';
+      })()}
+      <button class="btn warn" onclick="openCashDrawerModal()"
+        style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">
+        🗄️ ${lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager'}
+      </button>
+    </div>`;
 }
 
 function openCashDrawerModal() {
@@ -2737,21 +2697,13 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
-// ── Device binding: prevents one staff checking in for another ──────────
-function _deviceBindings(){ return loadData('device_binding',{}); }
-function getDeviceBoundUser(deviceId){ return _deviceBindings()[deviceId]||null; }
-function bindDeviceToUser(deviceId,username){
-  const b=_deviceBindings();
-  if(!b[deviceId]){ b[deviceId]=username.toLowerCase(); saveData('device_binding',b); }
-}
-function adminResetDeviceBinding(username){
-  if(!confirm('Reset device binding for "'+username+'"?')) return;
-  const b=_deviceBindings();
-  Object.keys(b).forEach(k=>{ if(b[k]===username.toLowerCase()) delete b[k]; });
-  saveData('device_binding',b);
-  showToast('Device binding cleared for '+username,'success');
-  renderAdminTab();
-}
+function _db(){ return loadData('device_binding',{}); }
+function getDeviceBoundUser(id){ return _db()[id]||null; }
+function bindDeviceToUser(id,u){ const b=_db(); if(!b[id]){b[id]=u.toLowerCase();saveData('device_binding',b);} }
+function adminResetDeviceBinding(u){
+  if(!confirm(t('deviceResetMsg')+' '+u)) return;
+  const b=_db(); Object.keys(b).forEach(k=>{ if(b[k]===u.toLowerCase()) delete b[k]; }); saveData('device_binding',b);
+  showToast('Device binding cleared for '+u,'success'); renderAdminTab(); }
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
