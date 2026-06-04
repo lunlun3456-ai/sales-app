@@ -722,7 +722,20 @@ const T = {
     settleTapPhoto:'Tap to take photo or select image',
     settleNote:'Note (optional)',settleUploading:'Uploading...',
     settleUpload:'📤 Upload',settleSelected:'✅ Image selected — tap to change',
-    enterAmounts:'All amounts can be 0.00 (no sales for that type)'
+    enterAmounts:'All amounts can be 0.00 (no sales for that type)',
+    targetDate:'Target Date',storeLbl:'Store',
+    pendingSupervisor:'Submitted — Awaiting Supervisor Confirmation',
+    pendingSupervisorNote:'Your submission is pending supervisor/manager confirmation.',
+    staffNoDrawer:'Cash drawer is managed by Supervisor/Manager. Contact them to open.',
+    cashSalesRef:'Cash Sales (from records)',
+    variance:'Variance (Actual − Expected)',
+    needsApproval:'Variance requires Manager approval before saving.',
+    requestAdjustment:'Request Adjustment Approval',
+    adjustmentSent:'Adjustment request sent to Manager.',
+    salesPendingApproval:'Sales Pending Approval',
+    approvedMsg:'Approved.',rejectedMsg:'Rejected.',
+    submitForApproval:'Submit for Supervisor Approval',
+    submittedPending:'Submitted — Pending Supervisor Approval ⏳'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
@@ -801,7 +814,20 @@ const T = {
     settleTapPhoto:'点击拍摄或选择图片',
     settleNote:'备注（选填）',settleUploading:'上传中...',
     settleUpload:'📤 上传',settleSelected:'✅ 图片已选择，点击更换',
-    enterAmounts:'所有金额均可填写为 0.00（表示无该类型销售）'
+    enterAmounts:'所有金额均可填写为 0.00（表示无该类型销售）',
+    targetDate:'目标日期',storeLbl:'门店',
+    pendingSupervisor:'已提交 — 等待主管确认',
+    pendingSupervisorNote:'您的提交正在等待主管/经理确认。',
+    staffNoDrawer:'收银机由主管/经理管理，请联系他们开启。',
+    cashSalesRef:'今日现金销售（来自记录）',
+    variance:'差异（实际 − 预期）',
+    needsApproval:'差异需要经理审批才能保存。',
+    requestAdjustment:'申请差异审批',
+    adjustmentSent:'差异申请已发送至经理。',
+    salesPendingApproval:'销售待审批',
+    approvedMsg:'已批准。',rejectedMsg:'已拒绝。',
+    submitForApproval:'提交等待主管审批',
+    submittedPending:'已提交 — 等待主管审批 ⏳'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -1072,16 +1098,16 @@ function renderSubmitTab() {
   document.getElementById('tab-submit').innerHTML=`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0':'Update or edit any date. Amounts can be RM 0.00'}</p>
+      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0.00':'Update or edit any date. Amounts can be RM 0.00'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
       <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
+        <label class="field-label">${t('targetDate')}</label>
         ${dateInputHtml}
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
+        <label class="field-label">🏪 ${t('storeLbl')}</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -1183,7 +1209,7 @@ function openConfirm() {
 
   const locked = isSalesLocked(store, targetDate);
   if(locked && ['staff','supervisor'].includes(currentUser.role)){
-    showToast('Settlement already uploaded. Manager/Admin/Boss approval required.','error'); return;
+    showToast(lang==='zh'?'日结单已上传，需经理批准才能修改':'Settlement uploaded. Manager approval required to edit.','error'); return;
   }
 
   const cash  =parseFloat(document.getElementById('s-cash').value)||0;
@@ -1226,6 +1252,11 @@ function openConfirm() {
 function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
 function confirmSubmit(withUpload=false) {
+  // Staff & Supervisor: submission goes to pending approval
+  if(['staff','supervisor'].includes(currentUser.role)){
+    submitForApprovalFlow(withUpload);
+    return;
+  }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1629,7 +1660,7 @@ async function refreshLog() {
   const filterHtml=`
     <div class="control-grid" style="margin-bottom:10px">
       <div>
-        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':'Store'}</label>
+        <label class="field-label" style="font-size:11px">🏪 ${t('storeLbl')}</label>
         <select onchange="logStoreFilter=this.value;renderLogEntries()">
           <option value="all">${t('allStores')}</option>
           ${allowedStores.filter(s=>s!=='HQ').map(s=>`<option value="${s}" ${logStoreFilter===s?'selected':''}>${s}</option>`).join('')}
@@ -2351,6 +2382,12 @@ function getPreviousDayClosing(store,dateKey){
   if(!all.length) return null;
   return{amount:parseFloat(all[0].total||all[0].amount||0),dateKey:all[0].dateKey};
 }
+// Get cash sales amount for a store/date from saved sales records
+function getCashSalesForDate(store,dateKey){
+  const rec=getSales().find(r=>r.store===store&&r.dateKey===dateKey);
+  return rec?parseFloat(rec.cash||0):0;
+}
+
 const BILLS = [
   {val:100, label:'RM 100', color:'#1e3a8a'},
   {val:50,  label:'RM 50',  color:'#065f46'},
@@ -2371,51 +2408,80 @@ const ALL_DENOMS = [...BILLS, ...COINS];
 let _cdStore='', _cdDate='', _cdQty={};
 
 function renderCashDrawerCard(store, dateKey) {
-  const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
-  const today = new Date().toISOString().slice(0,10);
-  const mvToday = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
-  const totalIn  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const totalOut = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const existing  = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
+  const mvToday   = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
+  const totalIn   = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalOut  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const drawerTotal = existing ? parseFloat(existing.total||existing.amount||0) : 0;
 
-  let drawerTotal = 0;
-  if(existing && existing.breakdown) {
-    try {
-      const bd = typeof existing.breakdown==='string'?JSON.parse(existing.breakdown):existing.breakdown;
-      drawerTotal = parseFloat(existing.total||0);
-    } catch(e) { drawerTotal = parseFloat(existing.amount||existing.total||0); }
-  } else if(existing) {
-    drawerTotal = parseFloat(existing.amount||existing.total||0);
-  }
+  // Formula: Opening(yesterday) + CashSales + CashIn - CashOut = Expected
+  // Variance = Actual - Expected  → needs Manager approval if ≠ 0
+  const prevDay   = getPreviousDayClosing(store, dateKey);
+  const opening   = prevDay ? prevDay.amount : 0;
+  const cashSales = getCashSalesForDate(store, dateKey);
+  const expected  = opening + cashSales + totalIn - totalOut;
+  const variance  = existing ? (drawerTotal - expected) : null;
+  const isStaff   = currentUser.role === 'staff';
+  const canOpen   = !isStaff;
 
-  return `
-    <div class="drawer-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer'}</span>
-        ${existing?`<span class="drawer-badge">✓ ${lang==='zh'?'已盘点':'Counted'}</span>`:''}
-      </div>
-      ${(()=>{
-        const _prev=getPreviousDayClosing(store,dateKey);
-        const _op=_prev?_prev.amount:0;
-        const _exp=_op+totalIn-totalOut;
-        const _diff=existing?(drawerTotal-_exp):null;
-        const _dc=_diff===null?'#94a3b8':_diff>0?'#10b981':_diff<0?'#ef4444':'#10b981';
-        const _dl=_diff===null?'-':_diff>0?'+RM '+_diff.toFixed(2)+' ↑':_diff<0?'-RM '+Math.abs(_diff).toFixed(2)+' ↓':'RM 0.00 ✓';
-        return '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
-          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+t('openingBal')+' '+(_prev?'('+_prev.dateKey+')':'')+'</span><span style="font-weight:900;color:#92400e">RM '+_op.toFixed(2)+'</span></div>'
-          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashInToday')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
-          +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+t('cashOutToday')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
-          +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+t('expectedBal')+'</span><span style="color:#92400e">RM '+_exp.toFixed(2)+'</span></div>'
-          +'</div>'
-          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-          +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div></div>'
-          +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+_dc+';background:'+(_diff===null?'#f8fafc':_diff>=0?'#f0fdf4':'#fff1f2')+'"><div style="font-size:10px;font-weight:700;color:'+_dc+'">'+t('gainLoss')+'</div><div style="font-size:20px;font-weight:900;color:'+_dc+'">'+_dl+'</div></div>'
-          +'</div>';
-      })()}
-      <button class="btn warn" onclick="openCashDrawerModal()"
-        style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">
-        🗄️ ${lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager'}
-      </button>
-    </div>`;
+  // Variance display
+  const varColor  = variance===null?'#94a3b8':variance>0?'#10b981':variance<0?'#ef4444':'#10b981';
+  const varLabel  = variance===null?'-':variance>0?'+RM '+variance.toFixed(2)+' \u2191':variance<0?'-RM '+Math.abs(variance).toFixed(2)+' \u2193':'RM 0.00 \u2713';
+  const varBg     = variance===null?'#f8fafc':variance>=0?'#f0fdf4':'#fff1f2';
+  const needsAppr = variance!==null && variance!==0;
+
+  // Carry-forward rows (string concat — no nested template literals)
+  const prevLbl   = prevDay?'('+prevDay.dateKey+')':'';
+  const carryRows = '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+t('openingBal')+' '+prevLbl+'</span><span style="font-weight:900;color:#92400e">RM '+opening.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashSalesRef')+'</span><span style="font-weight:900;color:#1e3a8a">+RM '+cashSales.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashInToday')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+t('cashOutToday')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+t('expectedBal')+'</span><span style="color:#92400e">RM '+expected.toFixed(2)+'</span></div>'
+    +'</div>';
+
+  const actualVarGrid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+    +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div></div>'
+    +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+varColor+';background:'+varBg+'"><div style="font-size:10px;font-weight:700;color:'+varColor+'">'+t('variance')+'</div><div style="font-size:18px;font-weight:900;color:'+varColor+'">'+varLabel+'</div></div>'
+    +'</div>';
+
+  const approvalWarn = needsAppr
+    ? '<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#92400e;font-weight:700">&#9888; '+t('needsApproval')
+      +'<br><button class="btn warn" style="margin-top:8px;font-size:13px" onclick="requestCashDrawerAdjustment(\''+store+'\',\''+dateKey+'\','+variance.toFixed(2)+')">'+t('requestAdjustment')+'</button></div>'
+    : '';
+
+  const drawerBtn = canOpen
+    ? '<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</button>'
+    : '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:12px;color:#64748b;text-align:center">\uD83D\uDD12 '+t('staffNoDrawer')+'</div>';
+
+  const countedBadge = existing ? '<span class="drawer-badge">\u2713 '+t('counted')+'</span>' : '';
+
+  return '<div class="drawer-card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<span style="font-size:15px;font-weight:800;color:#92400e">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</span>'
+      +countedBadge
+    +'</div>'
+    +carryRows
+    +actualVarGrid
+    +approvalWarn
+    +drawerBtn
+    +'</div>';
+}
+
+function requestCashDrawerAdjustment(store,dateKey,variance){
+  const reason=prompt(lang==='zh'?'请说明差异原因：':'Please explain the variance reason:','');
+  if(reason===null) return;
+  const req={id:String(Date.now()),type:'cash_variance',store,dateKey,
+    requester:currentUser.name,role:currentUser.role,
+    amount:Math.abs(variance),reason:'Variance: '+variance.toFixed(2)+' — '+reason,
+    status:'pending',createdAt:new Date().toISOString()};
+  const approvals=getApprovals(); approvals.push(req); saveApprovals(approvals);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'createApprovalRequest',...req})
+  }).catch(()=>{});
+  showToast(t('adjustmentSent'),'success');
+  renderSubmitTab();
 }
 
 function openCashDrawerModal() {
@@ -2425,6 +2491,9 @@ function openCashDrawerModal() {
   const store   = storeEl.value;
   const dateKey = dateEl.value;
   if(!store) { showToast(lang==='zh'?'请选择门店':'Select a store first','error'); return; }
+  if(currentUser.role === 'staff'){
+    showToast(t('staffNoDrawer'),'error'); return;
+  }
 
   const isRestricted = ['staff','supervisor'].includes(currentUser.role);
   const todayStr = new Date().toISOString().slice(0,10);
@@ -2747,7 +2816,34 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
-function _db(){ return loadData('device_binding',{}); }
+function // ── Sales submission approval workflow for Staff/Supervisor ──────────────
+function submitForApprovalFlow(withUpload=false){
+  const s=window._pendingSubmit;
+  if(!s){showToast('No pending submit data','error');return;}
+  const approvalId=String(Date.now());
+  const approvalRec={
+    id:approvalId, type:'sales_submission',
+    store:s.store, dateKey:s.targetDate,
+    requester:currentUser.name, role:currentUser.role,
+    amount:s.total, reason:'Staff sales submission',
+    status:'pending', createdAt:new Date().toISOString(),
+    payload:JSON.stringify({cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total,remark:s.remark})
+  };
+  // Save pending locally
+  const approvals=getApprovals(); approvals.push(approvalRec); saveApprovals(approvals);
+  // Send to GAS for approval queue
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'createApprovalRequest',...approvalRec})
+  }).catch(()=>{});
+  document.getElementById('confirm-modal')?.remove();
+  showToast(t('submittedPending'),'success');
+  renderSubmitTab(); renderRecordsTab();
+  if(withUpload) setTimeout(()=>openSettlementUpload(),600);
+  else setTimeout(()=>triggerSyncRefresh(),1500);
+}
+
+_db(){ return loadData('device_binding',{}); }
 function getDeviceBoundUser(id){ return _db()[id]||null; }
 function bindDeviceToUser(id,u){ const b=_db(); if(!b[id]){b[id]=u.toLowerCase();saveData('device_binding',b);} }
 function adminResetDeviceBinding(u){
