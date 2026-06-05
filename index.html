@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta2beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta2beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1936,8 +1936,25 @@ async function submitAttendance(type){
     renderAttendanceTab();
     setTimeout(function(){triggerSyncRefresh();},1500);
   }catch(e){
-    showAttendanceResult('rejected',label+' Failed',
-      'Location required. Please allow location access.',e.message);
+    // Still save the check-out even if location failed
+    var errRecord={
+      id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,
+      name:currentUser.name,role:currentUser.role,store:currentUser.store,
+      type:type,status:'present',dateKey:dateKeyUTC8(),datetime:nowUTC8(),
+      lat:0,lng:0,accuracy:9999,source:'location_error',
+      remark:remark,deviceId:getDeviceId(),deviceName:getDeviceName(),
+      userAgent:navigator.userAgent||'',platform:navigator.platform||''
+    };
+    var earr=getAttendance();earr.push(errRecord);saveAttendance(earr);
+    fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({action:'submitAttendance'},errRecord))
+    }).catch(function(){});
+    showAttendanceResult('success',label+' Saved',
+      (lang==='zh'?'考勤已记录（位置不可用）':'Attendance saved (location unavailable)'),
+      getDeviceName());
+    renderAttendanceTab();
+    setTimeout(function(){triggerSyncRefresh();},1500);
   }
 }
 
@@ -1967,7 +1984,7 @@ function getBestLocation(){
           {enableHighAccuracy:true,timeout:20000,maximumAge:0}
         );
       },
-      {enableHighAccuracy:false,timeout:10000,maximumAge:30000}
+      {enableHighAccuracy:false,timeout:8000,maximumAge:300000}
     );
   });
 }
@@ -1990,7 +2007,7 @@ function _ipLocation(resolve,reject){
           } else throw new Error('No coords');
         })
         .catch(function(){
-          reject(new Error('Location unavailable. Please allow location access.'));
+          resolve({lat:0,lng:0,accuracy:9999,source:'unavailable'});
         });
     });
 }
