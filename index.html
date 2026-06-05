@@ -205,6 +205,24 @@
   .attendance-result-box.pending { background:#fffbeb;border-top:8px solid #f59e0b; }
   .attendance-result-box.success { background:#f0fdf4;border-top:8px solid #10b981; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
+
+/* ── Attendance time display cards ── */
+.att-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.att-card{border-radius:14px;padding:14px 10px;text-align:center;border:2px solid}
+.att-card.ci-done{background:#f0fdf4;border-color:#10b981}
+.att-card.ci-wait{background:#f8fafc;border-color:#e2e8f0}
+.att-card.co-done{background:#fff7ed;border-color:#f59e0b}
+.att-card.co-wait{background:#f8fafc;border-color:#e2e8f0}
+.att-card .ac-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.att-card .ac-time{font-size:28px;font-weight:900;line-height:1}
+.att-card .ac-sub{font-size:10px;margin-top:3px;opacity:.7}
+.att-card.ci-done .ac-lbl,.att-card.ci-done .ac-time{color:#10b981}
+.att-card.co-done .ac-lbl,.att-card.co-done .ac-time{color:#f59e0b}
+.att-card.ci-wait .ac-lbl,.att-card.ci-wait .ac-time{color:#cbd5e1}
+.att-card.co-wait .ac-lbl,.att-card.co-wait .ac-time{color:#cbd5e1}
+.att-card.ci-wait .ac-time,.att-card.co-wait .ac-time{font-size:22px}
+.att-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.att-btn-row button:disabled{opacity:.38;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -543,7 +561,7 @@ function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
 function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwls3VQI6yblUhVddi9GfIZAM_0OIp7KQ6nUXRYJyQr7kFd2hp1hkZg3rg2Iv0XDcDaGw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVGoFVpzonwUNarMnUoPFblGaKDFjls0uozvA3E1c5WxTmas5XXsuofF8lhgZxIzGy_g/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -1214,7 +1232,7 @@ function confirmSubmit(withUpload=false) {
   const record={
     id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
     total:s.total,remark:s.remark,submitter:currentUser.name,
-    role:currentUser.role,datetime:now.toISOString(),
+    role:currentUser.role,datetime:nowUTC8(),
     dateKey:s.targetDate,month:s.targetDate.slice(0,7),
     submissionType,changeLog:JSON.stringify(changeLog)
   };
@@ -1758,34 +1776,109 @@ function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8A
 function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
 
 function renderAttendanceTab(){
-  const today=dateKeyUTC8();
-  const mine=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===today).sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
-  const lastIn=mine.find(r=>r.type==='check_in');
-  const lastOut=mine.find(r=>r.type==='check_out');
-  document.getElementById('tab-attendance').innerHTML=`
-    <div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">Attendance</h2><button class="btn refresh-inline" onclick="triggerSyncRefresh()">Refresh</button></div>
-    <div class="card">
-      <div class="card-title">Today - ${today}</div>
-      <div class="ops-grid" style="margin-top:12px">
-        <button class="btn success" onclick="submitAttendance('check_in')">Check In</button>
-        <button class="btn warn" onclick="submitAttendance('check_out')">Check Out</button>
-      </div>
-      <div class="input-wrap" style="margin-top:12px"><label class="field-label">Remark</label><input type="text" id="att-remark" placeholder="Optional remark"></div>
-      <div class="divider"></div>
-      <div class="stat-row"><span class="stat-label">Check In</span><span class="stat-value">${lastIn?fmtTimeUTC8(lastIn.datetime):'-'}</span></div>
-      <div class="stat-row"><span class="stat-label">Check Out</span><span class="stat-value">${lastOut?fmtTimeUTC8(lastOut.datetime):'-'}</span></div>
-    </div>
-    <div class="card"><div class="card-title">Recent Attendance</div>${mine.length?mine.map(attendanceRowHtml).join(''):'<div class="empty-state"><p>No attendance today.</p></div>'}</div>`;
+  const today = dateKeyUTC8();
+  const all   = getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===today&&r.status!=='rejected');
+  const lastIn  = all.find(r=>r.type==='check_in');
+  const lastOut = all.find(r=>r.type==='check_out');
+  const inTime  = lastIn  ? fmtTimeUTC8(lastIn.datetime)  : null;
+  const outTime = lastOut ? fmtTimeUTC8(lastOut.datetime) : null;
+
+  const inSub  = lastIn  ? (lastIn.status==='late'?'⚠️ '+(lang==='zh'?'迟到':'Late'):'✅ '+(lang==='zh'?'准时':'On time')) : (lang==='zh'?'未打卡':'Not yet');
+  const outSub = lastOut ? (lastOut.status==='early_leave'?'⚠️ '+(lang==='zh'?'早退':'Early leave'):'✅ '+(lang==='zh'?'正常':'Done')) : (lang==='zh'?'未打卡':'Not yet');
+
+  const inCard  = '<div class="att-card '+(inTime?'ci-done':'ci-wait')+'">'
+    +'<div class="ac-lbl">'+(lang==='zh'?'签到':'CHECK IN')+'</div>'
+    +'<div class="ac-time">'+(inTime||'--:--')+'</div>'
+    +'<div class="ac-sub">'+inSub+'</div></div>';
+  const outCard = '<div class="att-card '+(outTime?'co-done':'co-wait')+'">'
+    +'<div class="ac-lbl">'+(lang==='zh'?'签退':'CHECK OUT')+'</div>'
+    +'<div class="ac-time">'+(outTime||'--:--')+'</div>'
+    +'<div class="ac-sub">'+outSub+'</div></div>';
+
+  const ciDis = inTime  ? 'disabled' : '';
+  const coDis = (!inTime||outTime) ? 'disabled' : '';
+  const ciLbl = (inTime  ? '✅ ' : '🟢 ')+(lang==='zh'?'签到':'Check In');
+  const coLbl = (outTime ? '🟡 ' : '🔴 ')+(lang==='zh'?'签退':'Check Out');
+
+  const recent = getAttendance()
+    .filter(r=>r.username===currentUser.username&&r.dateKey<today)
+    .sort((a,b)=>b.dateKey.localeCompare(a.dateKey)).slice(0,14);
+  const recRows = recent.map(r=>{
+    const ci=r.type==='check_in';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
+      +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
+        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'+(ci?(lang==='zh'?'签到':'IN'):(lang==='zh'?'签退':'OUT'))+'</span></div>'
+        +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
+      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+fmtTimeUTC8(r.datetime)+'</div>'
+      +'</div>';
+  }).join('');
+
+  document.getElementById('tab-attendance').innerHTML =
+    '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+(lang==='zh'?'考勤':'Attendance')+'</h2>'
+      +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
+    +'<div class="card" style="margin-bottom:10px">'
+      +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '
+        +new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+      +'</div>'
+      +'<div class="att-grid">'+inCard+outCard+'</div>'
+      +'<div class="input-wrap" style="margin:8px 0">'
+        +'<label class="field-label">'+(lang==='zh'?'备注（选填）':'Remark (optional)')+'</label>'
+        +'<input type="text" id="att-remark" placeholder="'+(lang==='zh'?'如：看医生':'e.g. Doctor visit')+'">'
+      +'</div>'
+      +'<div class="att-btn-row">'
+        +'<button class="btn success" '+ciDis+' onclick="confirmAttendance(\'check_in\')">'+ciLbl+'</button>'
+        +'<button class="btn warn"    '+coDis+' onclick="confirmAttendance(\'check_out\')">'+coLbl+'</button>'
+      +'</div>'
+      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+(lang==='zh'?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
+    +'</div>'
+    +(recent.length?'<div class="card"><div class="card-title">'+(lang==='zh'?'近期记录':'Recent History')+'</div>'+recRows+'</div>':'');
+}
+
+function confirmAttendance(type){
+  const lbl = type==='check_in'?(lang==='zh'?'签到':'Check In'):(lang==='zh'?'签退':'Check Out');
+  const rem = (document.getElementById('att-remark')||{value:''}).value||'';
+  const timeStr = fmtTimeSUTC8(nowUTC8());
+  const dateStr = new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  const ov = document.createElement('div');
+  ov.className='modal-overlay open'; ov.id='att-confirm-modal';
+  ov.innerHTML =
+    '<div class="modal-box" style="text-align:center">'
+      +'<div style="font-size:44px;margin-bottom:6px">'+(type==='check_in'?'🟢':'🔴')+'</div>'
+      +'<div class="modal-title" style="font-size:20px">'+lbl+'</div>'
+      +'<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:12px 0;text-align:left">'
+        +'<div class="stat-row"><span class="stat-label">👤 '+(lang==='zh'?'姓名':'Name')+'</span><span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'
+        +'<div class="stat-row"><span class="stat-label">🏪 '+(lang==='zh'?'门店':'Store')+'</span><span class="stat-value">'+currentUser.store+'</span></div>'
+        +'<div class="stat-row"><span class="stat-label">📅 '+(lang==='zh'?'日期':'Date')+'</span><span class="stat-value">'+dateStr+'</span></div>'
+        +'<div class="stat-row"><span class="stat-label">🕐 '+(lang==='zh'?'时间':'Time')+'</span><span class="stat-value" style="font-size:22px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'
+        +(rem?'<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+rem+'</span></div>':'')
+      +'</div>'
+      +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">📍 '+(lang==='zh'?'自动获取位置':'Location captured automatically')+'</div>'
+      +'<div style="display:flex;gap:10px">'
+        +'<button class="btn secondary" style="flex:1" onclick="document.getElementById('att-confirm-modal').remove()">'+(lang==='zh'?'取消':'Cancel')+'</button>'
+        +'<button class="btn '+(type==='check_in'?'success':'warn')+'" style="flex:2" onclick="document.getElementById('att-confirm-modal').remove();submitAttendance(''+type+'');">'+(lang==='zh'?'确认 ':'Confirm ')+lbl+'</button>'
+      +'</div>'
+    +'</div>';
+  document.body.appendChild(ov);
 }
 
 async function submitAttendance(type){
   const remark=document.getElementById('att-remark')?.value||'';
-  const label=type==='check_in'?'Check In':'Check Out';
-  showToast('Getting location...','pending');
+  const label=type==='check_in'?(lang==='zh'?'签到':'Check In'):(lang==='zh'?'签退':'Check Out');
+  // Once-per-day guard
+  const _td=dateKeyUTC8();
+  const _mine=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===_td&&r.status!=='rejected');
+  if(type==='check_in'&&_mine.find(r=>r.type==='check_in')){
+    const _t=fmtTimeUTC8(_mine.find(r=>r.type==='check_in').datetime);
+    showToast((lang==='zh'?'今日已于 ':'Already checked in at ')+_t,'error'); return; }
+  if(type==='check_out'){
+    if(!_mine.find(r=>r.type==='check_in')){showToast(lang==='zh'?'请先签到':'Check in first','error');return;}
+    if(_mine.find(r=>r.type==='check_out')){
+      const _t=fmtTimeUTC8(_mine.find(r=>r.type==='check_out').datetime);
+      showToast((lang==='zh'?'今日已于 ':'Already checked out at ')+_t,'error'); return; }}
+  showToast(lang==='zh'?'正在获取位置...':'Getting location...','pending');
   try{
     const loc=await getBestLocation();
-    const now=new Date();
-    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:now.toISOString().slice(0,10),datetime:now.toISOString(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
+      const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:dateKeyUTC8(),datetime:nowUTC8(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submitAttendance',...record})}).catch(e=>console.warn('Attendance sync failed:',e));
     const zone=nearestLocalZone(record.store,record.lat,record.lng);
     if(zone && zone.distanceMeters>zone.radiusMeters){
