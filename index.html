@@ -402,7 +402,7 @@
     <div class="input-wrap">
       <label class="field-label">Target Store Location 门店</label>
       <select id="reg-store">
-        <option value="">${t('selectStore')}</option>
+        <option value="" id="select-store-opt">-- Select Store --</option>
         <option value="Bonia Sabindo">Bonia Sabindo</option>
         <option value="Bonia Eastern">Bonia Eastern</option>
         <option value="Polo Sabindo">Polo Sabindo</option>
@@ -432,11 +432,11 @@
     <div class="modal-title" id="modal-title">Confirm Submission</div>
     <div id="modal-body"></div>
     <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="btn secondary" style="flex:1" onclick="closeModal()" id="modal-cancel-btn">${lang==='zh'?'取消':'Cancel'}</button>
-      <button class="btn success"   style="flex:1" onclick="confirmSubmit(false)" id="modal-submit-btn">${lang==='zh'?'确认提交 ✓':'Confirm & Submit ✓'}</button>
+      <button class="btn secondary" style="flex:1" onclick="closeModal()" id="modal-cancel-btn">Cancel</button>
+      <button class="btn success"   style="flex:1" onclick="confirmSubmit(false)" id="modal-submit-btn">Confirm &amp; Submit</button>
     </div>
     <button class="btn" style="margin-top:8px;background:#f59e0b;font-size:14px" onclick="confirmSubmit(true)" id="modal-upload-btn">
-      📎 ${lang==='zh'?'提交并上传日结单（确认当日销售）':'Submit + Upload Receipt = Confirm Daily Sales'}
+      📎 Submit + Upload Receipt
     </button>
   </div>
 </div>
@@ -506,7 +506,7 @@
 <!-- ===================== SETTLEMENT UPLOAD MODAL ===================== -->
 <div class="modal-overlay" id="settlement-modal">
   <div class="modal-box">
-    <div class="modal-title">📎 <span id="settlement-modal-title">${t('settleTitle')}</span></div>
+    <div class="modal-title">📎 <span id="settlement-modal-title">Upload Settlement Receipt</span></div>
     <div id="settlement-modal-info" style="font-size:13px;color:var(--text2);margin-bottom:14px;padding:10px;background:#f8fafc;border-radius:10px;"></div>
     <div id="upload-preview" style="display:none;margin-bottom:14px;text-align:center">
       <img id="preview-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid var(--border);object-fit:cover">
@@ -621,7 +621,7 @@ function weekdayUTC8(isoDateStr) {
   return lang === 'zh' ? daysCN[idx] : daysEN[idx];
 }
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNYeRwjZ_PjVeohbYt5k8SvQxrdQrOHo2ugMHqyV06UATb1NqFLnGsddOXi3O6TYDVGw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlgD9Y7LKCwAWaFkuVC0-fPsCPPFq66r14sY4GL8yu4N_r2lu6Ez-7KQXoJwrdDKO3JA/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -802,7 +802,7 @@ const T = {
     day:'Day',startTime:'Start',endTime:'End',
     weekly:'Weekly',monthly:'Monthly',
     selectStore:'-- Select Store --',
-    settleTitle:'Upload Settlement Receipt',
+    settleTitle:t('settleTitle'),
     settleInfo:'Take a photo or select the settlement receipt image (JPG/PNG)',
     settleTapPhoto:'Tap to take photo or select image',
     settleNote:'Note (optional)',settleUploading:'Uploading...',
@@ -820,7 +820,152 @@ const T = {
     salesPendingApproval:'Sales Pending Approval',
     approvedMsg:'Approved.',rejectedMsg:'Rejected.',
     submitForApproval:'Submit for Supervisor Approval',
-    submittedPending:'Submitted — Pending Supervisor Approval ⏳'
+    submittedPending:'Submitted — Pending Supervisor Approval ⏳',
+    submitSubtitle:'Update or edit any date. Amounts can be RM 0.00',
+    selectStoreDate:'Select store and date first',
+    editingWarning:'You are editing an existing submission. This will be recorded in the audit log.',
+    salesLockedEdit:'Settlement uploaded. Manager approval required to edit.',
+    lockNote:'Settlement uploaded — Daily sales locked. Manager/Admin/Boss approval required.',
+    storeLabel3:'Store',dateLabel3:'Date',
+    uploadingCloud:'Uploading to Cloud…',
+    cashDrawerManager:'Cash Drawer Manager',
+    billsLabel:'Bills / Banknotes',coinsLabel:'Coins',
+    cashInLabel:'Cash IN',cashOutLabel:'Cash OUT',
+    saveCountBtn:'Save Cash Count',closeBtnLbl:'Close',
+    addBtn:'Add',amountLbl:'Amount',reasonLbl:'Reason / Note',
+    noRecordsYet:'No records yet',
+    cashOutPending:'cash out request(s) waiting approval',
+    noteOptional:'Note (optional)',
+    approvalRequired:'Approval Required',
+    confirmSubmitBtn:'Confirm \u0026 Submit \u2713',
+    submitUploadBtn:'Submit + Upload Receipt = Confirm Daily Sales',
+    syncingCloud:'Syncing from Cloud…',syncDone:'Synced from Cloud ✓',
+    enterUsername:'Enter your username',enterPin:'Enter your PIN',
+    pin6Digits:'PIN must be 6 digits',connectingLbl:'Connecting…',
+    connectingServer:'Connecting to server…',
+    noServerCache:'Cannot reach server & no cached data. Check internet & GAS deployment.',
+    wrongPin:'Wrong PIN, please try again',
+    accountPending:'Account pending Admin approval',
+    monthly:'Monthly',cashInOutLbl:'Cash In / Out',
+    cashInDrawer:'Cash in Drawer',countedAt:'Counted at',
+    viewMode:'View Mode',storeFilter:'Store Filter',
+    todayStatus:'Today Submission Status',
+    actionType:'Action Type',allOpt:'All',
+    latLngRequired:'Enter latitude and longitude.',
+    zoneSaved:'Zone saved.',schedSaved:'Schedule saved.',
+    approvingLbl:'Approving…',savingLbl:'Saving…',
+    localCacheInfo:'Local Cache Info',localRecords:'Local Records',
+    lastSync:'Last Sync',fillAllFields:'Fill all fields!',
+    wrongCurrentPin:'Incorrect current PIN!',
+    newPin6Digits:'New PIN must be 6 digits!',
+    pinMismatch:'New PINs do not match!',
+    pinUpdated:'PIN updated!',
+    allSubmittedToday:'All branches submitted today!',
+    whatsappMsg:'Hi! Please submit today\'s sales figures ASAP, thank you!',
+    pendingStores:'Pending stores:',sendGroupReminder:'Send Group Reminder',
+    directContact:'Direct WhatsApp to staff:',
+    selectStoreFrst:'Please select a store first',
+    selectImageFirst:'Please select or take a photo first',
+    uploadSuccess:'✅ Upload successful!',
+    explainVariance:'Please explain the variance reason:',
+    inDrawer:'In Drawer',cashOutMgrOnly:'Cash OUT — Manager/Admin/Boss only',
+    cashOutAdd:'+ Cash OUT',cashInAdd:'+ Cash IN',
+    bankingReason:'e.g. Banking, Petty cash',topUpReason:'e.g. Top up change',
+    saveBtn:'Save',deleteEntry:'Delete this entry?',
+    cashCountSaved:'Cash count saved ✓',
+    cancelReject:'Reject & delete this request?',
+    sendReminders:'Send Reminders',closeReminder:'Close'
+,
+    absent:'Absent',
+    accessDenied:'Access Denied',
+    actualCount:'Actual Count',
+    addLbl:'Add',
+    admin:'Admin',
+    allOpt:'All',
+    allStores:'All Stores',
+    allStoresOpt:'All Stores',
+    alreadyCheckedIn:'Already checked in at',
+    amountLbl:'Amount',
+    attRecords:'Attendance Records',
+    attRemark:'Remark',
+    backupBtn:'Create Database Backup',
+    bank:'Bank Transfer',
+    branch:'Branch',
+    cancelBtn:'Cancel',
+    card:'Card',
+    cash:'Cash',
+    cashInAdd:'+ Add',
+    cashInOutLbl:'Cash In / Out',
+    cashInToday:'Cash In today',
+    cashOutLabel:'Cash OUT',
+    cashOutMgrOnly:'Cash Out — Manager/Admin/Boss only',
+    cashOutToday:'Cash Out today',
+    checkIn:'Check In',
+    checkInFirst:'Check in first',
+    checkOut:'Check Out',
+    closeBtnLbl:'Close',
+    coinsLabel:'Coins',
+    confirmBtn:'Confirm',
+    confirmNewPinLabel:'Confirm New PIN',
+    confirmTitle2:'Confirm Submission',
+    connectingLbl:'Connecting…',
+    counted:'Counted',
+    countedAt:'Counted at',
+    customOpt:'Custom Date',
+    daily:'Daily Trend',
+    dateLabel3:'Date',
+    deleteEntry:'Delete',
+    deleteUser:'Delete',
+    done:'Done',
+    editEntry:'Edit',
+    editUser:'Edit',
+    enterPin:'Enter PIN',
+    fillAllFields:'Fill all fields. PIN = 6 digits.',
+    gettingLocation:'Getting location…',
+    lateStatus:'Late',
+    localRecords:'Local Records',
+    logDesc:'Immutable audit trail of all submissions and edits.',
+    logout:'Logout',
+    me:'Me',
+    nameLabel:'Name',
+    newPinLabel:'New PIN',
+    noAccess:'No access',
+    noRecords:'No records',
+    noRequests:'No pending requests',
+    onTime:'On time',
+    pendingApproval:'Pending Approvals',
+    present:'Present',
+    qr:'QR / E-wallet',
+    radius:'Radius (m)',
+    reasonLbl:'Reason / Note',
+    records:'Records',
+    refresh:'Refresh',
+    rejectBtn:'Reject',
+    rejectBtn2:'Reject',
+    rejectedMsg:'Rejected.',
+    remark:'Remark',
+    saveSched:'Save Work Schedule',
+    savingLbl:'Saving…',
+    schedSaved:'Schedule saved.',
+    sendGroupReminder:'Send Group Reminder',
+    settleSelected:'Image selected — tap to change',
+    settleUploading:'Uploading…',
+    storeFilter:'Store Filter',
+    storeLabel:'Store',
+    storeLabel2:'Store',
+    storeLbl:'Store',
+    submit:'Submit',
+    submitBtn:'Submit & Sync',
+    summary:'Summary',
+    syncDone:'Sync complete.',
+    tapCheckIn:'Tap Check In to start your day',
+    timeLabel:'Time',
+    todayOpt:'Today',
+    topUpReason:'e.g. Top up change',
+    uploadCloud:'Uploading to cloud…',
+    userDeleted:'User deleted.',
+    userMgmt:'User Management',
+    yestOpt:'Yesterday'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
@@ -912,7 +1057,61 @@ const T = {
     salesPendingApproval:'销售待审批',
     approvedMsg:'已批准。',rejectedMsg:'已拒绝。',
     submitForApproval:'提交等待主管审批',
-    submittedPending:'已提交 — 等待主管审批 ⏳'
+    submittedPending:'已提交 — 等待主管审批 ⏳',
+    submitSubtitle:'可随时补录、覆盖或更新历史数据，金额可填 0.00',
+    selectStoreDate:'请先选择门店和日期',
+    editingWarning:'您正在修改已提交的数据，此操作将被记录在审计日志中。',
+    salesLockedEdit:'日结单已上传，需经理批准才能修改。',
+    lockNote:'日结单已上传，当日销售已锁定。如需修改请联系经理/管理员/老板。',
+    storeLabel3:'门店',dateLabel3:'日期',
+    uploadingCloud:'正在上传至云端…',
+    cashDrawerManager:'收银机管理',
+    billsLabel:'纸币',coinsLabel:'硬币',
+    cashInLabel:'现金入',cashOutLabel:'现金出',
+    saveCountBtn:'保存现金盘点',closeBtnLbl:'关闭',
+    addBtn:'添加',amountLbl:'金额',reasonLbl:'原因/备注',
+    noRecordsYet:'暂无记录',
+    cashOutPending:'笔现金出申请待审批',
+    noteOptional:'备注（选填）',
+    approvalRequired:'需要审批',
+    confirmSubmitBtn:'确认提交 ✓',
+    submitUploadBtn:'提交并上传日结单（确认当日销售）',
+    syncingCloud:'正在从云端同步…',syncDone:'云端同步成功 ✓',
+    enterUsername:'请输入用户名',enterPin:'请输入密码',
+    pin6Digits:'密码必须是6位数字',connectingLbl:'连接中…',
+    connectingServer:'正在连接服务器…',
+    noServerCache:'无法连接服务器且无缓存，请检查网络及脚本部署。',
+    wrongPin:'密码错误，请重试',
+    accountPending:'账号待审批，请联系管理员',
+    monthly:'月度',cashInOutLbl:'现金进出记录',
+    cashInDrawer:'收银机现金盘点',countedAt:'盘点时间',
+    viewMode:'查看模式',storeFilter:'门店筛选',
+    todayStatus:'今日提交状态',
+    actionType:'操作类型',allOpt:'全部',
+    latLngRequired:'请输入经纬度坐标。',
+    zoneSaved:'区域已保存。',schedSaved:'排班已保存。',
+    approvingLbl:'正在审批…',savingLbl:'正在保存…',
+    localCacheInfo:'本地缓存信息',localRecords:'本地销售记录',
+    lastSync:'最后同步',fillAllFields:'请填写完整！',
+    wrongCurrentPin:'当前密码错误！',
+    newPin6Digits:'新密码必须是6位数字！',
+    pinMismatch:'新密码不一致！',
+    pinUpdated:'密码修改成功！',
+    allSubmittedToday:'所有门店今日已提交！',
+    whatsappMsg:'您好！请尽快提交您门店今天的日销数据，谢谢！',
+    pendingStores:'未提交门店：',sendGroupReminder:'发送群组提醒',
+    directContact:'直接联系负责人：',
+    selectStoreFrst:'请先选择门店',
+    selectImageFirst:'请先拍摄或选择图片',
+    uploadSuccess:'✅ 上传成功！',
+    explainVariance:'请说明差异原因：',
+    inDrawer:'柜内现金',cashOutMgrOnly:'现金出功能仅限经理/管理员',
+    cashOutAdd:'+ 现金出',cashInAdd:'+ 现金入',
+    bankingReason:'如：银行存款、零用金',topUpReason:'如：补充找零',
+    saveBtn:'保存',deleteEntry:'删除此记录？',
+    cashCountSaved:'现金盘点已保存 ✓',
+    cancelReject:'拒绝并删除此申请？',
+    sendReminders:'发送提醒',closeReminder:'关闭'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -928,6 +1127,13 @@ function updateNavLabels() {
   document.getElementById('nav-records-lbl').textContent = t('records');
   document.getElementById('nav-summary-lbl').textContent = t('summary');
   document.getElementById('nav-attendance-lbl').textContent = t('attendance');
+  // Update confirm modal buttons (static HTML can't use t())
+  const mb1=document.getElementById('modal-cancel-btn');  if(mb1) mb1.textContent=t('cancelBtn');
+  const mb2=document.getElementById('modal-submit-btn'); if(mb2) mb2.textContent=t('confirmSubmitBtn');
+  const mb3=document.getElementById('modal-upload-btn'); if(mb3) mb3.innerHTML='📎 '+t('submitUploadBtn');
+  const sst=document.getElementById('settlement-modal-title'); if(sst) sst.textContent=t('settleTitle');
+  const sso=document.getElementById('select-store-opt'); if(sso) sso.textContent='-- '+t('selectStoreDate').split(' ')[1]+' --';
+  const mt=document.getElementById('modal-title'); if(mt&&mt.textContent.trim()!=='') mt.textContent=t('confirmTitle2');
   document.getElementById('nav-log-lbl').textContent     = t('log');
   document.getElementById('nav-admin-lbl').textContent   = t('admin');
   document.getElementById('nav-profile-lbl').textContent = t('me');
@@ -990,7 +1196,7 @@ async function triggerSyncRefresh() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
   const btn=document.getElementById('sync-btn');
   if(btn) btn.textContent='⏳';
-  showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
+  showToast(t('syncingCloud'),'pending');
   try {
     const json = await gasGet('getSales');
     let newSales = null;
@@ -1002,7 +1208,7 @@ async function triggerSyncRefresh() {
       // Always re-render whichever tab is showing AND force records+summary refresh
       renderCurrentTab();
       checkAllStoresSubmitted();
-      showToast(lang==='zh'?'云端同步成功 ✓':'Synced from Cloud ✓','success');
+      showToast(t('syncDone'),'success');
       // Also pull cash drawer records
       try {
         const cdJson = await gasGet('getCashDrawer');
@@ -1063,13 +1269,13 @@ async function fetchLog() {
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username){ showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
-  if(!pin)     { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
-  if(pin.length!==6){ showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits','error'); return; }
+  if(!username){ showToast(t('enterUsername'),'error'); return; }
+  if(!pin)     { showToast(t('enterPin'),'error'); return; }
+  if(pin.length!==6){ showToast(t('pin6Digits'),'error'); return; }
 
   const loginBtn=document.getElementById('login-btn');
-  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=lang==='zh'?'连接中...':'Connecting...'; }
-  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
+  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=t('connectingLbl'); }
+  showToast(t('connectingServer'),'pending');
 
   // Try live fetch first, fall back to cache
   await fetchLiveUsers();
@@ -1078,7 +1284,7 @@ async function doLogin() {
 
   // Validate
   if(Object.keys(cachedUsers).length===0){
-    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
+    showToast(t('noServerCache'),'error');
     return;
   }
   const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
@@ -1088,11 +1294,11 @@ async function doLogin() {
   }
   const _pin = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
   if(_pin !== String(pin).trim()){
-    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
+    showToast(t('wrongPin'),'error'); return;
   }
   const _st = String(userMatch.status ?? 'active').trim().toLowerCase();
   if(_st === 'pending'){
-    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
+    showToast(t('accountPending'),'error'); return;
   }
   if(_st === 'inactive' || _st === 'disabled'){
     showToast('Account disabled — contact Admin','error'); return;
@@ -1162,7 +1368,7 @@ function renderSubmitTab() {
   let storeOptions=!isManagerial
     ?`<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
     :`<select id="submit-store" onchange="checkAndLoadExistingSales()">
-         <option value="">${t('selectStore')}</option>
+         <option value="" id="select-store-opt">-- Select Store --</option>
          ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
@@ -1183,7 +1389,7 @@ function renderSubmitTab() {
   document.getElementById('tab-submit').innerHTML=`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0.00':'Update or edit any date. Amounts can be RM 0.00'}</p>
+      <p>${t('submitSubtitle')}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
@@ -1269,7 +1475,7 @@ function checkAndLoadExistingSales() {
     const el=document.getElementById(id);
     if(el) el.disabled = locked && restricted;
   });
-  if(note) note.innerHTML = locked ? '<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:#3730a3;font-weight:700">Settlement uploaded. Daily sales is locked; Manager/Admin/Boss approval is required for changes.</div>' : '';
+  if(note) note.innerHTML = locked ? '<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:#3730a3;font-weight:700">'+t('lockNote')+'</div>' : '';
   if(submitBtn) submitBtn.disabled = locked && restricted;
 }
 function updateLiveTotal() {
@@ -1283,7 +1489,7 @@ function updateLiveTotal() {
 function openConfirm() {
   const store     =document.getElementById('submit-store').value;
   const targetDate=document.getElementById('submit-date').value;
-  if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
+  if(!store||!targetDate){showToast(t('selectStoreDate'),'error');return;}
 
   // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
@@ -1294,7 +1500,7 @@ function openConfirm() {
 
   const locked = isSalesLocked(store, targetDate);
   if(locked && ['staff','supervisor'].includes(currentUser.role)){
-    showToast(lang==='zh'?'日结单已上传，需经理批准才能修改':'Settlement uploaded. Manager approval required to edit.','error'); return;
+    showToast(t('salesLockedEdit'),'error'); return;
   }
 
   const cash  =parseFloat(document.getElementById('s-cash').value)||0;
@@ -1315,14 +1521,14 @@ function openConfirm() {
   if(isEdit){
     editWarning=`
       <div style="background:#fff3cd;border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#78350f;font-weight:600;">
-        ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
+        ✏️ ${t('editingWarning')}
       </div>`;
   }
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 ${t('storeLabel3')}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 ${t('dateLabel3')}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
@@ -1357,7 +1563,7 @@ function confirmSubmit(withUpload=false) {
     dateKey:s.targetDate,month:s.targetDate.slice(0,7),
     submissionType,changeLog:JSON.stringify(changeLog)
   };
-  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...','pending');
+  showToast(t('uploadingCloud'),'pending');
   fetch(WEB_APP_URL,{
     method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -1406,7 +1612,7 @@ function renderRecordsTab() {
           <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
           <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
           <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
+          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${t('monthly')}</option>
         </select>
       </div>
       <div>
@@ -1466,14 +1672,14 @@ function renderRecordsTab() {
   const mvHtml = mvFiltered.length===0 ? '' : `
     <div style="margin-top:10px">
       <div style="font-size:13px;font-weight:800;margin-bottom:6px;color:var(--text2)">
-        💸 ${lang==='zh'?'现金进出记录':'Cash In / Out'}
+        💸 ${t('cashInOutLbl')}
       </div>
       ${mvFiltered.map(r=>{
         const isIn = r.type==='in';
         return `<div class="move-item">
           <div>
             <div style="font-size:13px;font-weight:800">${r.store}
-              <span style="background:${isIn?'#d1fae5':'#fee2e2'};color:${isIn?'#065f46':'#b91c1c'};border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;margin-left:4px">${isIn?(lang==='zh'?'现金入':'Cash IN'):(lang==='zh'?'现金出':'Cash OUT')}</span>
+              <span style="background:${isIn?'#d1fae5':'#fee2e2'};color:${isIn?'#065f46':'#b91c1c'};border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;margin-left:4px">${isIn?(t('cashInLabel')):(t('cashOutLabel'))}</span>
             </div>
             <div style="font-size:11px;color:var(--text2)">${r.reason||''} · ${r.submitter||''}</div>
           </div>
@@ -1494,14 +1700,14 @@ function renderRecordsTab() {
   const cdHtml = cdFiltered.length===0 ? '' : `
     <div style="margin-top:14px">
       <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-        🗄️ ${lang==='zh'?'收银机现金盘点':'Cash in Drawer'}
+        🗄️ ${t('cashInDrawer')}
       </div>
       ${cdFiltered.map(r=>`
         <div class="record-item">
           <div class="record-icon">🗄️</div>
           <div class="record-info">
             <div class="record-store">${r.store} <span class="badge" style="background:#fff7ed;color:#92400e">${r.submitter||''}</span></div>
-            <div class="record-meta">${lang==='zh'?'盘点时间':'Counted at'}: ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
+            <div class="record-meta">${t('countedAt')}: ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
             ${r.note?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.note}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
@@ -1588,12 +1794,12 @@ function renderSummaryTab() {
     <div class="card" style="padding:14px;background:#eff6ff;margin-bottom:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">📅 ${lang==='zh'?'查看模式':'View Mode'}</label>
+          <label class="field-label" style="font-size:11px;margin-bottom:4px">📅 ${t('viewMode')}</label>
           <select onchange="summaryViewMode=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
             <option value="today"       ${vm==='today'?'selected':''}>${t('todayOpt')}</option>
             <option value="yesterday"   ${vm==='yesterday'?'selected':''}>${t('yestOpt')}</option>
             <option value="custom_date" ${vm==='custom_date'?'selected':''}>${t('customOpt')}</option>
-            <option value="month"       ${vm==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
+            <option value="month"       ${vm==='month'?'selected':''}>${t('monthly')}</option>
           </select>
           ${vm==='custom_date'
             ?`<input type="date" value="${summaryCustDate}" onchange="summaryCustDate=this.value;renderSummaryTab()" style="padding:7px;font-size:13px;margin-top:6px;width:100%">`
@@ -1602,7 +1808,7 @@ function renderSummaryTab() {
             :''}
         </div>
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">🏪 ${lang==='zh'?'门店筛选':'Store Filter'}</label>
+          <label class="field-label" style="font-size:11px;margin-bottom:4px">🏪 ${t('storeFilter')}</label>
           <select onchange="summaryStoreFilter=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
             <option value="all" ${summaryStoreFilter==='all'?'selected':''}>${t('allStores')}</option>
             ${branches.map(s=>`<option value="${s}" ${summaryStoreFilter===s?'selected':''}>${s}</option>`).join('')}
@@ -1632,7 +1838,7 @@ function renderSummaryTab() {
     <!-- TODAY STATUS STRIP -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
+        📋 ${t('todayStatus')} · ${todayKey}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
@@ -1709,7 +1915,7 @@ async function renderLogTab() {
       </div>
       <button class="btn refresh-inline" onclick="refreshLog()">🔄 ${t('refresh')}</button>
     </div>
-    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>
+    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${t('loadingMsg')}</div>
     <div id="log-content"></div>`;
 
   await refreshLog();
@@ -1749,9 +1955,9 @@ async function refreshLog() {
         </select>
       </div>
       <div>
-        <label class="field-label" style="font-size:11px">📋 ${lang==='zh'?'操作类型':'Action Type'}</label>
+        <label class="field-label" style="font-size:11px">📋 ${t('actionType')}</label>
         <select onchange="logActionFilter=this.value;renderLogEntries()">
-          <option value="all">${lang==='zh'?'全部':'All'}</option>
+          <option value="all">${t('allOpt')}</option>
           <option value="new"  ${logActionFilter==='new'?'selected':''}>${t('newEntry')}</option>
           <option value="edit" ${logActionFilter==='edit'?'selected':''}>${t('editEntry')}</option>
         </select>
@@ -1942,7 +2148,7 @@ function renderAttendanceTab(){
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">'+inCard+outCard+'</div>'
       +'<div class="input-wrap" style="margin-top:8px;margin-bottom:8px">'
         +'<label class="field-label">'+t('remarkLabel')+'</label>'
-        +'<input type="text" id="att-remark" placeholder="'+(lang==='zh'?'如：看医生':'e.g. Doctor visit')+'"></div>'
+        +'<input type="text" id="att-remark" placeholder="'+(t('attRemark'))+'"></div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'
         +'<button class="btn success" '+ciDis+' onclick="confirmAttendance(\'check_in\')">'+ciLbl+'</button>'
         +'<button class="btn warn"    '+coDis+' onclick="confirmAttendance(\'check_out\')">'+coLbl+'</button>'
@@ -2060,8 +2266,8 @@ function renderZoneScheduleTools(branches,users){
   // Only admin can set work zones — boss and manager cannot
   if(currentUser.role !== 'admin') return '';
   return `<div class="divider"></div><div class="card-title">${t('workZone')}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('branch')}</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">${t('radius')}</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">${t('saveZone')}</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('staff')}</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">${t('day')}</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">${t('saveSched')}</button>`; }
-async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast(lang==='zh'?'请输入经纬度坐标':'Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(lang==='zh'?'区域已保存':'Zone saved.','success'); triggerSyncRefresh(); }
-async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(lang==='zh'?'排班已保存':'Schedule saved.','success'); triggerSyncRefresh(); }
+async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast(t('latLngRequired'),'error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(t('zoneSaved'),'success'); triggerSyncRefresh(); }
+async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(t('schedSaved'),'success'); triggerSyncRefresh(); }
 async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast(t('backupDone'),'success'); setTimeout(()=>triggerSyncRefresh(),1500); }
 // ============================================================
 // ADMIN TAB
@@ -2096,7 +2302,7 @@ async function renderAdminTab() {
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}`;
 }
 async function approveUser(username) {
-  showToast(lang==='zh'?'正在审批...':'Approving...','pending');
+  showToast(t('approvingLbl'),'pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approveUser',username})});
     if(cachedUsers[username]){cachedUsers[username].status='active';saveData('cached_users',cachedUsers);}
@@ -2104,7 +2310,7 @@ async function approveUser(username) {
   } catch(e){showToast('Error: '+e,'error');}
 }
 async function rejectUser(username) {
-  if(!confirm('Reject & delete this request?')) return;
+  if(!confirm(t('cancelReject'))) return;
   showToast('Rejecting...','pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rejectUser',username})});
@@ -2142,7 +2348,7 @@ async function saveUserEdit() {
   const store=document.getElementById('edit-store').value;
   if(!username||!name||!pin||pin.length!==6||!phone){showToast('Fill all fields. PIN=6 digits.','error');return;}
   const userData={action:'saveUser',originalKey,username,name,phone,pin,role,store,status:'active'};
-  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
+  showToast(t('savingLbl'),'pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)});
     if(originalKey&&originalKey!==username) delete cachedUsers[originalKey];
@@ -2152,7 +2358,7 @@ async function saveUserEdit() {
   } catch(e){showToast('Error: '+e,'error');}
 }
 async function deleteUser(username) {
-  if(!confirm('Delete user @'+username+'?')) return;
+  if(!confirm(t('deleteEntry')+' @'+username)) return;
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteUser',username})});
     delete cachedUsers[username]; saveData('cached_users',cachedUsers);
@@ -2189,13 +2395,13 @@ function renderProfileTab() {
       <button class="btn success" onclick="changeCurrentUserPin()">${t('pinSubmitBtn')}</button>
     </div>
     <div class="card">
-      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
+      <div class="card-title">${t('localCacheInfo')}</div>
       <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
+        <span class="stat-label">${t('localRecords')}</span>
         <span class="stat-value">${getSales().length}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
+        <span class="stat-label">${t('lastSync')}</span>
         <span class="stat-value" style="font-size:13px">${fmtTimeUTC8(nowUTC8())}</span>
       </div>
     </div>
@@ -2207,17 +2413,17 @@ async function changeCurrentUserPin() {
   const currentPin=document.getElementById('profile-curr-pin').value.trim();
   const newPin=document.getElementById('profile-new-pin').value.trim();
   const confirmPin=document.getElementById('profile-conf-pin').value.trim();
-  if(!currentPin||!newPin||!confirmPin){showToast(lang==='zh'?'请填写完整！':'Fill all fields!','error');return;}
-  if(String(currentPin)!==String(currentUser.pin)){showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!','error');return;}
-  if(newPin.length!==6||isNaN(newPin)){showToast(lang==='zh'?'新密码必须是6位数字！':'New PIN must be 6 digits!','error');return;}
-  if(newPin!==confirmPin){showToast(lang==='zh'?'新密码不一致！':'New PINs do not match!','error');return;}
-  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
+  if(!currentPin||!newPin||!confirmPin){showToast(t('fillAllFields'),'error');return;}
+  if(String(currentPin)!==String(currentUser.pin)){showToast(t('wrongCurrentPin'),'error');return;}
+  if(newPin.length!==6||isNaN(newPin)){showToast(t('newPin6Digits'),'error');return;}
+  if(newPin!==confirmPin){showToast(t('pinMismatch'),'error');return;}
+  showToast(t('savingLbl'),'pending');
   const userPayload={action:'saveUser',originalKey:currentUser.username,username:currentUser.username,name:currentUser.name,phone:currentUser.phone||'',pin:newPin,role:currentUser.role,store:currentUser.store,status:'active'};
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userPayload)});
     currentUser.pin=newPin;
     if(cachedUsers[currentUser.username]){cachedUsers[currentUser.username].pin=newPin;saveData('cached_users',cachedUsers);}
-    showToast(lang==='zh'?'密码修改成功！':'PIN updated!','success');
+    showToast(t('pinUpdated'),'success');
     document.getElementById('profile-curr-pin').value='';
     document.getElementById('profile-new-pin').value='';
     document.getElementById('profile-conf-pin').value='';
@@ -2270,7 +2476,7 @@ function sendReminder() {
   const todaySales=getSales().filter(s=>s.dateKey===today);
   const submittedStores=new Set(todaySales.map(s=>s.store));
   const pending=BRANCHES.filter(b=>!submittedStores.has(b));
-  if(pending.length===0){showToast(lang==='zh'?'所有门店今日已提交！':'All branches submitted today!','success');return;}
+  if(pending.length===0){showToast(t('allSubmittedToday'),'success');return;}
   const msgEn=`🔔 *Sales Report Reminder*\nDate: ${today}\n\nPending branches:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit ASAP. Thank you!`;
   const msgZh=`🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
   let contactsHtml='';
@@ -2297,12 +2503,12 @@ function sendReminder() {
     overlay.innerHTML=`
       <div class="modal-box">
         <div class="modal-title">🔔 Send Reminders</div>
-        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${lang==='zh'?'未提交门店：':'Pending stores:'} <strong>${pending.join(', ')}</strong></p>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${t('pendingStores')} <strong>${pending.join(', ')}</strong></p>
         <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang==='zh'?msgZh:msgEn)}','_blank');document.getElementById('reminder-modal').remove();" style="margin-bottom:14px">
-          📢 ${lang==='zh'?'发送群组提醒':'Send Group Reminder'}
+          📢 ${t('sendGroupReminder')}
         </button>
         <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--text);border-top:1px solid var(--border);padding-top:10px">
-          ${lang==='zh'?'直接联系负责人：':'Direct WhatsApp to staff:'}
+          ${t('directContact')}
         </div>
         ${contactsHtml}
         <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px">Close 关闭</button>
@@ -2324,7 +2530,7 @@ function openSettlementUpload() {
   const dateKey = dateEl  ? dateEl.value  : dateKeyUTC8();
 
   if(!store) {
-    showToast(lang==='zh'?'请先选择门店':'Please select a store first','error');
+    showToast(t('selectStoreFrst'),'error');
     return;
   }
 
@@ -2385,7 +2591,7 @@ async function uploadSettlement() {
   const note    = document.getElementById('settlement-note').value || '';
 
   if(!fileInput || !fileInput.files || !fileInput.files[0]) {
-    showToast(lang==='zh'?'请先拍摄或选择图片':'Please select or take a photo first','error');
+    showToast(t('selectImageFirst'),'error');
     return;
   }
 
@@ -2436,7 +2642,7 @@ async function uploadSettlement() {
 
     clearInterval(ticker);
     if(progressBar)  progressBar.style.width = '100%';
-    if(progressLabel) progressLabel.textContent = lang==='zh' ? '✅ 上传成功！' : '✅ Upload successful!';
+    if(progressLabel) progressLabel.textContent = t('uploadSuccess');
 
     setTimeout(() => {
       closeSettlementModal();
@@ -2447,7 +2653,97 @@ async function uploadSettlement() {
     clearInterval(ticker);
     if(btn) { btn.disabled=false; btn.textContent='📤 Upload 上传'; }
     if(progressWrap) progressWrap.style.display = 'none';
-    showToast('Upload failed: ' + e.message, 'error');
+    showToast('Upload failed: ' + e.message, 'error');,
+    absent:'缺勤',
+    accessDenied:'无权限',
+    actualCount:'实际盘点',
+    addLbl:'添加',
+    admin:'管理员',
+    allOpt:'全部',
+    allStores:'所有门店',
+    allStoresOpt:'所有门店',
+    alreadyCheckedIn:'今日已于此时签到：',
+    amountLbl:'金额',
+    attRecords:'考勤记录',
+    attRemark:'备注',
+    backupBtn:'创建数据库备份',
+    bank:'银行转账',
+    branch:'门店',
+    cancelBtn:'取消',
+    card:'信用卡/借记卡',
+    cash:'现金',
+    cashInAdd:'+ 添加',
+    cashInOutLbl:'现金进出',
+    cashInToday:'今日入款',
+    cashOutLabel:'现金出',
+    cashOutMgrOnly:'现金出 — 仅限经理/管理员/老板',
+    cashOutToday:'今日出款',
+    checkIn:'签到',
+    checkInFirst:'请先签到',
+    checkOut:'签退',
+    closeBtnLbl:'关闭',
+    coinsLabel:'硬币',
+    confirmBtn:'确认',
+    confirmNewPinLabel:'确认新密码',
+    confirmTitle2:'确认提交',
+    connectingLbl:'连接中…',
+    counted:'已盘点',
+    countedAt:'盘点时间',
+    customOpt:'自定义日期',
+    daily:'每日趋势',
+    dateLabel3:'日期',
+    deleteEntry:'删除',
+    deleteUser:'删除',
+    done:'已完成',
+    editEntry:'修改',
+    editUser:'编辑',
+    enterPin:'请输入密码',
+    fillAllFields:'请填写完整，密码必须为6位数字。',
+    gettingLocation:'正在获取位置…',
+    lateStatus:'迟到',
+    localRecords:'本地记录',
+    logDesc:'所有提交和修改的不可变审计日志。',
+    logout:'退出登录',
+    me:'我的',
+    nameLabel:'姓名',
+    newPinLabel:'新密码',
+    noAccess:'无权限',
+    noRecords:'暂无记录',
+    noRequests:'暂无待审批',
+    onTime:'准时',
+    pendingApproval:'待审批',
+    present:'出勤',
+    qr:'QR/电子钱包',
+    radius:'半径（米）',
+    reasonLbl:'原因/备注',
+    records:'记录',
+    refresh:'刷新',
+    rejectBtn:'拒绝',
+    rejectBtn2:'拒绝',
+    rejectedMsg:'已拒绝。',
+    remark:'备注',
+    saveSched:'保存工作排班',
+    savingLbl:'正在保存…',
+    schedSaved:'排班已保存。',
+    sendGroupReminder:'发送群组提醒',
+    settleSelected:'图片已选择，点击更换',
+    settleUploading:'上传中…',
+    storeFilter:'门店筛选',
+    storeLabel:'门店',
+    storeLabel2:'门店',
+    storeLbl:'门店',
+    submit:'提交',
+    submitBtn:'提交与同步',
+    summary:'汇总',
+    syncDone:'同步完成。',
+    tapCheckIn:'点击签到开始今日工作',
+    timeLabel:'时间',
+    todayOpt:'今天',
+    topUpReason:'如：补充找零',
+    uploadCloud:'正在同步至云端…',
+    userDeleted:'用户已删除。',
+    userMgmt:'用户管理',
+    yestOpt:'昨天'
   }
 }
 
@@ -2550,7 +2846,7 @@ function renderCashDrawerCard(store, dateKey) {
 }
 
 function requestCashDrawerAdjustment(store,dateKey,variance){
-  const reason=prompt(lang==='zh'?'请说明差异原因：':'Please explain the variance reason:','');
+  const reason=prompt(t('explainVariance'),'');
   if(reason===null) return;
   const req={id:String(Date.now()),type:'cash_variance',store,dateKey,
     requester:currentUser.name,role:currentUser.role,
@@ -2571,7 +2867,7 @@ function openCashDrawerModal() {
   if(!storeEl||!dateEl) return;
   const store   = storeEl.value;
   const dateKey = dateEl.value;
-  if(!store) { showToast(lang==='zh'?'请选择门店':'Select a store first','error'); return; }
+  if(!store) { showToast(t('selectStoreFrst'),'error'); return; }
   if(currentUser.role === 'staff'){
     showToast(t('staffNoDrawer'),'error'); return;
   }
@@ -2637,7 +2933,7 @@ function renderCashDrawerModal() {
     </div>`).join('');
 
   const mvListHtml = (list, type) => list.length===0
-    ? `<div style="color:var(--text2);font-size:13px;padding:6px 0">${lang==='zh'?'暂无记录':'No records yet'}</div>`
+    ? `<div style="color:var(--text2);font-size:13px;padding:6px 0">${t('noRecordsYet')}</div>`
     : list.map(r=>`
       <div class="move-item">
         <div>
@@ -2660,7 +2956,7 @@ function renderCashDrawerModal() {
       <div class="cd-header">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
-            <div style="font-size:17px;font-weight:900">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer Manager'}</div>
+            <div style="font-size:17px;font-weight:900">🗄️ ${t('cashDrawerManager')}</div>
             <div style="font-size:12px;opacity:.85;margin-top:2px">🏪 ${_cdStore} · 📅 ${_cdDate}</div>
           </div>
           <button onclick="document.getElementById('cd-main-modal').remove()"
@@ -2669,15 +2965,15 @@ function renderCashDrawerModal() {
         <!-- Running totals -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
           <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'柜内现金':'In Drawer'}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${t('inDrawer')}</div>
             <div style="font-size:16px;font-weight:900" id="cd-live-total">RM ${cdCalcTotal().toFixed(2)}</div>
           </div>
           <div style="background:rgba(16,185,129,.3);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金入':'Cash In'}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${t('cashInToday')}</div>
             <div style="font-size:16px;font-weight:900">+${totalIn.toFixed(2)}</div>
           </div>
           <div style="background:rgba(239,68,68,.3);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金出':'Cash Out'}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${t('cashOutToday')}</div>
             <div style="font-size:16px;font-weight:900">-${totalOut.toFixed(2)}</div>
           </div>
         </div>
@@ -2685,13 +2981,13 @@ function renderCashDrawerModal() {
 
       <!-- BILLS SECTION -->
       <div class="cd-section">
-        <div class="cd-section-title">💵 ${lang==='zh'?'纸币':'Bills / Banknotes'}</div>
+        <div class="cd-section-title">💵 ${t('billsLabel')}</div>
         <div class="denom-grid">${billRows}</div>
       </div>
 
       <!-- COINS SECTION -->
       <div class="cd-section">
-        <div class="cd-section-title">🪙 ${lang==='zh'?'硬币':'Coins'}</div>
+        <div class="cd-section-title">🪙 ${t('coinsLabel')}</div>
         <div class="denom-grid">${coinRows}</div>
       </div>
 
@@ -2699,11 +2995,11 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            ✅ ${lang==='zh'?'现金入':'Cash IN'} <span style="font-weight:900;color:#10b981">+RM ${totalIn.toFixed(2)}</span>
+            ✅ ${t('cashInLabel')} <span style="font-weight:900;color:#10b981">+RM ${totalIn.toFixed(2)}</span>
           </div>
           <button onclick="openAddMovement('in')"
             style="background:#10b981;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
-            + ${lang==='zh'?'添加':'Add'}
+            + ${t('addBtn')}
           </button>
         </div>
         <div id="cd-in-list">${mvListHtml(ins,'in')}</div>
@@ -2714,25 +3010,25 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            🚫 ${lang==='zh'?'现金出':'Cash OUT'} <span style="font-weight:900;color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
+            🚫 ${t('cashOutLabel')} <span style="font-weight:900;color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
           </div>
           <button onclick="openAddMovement('out')"
             style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
-            + ${lang==='zh'?'添加':'Add'}
+            + ${t('addBtn')}
           </button>
         </div>
         <div id="cd-out-list">${mvListHtml(outs,'out')}${pendingOuts.length?`<div style="margin-top:8px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:10px;padding:8px;font-weight:700">${pendingOuts.length} cash out request(s) waiting approval.</div>`:''}</div>
       </div>` : `
       <div class="cd-section" style="background:#f8fafc">
         <div style="font-size:13px;color:var(--text2);font-weight:600;text-align:center;padding:6px">
-          🔒 ${lang==='zh'?'现金出功能仅限经理/管理员':'Cash Out — Manager / Admin / Boss only'}
+          🔒 ${t('cashOutMgrOnly')}
         </div>
         ${outs.length>0?`<div id="cd-out-list">${mvListHtml(outs,'out')}</div>`:''}
       </div>`}
 
       <!-- NOTE + SUBMIT -->
       <div class="cd-section">
-        <label class="field-label" style="color:#92400e">${lang==='zh'?'备注（选填）':'Note (optional)'}</label>
+        <label class="field-label" style="color:#92400e">${t('noteOptional')}</label>
         <input type="text" id="cd-final-note" placeholder="..."
           value="${(()=>{ const ex=getCashDrawer().find(r=>r.dateKey===_cdDate&&r.store===_cdStore); return ex?ex.note||'':''; })()}"
           style="border-color:#f59e0b;margin-top:4px">
@@ -2741,11 +3037,11 @@ function renderCashDrawerModal() {
       <!-- SUBMIT BAR -->
       <div class="cd-submit-bar">
         <button class="btn secondary" style="flex:1" onclick="document.getElementById('cd-main-modal').remove()">
-          ${lang==='zh'?'关闭':'Close'}
+          ${t('closeBtnLbl')}
         </button>
         <button class="btn warn" style="flex:2;background:linear-gradient(135deg,#92400e,#f59e0b)"
           onclick="submitCashDrawerFull()">
-          🗄️ ${lang==='zh'?'保存现金盘点':'Save Cash Count'}
+          🗄️ ${t('saveCountBtn')}
         </button>
       </div>
 
@@ -2787,10 +3083,10 @@ function openAddMovement(type) {
   ov.innerHTML=`
     <div class="modal-box">
       <div class="modal-title" style="color:${isOut?'#ef4444':'#10b981'}">
-        ${isOut?(lang==='zh'?'➕ 现金出':'➕ Cash OUT'):(lang==='zh'?'➕ 现金入':'➕ Cash IN')}
+        ${isOut?(t('cashOutAdd')):(t('cashInAdd'))}
       </div>
       <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'金额':'Amount'} (RM)</label>
+        <label class="field-label">${t('amountLbl')} (RM)</label>
         <div class="amount-input-wrap">
           <span class="amount-prefix" style="color:${isOut?'#ef4444':'#10b981'}">RM</span>
           <input type="number" class="amount-input" id="mv-amount" placeholder="0.00"
@@ -2799,19 +3095,19 @@ function openAddMovement(type) {
         </div>
       </div>
       <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'原因/备注':'Reason / Note'}</label>
+        <label class="field-label">${t('reasonLbl')}</label>
         <input type="text" id="mv-reason"
-          placeholder="${isOut?(lang==='zh'?'如：银行存款、零用金':'e.g. Banking, Petty cash'):(lang==='zh'?'如：补充找零':'e.g. Top up change')}"
+          placeholder="${isOut?(t('bankingReason')):(t('topUpReason'))}"
           style="border-color:${isOut?'#ef4444':'#10b981'}">
       </div>
       <div style="display:flex;gap:10px;margin-top:8px">
         <button class="btn secondary" style="flex:1"
           onclick="document.getElementById('cd-add-mv-modal').remove()">
-          ${lang==='zh'?'取消':'Cancel'}
+          ${t('cancelBtn')}
         </button>
         <button class="btn" style="flex:2;background:${isOut?'#ef4444':'#10b981'}"
           onclick="saveCashMovementEntry('${type}')">
-          ${lang==='zh'?'保存':'Save'}
+          ${t('saveBtn')}
         </button>
       </div>
     </div>`;
@@ -2855,7 +3151,7 @@ function saveCashMovementEntry(type) {
   renderCashDrawerModal();
 }
 function deleteCashMovement(id) {
-  if(!confirm(lang==='zh'?'删除此记录？':'Delete this entry?')) return;
+  if(!confirm(t('deleteEntry'))) return;
   const mvs = getCashMovements().filter(r=>r.id!==String(id));
   saveCashMovements(mvs);
   renderCashDrawerModal();
@@ -2877,7 +3173,7 @@ function submitCashDrawerFull() {
     datetime: nowUTC8()
   };
 
-  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
+  showToast(t('savingLbl'),'pending');
   fetch(WEB_APP_URL, {
     method:'POST', mode:'no-cors', cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -2886,7 +3182,7 @@ function submitCashDrawerFull() {
     let cd = getCashDrawer().filter(r=>!(r.dateKey===_cdDate&&r.store===_cdStore));
     cd.push(record);
     saveCashDrawer(cd);
-    showToast(lang==='zh'?'现金盘点已保存 ✓':'Cash count saved ✓','success');
+    showToast(t('cashCountSaved'),'success');
     document.getElementById('cd-main-modal')?.remove();
     renderSubmitTab();
     if(currentTab==='records') renderRecordsTab();
