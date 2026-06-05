@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -862,7 +862,12 @@ async function triggerSyncRefresh() {
         if(appJson){
           if(Array.isArray(appJson.settlementLocks)) saveSettlementLocks(appJson.settlementLocks);
           if(Array.isArray(appJson.approvals)) saveApprovals(appJson.approvals);
-          if(Array.isArray(appJson.attendance)) saveAttendance(appJson.attendance);
+          if(Array.isArray(appJson.attendance)){
+            // Merge: server is authoritative but keep local records not yet on server
+            var serverIds=new Set(appJson.attendance.map(function(r){return String(r.id);}));
+            var localOnly=getAttendance().filter(function(r){return !serverIds.has(String(r.id));});
+            saveAttendance(appJson.attendance.concat(localOnly));
+          }
           if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
