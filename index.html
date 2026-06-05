@@ -429,12 +429,15 @@
 <!-- ===================== CONFIRM SUBMIT MODAL ===================== -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box">
-    <div class="modal-title" id="modal-title">Confirm Submission</div>
+    <div class="modal-title" id="modal-title">Confirm 确认</div>
     <div id="modal-body"></div>
-    <div style="display:flex;gap:10px;margin-top:20px;">
-      <button class="btn secondary" style="flex:1" onclick="closeModal()">Cancel 取消</button>
-      <button class="btn success"   style="flex:1" onclick="confirmSubmit()">Confirm & Submit ✓</button>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn secondary" style="flex:1" id="m-cancel-btn" onclick="closeModal()">Cancel 取消</button>
+      <button class="btn success" style="flex:1" id="m-submit-btn" onclick="confirmSubmit(false)">✅ Confirm &amp; Submit</button>
     </div>
+    <button class="btn" id="m-upload-btn" onclick="confirmSubmit(true)" style="margin-top:8px;font-size:14px;background:#f59e0b;width:100%">
+      📎 Submit + Upload Receipt (Confirms Daily Sales)
+    </button>
   </div>
 </div>
 
@@ -540,7 +543,7 @@ function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
 function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_sJ9jou0l6Ab4viXmukmEsoPFJCjE5pfd9UIhPWp6nnsaLtD5Z_gMg-1O831LlJM3LA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwls3VQI6yblUhVddi9GfIZAM_0OIp7KQ6nUXRYJyQr7kFd2hp1hkZg3rg2Iv0XDcDaGw/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -691,7 +694,17 @@ const T = {
     beforeLabel:'Before', afterLabel:'After',
     noLog:'No log entries found', logFilter:'Filter Log',
     logAccessDenied:'Only Boss, Admin & Manager can view the audit log.'
-  },
+,
+    submitUploadBtn:'Submit + Upload Receipt (Confirms Daily Sales)',
+    submittedPending:'Submitted — Pending Supervisor Approval ⏳',
+    salesLockedMsg:'Settlement uploaded — Sales locked. Manager approval required.',
+    varianceApproval:'Variance requires Manager approval',
+    requestApproval:'Request Approval',
+    varianceSent:'Variance request sent to Manager',
+    staffNoDrawer:'Cash drawer: Supervisor/Manager only',
+    selectStoreFrst:'Please select a store first',
+    latLngRequired:'Enter latitude and longitude',
+    zoneSaved:'Zone saved.'  },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
     log:'日志', admin:'管理', me:'我的',
@@ -733,7 +746,17 @@ const T = {
     newEntry:'首次提交', editEntry:'已修改',
     beforeLabel:'修改前', afterLabel:'修改后',
     noLog:'暂无日志记录', logFilter:'筛选日志',
-    logAccessDenied:'仅老板、管理员及经理可查看审计日志。'
+    logAccessDenied:'仅老板、管理员及经理可查看审计日志。',
+    submitUploadBtn:'提交并上传日结单（确认当日销售）',
+    submittedPending:'已提交 — 等待主管审批 ⏳',
+    salesLockedMsg:'日结单已上传 — 销售已锁定，修改需经理审批。',
+    varianceApproval:'差异需经理审批',
+    requestApproval:'申请差异审批',
+    varianceSent:'差异申请已发送至经理',
+    staffNoDrawer:'收银机由主管/经理管理，请联系他们开启。',
+    selectStoreFrst:'请先选择门店',
+    latLngRequired:'请输入经纬度坐标',
+    zoneSaved:'区域已保存。'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -748,7 +771,10 @@ function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
   document.getElementById('nav-records-lbl').textContent = t('records');
   document.getElementById('nav-summary-lbl').textContent = t('summary');
-  document.getElementById('nav-attendance-lbl').textContent = lang==='zh'?'Attendance':'Attendance';
+  document.getElementById('nav-attendance-lbl').textContent = lang==='zh'?'考勤':'Attendance';
+  const _mb1=document.getElementById('m-cancel-btn');  if(_mb1) _mb1.textContent=lang==='zh'?'取消':'Cancel';
+  const _mb2=document.getElementById('m-submit-btn'); if(_mb2) _mb2.textContent=(lang==='zh'?'确认提交':'Confirm & Submit');
+  const _mb3=document.getElementById('m-upload-btn'); if(_mb3) _mb3.textContent='📎 '+(lang==='zh'?'提交并上传日结单（确认当日销售）':'Submit + Upload Receipt (Confirms Daily Sales)');
   document.getElementById('nav-log-lbl').textContent     = t('log');
   document.getElementById('nav-admin-lbl').textContent   = t('admin');
   document.getElementById('nav-profile-lbl').textContent = t('me');
@@ -1050,9 +1076,7 @@ function renderSubmitTab() {
       </div>
             <div id="sales-lock-note"></div>
       <button class="btn" onclick="openConfirm()" id="sales-submit-btn" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-      <button class="btn secondary" onclick="openSettlementUpload()" style="margin-top:10px;font-size:15px;border:2px solid var(--primary);">
-        📎 ${lang==='zh'?'上传日结单 / 收据':'Upload Settlement Receipt'}
-      </button>
+
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
       💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
@@ -1158,7 +1182,27 @@ function openConfirm() {
 
 function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
-function confirmSubmit() {
+function _staffSubmitForApproval(withUpload) {
+  const p = window._pendingSubmit; if(!p){showToast('No data','error');return;}
+  const req = {id:String(Date.now()),type:'sales_submission',store:p.store,dateKey:p.targetDate,
+    requester:currentUser.name,role:currentUser.role,amount:p.total,
+    reason:'Staff sales submission',status:'pending',createdAt:nowUTC8(),
+    payload:JSON.stringify({cash:p.cash,qr:p.qr,card:p.card,bank:p.bank,remark:p.remark})};
+  const a=getApprovals(); a.push(req); saveApprovals(a);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'createApprovalRequest',...req})}).catch(()=>{});
+  closeModal();
+  showToast(lang==='zh'?'已提交 — 等待主管审批 ⏳':'Submitted — Pending Supervisor Approval ⏳','success');
+  renderSubmitTab(); renderRecordsTab();
+  if(withUpload) setTimeout(()=>openSettlementUpload(),600);
+  else setTimeout(()=>triggerSyncRefresh(),1500);
+}
+
+function confirmSubmit(withUpload=false) {
+  if(['staff','supervisor'].includes(currentUser.role)){
+    _staffSubmitForApproval(withUpload); return;
+  }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1188,8 +1232,8 @@ function confirmSubmit() {
     showToast(t('submitted'),'success');
     renderSubmitTab();
     checkAllStoresSubmitted();
-    // Pull fresh data from DB in background to confirm sync
-    setTimeout(()=>triggerSyncRefresh(), 1500);
+    if(withUpload) setTimeout(()=>openSettlementUpload(),600);
+    else setTimeout(()=>triggerSyncRefresh(),1500);
   }).catch(err=>{showToast('Error: '+err,'error');});
 }
 
@@ -1793,7 +1837,6 @@ function renderOperationsDashboard(){
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
     <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Attendance Records</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No attendance records.</div>'}</div>
-    <div style="margin-top:12px">${renderAttendanceReport(users)}</div>
     ${renderZoneScheduleTools(branches,users)}
     <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>
   </div>`;
@@ -1801,7 +1844,9 @@ function renderOperationsDashboard(){
 function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
 async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
-function renderZoneScheduleTools(branches,users){ return `<div class="divider"></div><div class="card-title">Work Zone & Schedule</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Branch</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">Radius</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">Save Allowed Zone</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Staff</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">Day</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`; }
+function renderZoneScheduleTools(branches,users){
+  if(currentUser.role !== 'admin') return '';
+ return `<div class="divider"></div><div class="card-title">Work Zone & Schedule</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Branch</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">Radius</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">Save Allowed Zone</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Staff</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">Day</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`; }
 async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast('Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Zone saved.','success'); triggerSyncRefresh(); }
 async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Schedule saved.','success'); triggerSyncRefresh(); }
 async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast('Backup created in Google Drive.','success'); setTimeout(()=>triggerSyncRefresh(),1500); }
@@ -2059,6 +2104,14 @@ function sendReminder() {
 // ============================================================
 // SETTLEMENT UPLOAD — upload daily receipt/settlement to Google Drive
 // ============================================================
+function confirmAndLockAfterUpload(store, dateKey) {
+  const locks = getSettlementLocks().filter(r=>!(r.store===store&&r.dateKey===dateKey));
+  locks.push({store, dateKey, locked:true, datetime:nowUTC8(), by:currentUser.name});
+  saveSettlementLocks(locks);
+  showToast(lang==='zh'?'日结单已上传，当日销售已确认锁定 ✅':'Receipt uploaded — Daily sales confirmed & locked ✅','success');
+  setTimeout(()=>{ renderSubmitTab(); if(currentTab==='records') renderRecordsTab(); },800);
+}
+
 function openSettlementUpload() {
   const storeEl = document.getElementById('submit-store');
   const dateEl  = document.getElementById('submit-date');
@@ -2182,7 +2235,7 @@ async function uploadSettlement() {
 
     setTimeout(() => {
       closeSettlementModal();
-      showToast(lang==='zh'?'Settlement Receipt uploaded to Cloud ✅':'Settlement Receipt uploaded to Cloud ✅','success');
+      confirmAndLockAfterUpload(window._settlementStore, window._settlementDateKey);
     }, 900);
 
   } catch(e) {
@@ -2199,6 +2252,17 @@ async function uploadSettlement() {
 // ============================================================
 // CASH DRAWER — denomination constants
 // ============================================================
+
+function _prevDayClosing(store,dateKey){
+  const all=getCashDrawer().filter(r=>r.store===store&&r.dateKey<dateKey)
+    .sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+  if(!all.length) return null;
+  return{amount:parseFloat(all[0].total||all[0].amount||0),dateKey:all[0].dateKey};
+}
+function _cashSalesForDate(store,dateKey){
+  const r=getSales().find(r=>r.store===store&&r.dateKey===dateKey);
+  return r?parseFloat(r.cash||0):0;
+}
 const BILLS = [
   {val:100, label:'RM 100', color:'#1e3a8a'},
   {val:50,  label:'RM 50',  color:'#065f46'},
@@ -2220,46 +2284,43 @@ let _cdStore='', _cdDate='', _cdQty={};
 
 function renderCashDrawerCard(store, dateKey) {
   const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
-  const today = dateKeyUTC8();
-  const mvToday = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
-  const totalIn  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const totalOut = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-
-  let drawerTotal = 0;
-  if(existing && existing.breakdown) {
-    try {
-      const bd = typeof existing.breakdown==='string'?JSON.parse(existing.breakdown):existing.breakdown;
-      drawerTotal = parseFloat(existing.total||0);
-    } catch(e) { drawerTotal = parseFloat(existing.amount||existing.total||0); }
-  } else if(existing) {
-    drawerTotal = parseFloat(existing.amount||existing.total||0);
-  }
-
-  return `
-    <div class="drawer-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer'}</span>
-        ${existing?`<span class="drawer-badge">✓ ${lang==='zh'?'已盘点':'Counted'}</span>`:''}
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="text-align:center;background:#fff;border-radius:10px;padding:8px;border:1px solid #fde68a">
-          <div style="font-size:10px;color:#b45309;font-weight:700">${lang==='zh'?'在柜金额':'Drawer Total'}</div>
-          <div style="font-size:15px;font-weight:900;color:#92400e">RM ${drawerTotal.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;background:#f0fdf4;border-radius:10px;padding:8px;border:1px solid #bbf7d0">
-          <div style="font-size:10px;color:#065f46;font-weight:700">${lang==='zh'?'现金入':'Cash In'}</div>
-          <div style="font-size:15px;font-weight:900;color:#10b981">+${totalIn.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;background:#fff1f2;border-radius:10px;padding:8px;border:1px solid #fecdd3">
-          <div style="font-size:10px;color:#b91c1c;font-weight:700">${lang==='zh'?'现金出':'Cash Out'}</div>
-          <div style="font-size:15px;font-weight:900;color:#ef4444">-${totalOut.toFixed(2)}</div>
-        </div>
-      </div>
-      <button class="btn warn" onclick="openCashDrawerModal()"
-        style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">
-        🗄️ ${lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager'}
-      </button>
-    </div>`;
+  const mv = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
+  const totalIn  = mv.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalOut = mv.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const actual   = existing ? parseFloat(existing.total||existing.amount||0) : 0;
+  const prev     = _prevDayClosing(store, dateKey);
+  const opening  = prev ? prev.amount : 0;
+  const cashSales= _cashSalesForDate(store, dateKey);
+  const expected = opening + cashSales + totalIn - totalOut;
+  const variance = existing ? (actual - expected) : null;
+  const isStaff  = currentUser.role === 'staff';
+  const vc = variance===null?'#94a3b8':variance>0?'#10b981':variance<0?'#ef4444':'#10b981';
+  const vl = variance===null?'-':variance>0?('+RM '+variance.toFixed(2)+' \u2191'):variance<0?('-RM '+Math.abs(variance).toFixed(2)+' \u2193'):'RM 0.00 \u2713';
+  const prevLbl = prev?'('+prev.dateKey+')':'';
+  const carryHtml =
+    '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+(lang==='zh'?'📂 开盘':'📂 Opening')+' '+prevLbl+'</span><span style="font-weight:900;color:#92400e">RM '+opening.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'今日现金销售':'Cash Sales today')+'</span><span style="font-weight:900;color:#1e3a8a">+RM '+cashSales.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'入款':'Cash In')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+(lang==='zh'?'出款':'Cash Out')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+(lang==='zh'?'预期余额':'Expected')+'</span><span style="color:#92400e">RM '+expected.toFixed(2)+'</span></div>'
+    +'</div>';
+  const varHtml =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+    +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+(lang==='zh'?'实际盘点':'Actual Count')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+actual.toFixed(2)+'</div></div>'
+    +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+vc+';background:'+(variance===null?'#f8fafc':variance>=0?'#f0fdf4':'#fff1f2')+'"><div style="font-size:10px;font-weight:700;color:'+vc+'">'+(lang==='zh'?'盈亏':'Gain/Loss')+'</div><div style="font-size:18px;font-weight:900;color:'+vc+'">'+vl+'</div></div>'
+    +'</div>';
+  const warnHtml = (variance!==null&&variance!==0)
+    ?'<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#92400e;font-weight:700">⚠️ '+(lang==='zh'?'差异需经理审批':'Variance requires Manager approval')+'<br><button class="btn warn" style="margin-top:6px;font-size:12px" onclick="_requestVarianceApproval(\''+store+'\',\''+dateKey+'\','+((variance||0).toFixed(2))+')">'+(lang==='zh'?'申请差异审批':'Request Approval')+'</button></div>':'';
+  const drawerBtn = isStaff
+    ?'<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:12px;color:#64748b;text-align:center">🔒 '+(lang==='zh'?'收银机由主管/经理管理':'Cash drawer: Supervisor/Manager only')+'</div>'
+    :'<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:14px;background:linear-gradient(135deg,#92400e,#f59e0b)">🗄️ '+(lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager')+'</button>';
+  const badge = existing?'<span class="drawer-badge">✓ '+(lang==='zh'?'已盘点':'Counted')+'</span>':'';
+  return '<div class="drawer-card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<span style="font-size:15px;font-weight:800;color:#92400e">🗄️ '+(lang==='zh'?'收银机管理':'Cash Drawer')+'</span>'+badge
+    +'</div>'
+    +carryHtml+varHtml+warnHtml+drawerBtn+'</div>';
 }
 
 function openCashDrawerModal() {
@@ -2269,6 +2330,7 @@ function openCashDrawerModal() {
   const store   = storeEl.value;
   const dateKey = dateEl.value;
   if(!store) { showToast(lang==='zh'?'请选择门店':'Select a store first','error'); return; }
+  if(currentUser.role==='staff'){ showToast(lang==='zh'?'收银机由主管/经理管理，请联系他们':'Cash drawer: Supervisor/Manager only','error'); return; }
 
   const isRestricted = ['staff','supervisor'].includes(currentUser.role);
   const todayStr = dateKeyUTC8();
