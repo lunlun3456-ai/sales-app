@@ -402,7 +402,7 @@
     <div class="input-wrap">
       <label class="field-label">Target Store Location 门店</label>
       <select id="reg-store">
-        <option value="" id="select-store-opt">-- Select Store --</option>
+        <option value="">-- Select Store --</option>
         <option value="Bonia Sabindo">Bonia Sabindo</option>
         <option value="Bonia Eastern">Bonia Eastern</option>
         <option value="Polo Sabindo">Polo Sabindo</option>
@@ -431,13 +431,10 @@
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirm Submission</div>
     <div id="modal-body"></div>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="btn secondary" style="flex:1" onclick="closeModal()" id="modal-cancel-btn">Cancel</button>
-      <button class="btn success"   style="flex:1" onclick="confirmSubmit(false)" id="modal-submit-btn">Confirm &amp; Submit</button>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn secondary" style="flex:1" onclick="closeModal()">Cancel 取消</button>
+      <button class="btn success"   style="flex:1" onclick="confirmSubmit()">Confirm & Submit ✓</button>
     </div>
-    <button class="btn" style="margin-top:8px;background:#f59e0b;font-size:14px" onclick="confirmSubmit(true)" id="modal-upload-btn">
-      📎 Submit + Upload Receipt
-    </button>
   </div>
 </div>
 
@@ -536,92 +533,14 @@
 </div>
 
 <script>
-
-// ════════════════════════════════════════════════════════════
-// UTC+8 TIMEZONE HELPERS  (Malaysia / Singapore / China)
-// All times stored and displayed in UTC+8
-// ════════════════════════════════════════════════════════════
-const _UTC8_MS = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-
-/** Current UTC+8 date string YYYY-MM-DD */
-function dateKeyUTC8() {
-  return new Date(Date.now() + _UTC8_MS).toISOString().slice(0, 10);
-}
-
-/** Current UTC+8 month string YYYY-MM */
-function monthUTC8() {
-  return new Date(Date.now() + _UTC8_MS).toISOString().slice(0, 7);
-}
-
-/** Current datetime as ISO string anchored to UTC+8 */
-function nowUTC8() {
-  const d = new Date(Date.now() + _UTC8_MS);
-  return d.toISOString().slice(0, 19) + '+08:00';
-}
-
-/** Format any stored ISO timestamp as HH:MM in UTC+8 */
-function fmtTimeUTC8(isoStr) {
-  if (!isoStr) return '--:--';
-  try {
-    const d = new Date(isoStr);
-    const u = new Date(d.getTime() + _UTC8_MS);
-    const h = String(u.getUTCHours()).padStart(2, '0');
-    const m = String(u.getUTCMinutes()).padStart(2, '0');
-    return h + ':' + m;
-  } catch(e) { return '--:--'; }
-}
-
-/** Format stored ISO timestamp as HH:MM:SS in UTC+8 */
-function fmtTimeSUTC8(isoStr) {
-  if (!isoStr) return '--:--:--';
-  try {
-    const d = new Date(isoStr);
-    const u = new Date(d.getTime() + _UTC8_MS);
-    const h = String(u.getUTCHours()).padStart(2,'0');
-    const m = String(u.getUTCMinutes()).padStart(2,'0');
-    const s = String(u.getUTCSeconds()).padStart(2,'0');
-    return h+':'+m+':'+s;
-  } catch(e){ return '--:--:--'; }
-}
-
-/** Format stored ISO timestamp as short date+time in UTC+8 */
-function fmtDateTimeUTC8(isoStr) {
-  if (!isoStr) return '';
-  try {
-    const d = new Date(isoStr);
-    const u = new Date(d.getTime() + _UTC8_MS);
-    const date = u.toISOString().slice(0, 10);
-    const time = u.toISOString().slice(11, 16);
-    return date + ' ' + time;
-  } catch(e) { return ''; }
-}
-
-/** Today's full date label in UTC+8 (e.g. "Monday, 4 June 2025") */
-function todayLabelUTC8() {
-  const u = new Date(Date.now() + _UTC8_MS);
-  // Build manually to avoid locale issues
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  const daysCN = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-  const monthsCN = ['1月','2月','3月','4月','5月','6月',
-                    '7月','8月','9月','10月','11月','12月'];
-  const d = u.getUTCDay(), mo = u.getUTCMonth(), day = u.getUTCDate(), yr = u.getUTCFullYear();
-  return lang === 'zh'
-    ? yr+'年'+monthsCN[mo]+day+'日 '+daysCN[d]
-    : days[d]+', '+day+' '+months[mo]+' '+yr;
-}
-
-/** Weekday abbreviation in UTC+8 */
-function weekdayUTC8(isoDateStr) {
-  const d = new Date(isoDateStr + 'T00:00:00+08:00');
-  const daysCN = ['日','一','二','三','四','五','六'];
-  const daysEN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const idx = new Date(d.getTime() + _UTC8_MS).getUTCDay();
-  return lang === 'zh' ? daysCN[idx] : daysEN[idx];
-}
-
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxNYeRwjZ_PjVeohbYt5k8SvQxrdQrOHo2ugMHqyV06UATb1NqFLnGsddOXi3O6TYDVGw/exec';
+// UTC+8 timezone helpers
+const _U8=8*3600000;
+function dateKeyUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,10);}
+function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
+function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
+function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
+function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_sJ9jou0l6Ab4viXmukmEsoPFJCjE5pfd9UIhPWp6nnsaLtD5Z_gMg-1O831LlJM3LA/exec";
 
 let lang = 'en';
 let currentUser = null;
@@ -771,201 +690,7 @@ const T = {
     newEntry:'NEW SUBMISSION', editEntry:'EDITED',
     beforeLabel:'Before', afterLabel:'After',
     noLog:'No log entries found', logFilter:'Filter Log',
-    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.',
-    attendance:'Attendance',checkIn:'Check In',checkOut:'Check Out',
-    notYet:'Not yet',tapCheckIn:'Tap Check In to start your day',
-    recentHistory:'Recent History',cancelBtn:'Cancel',confirmBtn:'Confirm',
-    remarkLabel:'Remark (optional)',nameLabel:'Name',storeLabel:'Store',
-    dateLabel:'Date',timeLabel:'Time',onTime:'On time',lateStatus:'Late',
-    earlyLeave:'Early leave',done:'Done',gettingLocation:'Getting location...',
-    attendanceSaved:'Attendance recorded',alreadyCheckedIn:'Already checked in today at',
-    alreadyCheckedOut:'Already checked out today at',checkInFirst:'Please check in first',
-    openingBal:'Opening',cashInToday:'Cash In today',cashOutToday:'Cash Out today',
-    expectedBal:'Expected',actualCount:'Actual Count',gainLoss:'Gain / Loss',
-    notCounted:'Not counted yet',counted:'Counted',noPrevDay:'no prev day',
-    locationAuto:'Location captured automatically',
-    deviceResetMsg:'Reset device binding?',
-    managerDash:'Manager Dashboard',present:'Present',absent:'Absent',
-    approval:'Approvals',pendingApproval:'Pending Approvals',
-    noApproval:'No pending approvals.',attRecords:'Attendance Records',
-    noAttRecords:'No attendance records.',backupBtn:'Create Database Backup',
-    backupDone:'Backup created in Google Drive.',
-    dateLabel2:'Date',storeLabel2:'Store',allStoresOpt:'All Stores',
-    approveBtn2:'Approve',rejectBtn2:'Reject',
-    outsideZone2:'Outside allowed zone',attBlocked:'Attendance Blocked',
-    uploadReceiptBtn:'Submit + Upload Receipt (Confirms Daily Sales)',
-    uploadAndConfirm:'Receipt uploaded — Daily sales confirmed & locked',
-    salesLockedNote:'Settlement uploaded. Daily sales locked.',
-    loadingMsg:'Loading...',noAccess:'No access',
-    workZone:'Work Zone & Schedule',branch:'Branch',radius:'Radius',
-    saveZone:'Save Allowed Zone',saveSched:'Save Work Schedule',
-    day:'Day',startTime:'Start',endTime:'End',
-    weekly:'Weekly',monthly:'Monthly',
-    selectStore:'-- Select Store --',
-    settleTitle:'Upload Settlement Receipt',
-    settleInfo:'Take a photo or select the settlement receipt image (JPG/PNG)',
-    settleTapPhoto:'Tap to take photo or select image',
-    settleNote:'Note (optional)',settleUploading:'Uploading...',
-    settleUpload:'📤 Upload',settleSelected:'✅ Image selected — tap to change',
-    enterAmounts:'All amounts can be 0.00 (no sales for that type)',
-    targetDate:'Target Date',storeLbl:'Store',
-    pendingSupervisor:'Submitted — Awaiting Supervisor Confirmation',
-    pendingSupervisorNote:'Your submission is pending supervisor/manager confirmation.',
-    staffNoDrawer:'Cash drawer is managed by Supervisor/Manager. Contact them to open.',
-    cashSalesRef:'Cash Sales (from records)',
-    variance:'Variance (Actual − Expected)',
-    needsApproval:'Variance requires Manager approval before saving.',
-    requestAdjustment:'Request Adjustment Approval',
-    adjustmentSent:'Adjustment request sent to Manager.',
-    salesPendingApproval:'Sales Pending Approval',
-    approvedMsg:'Approved.',rejectedMsg:'Rejected.',
-    submitForApproval:'Submit for Supervisor Approval',
-    submittedPending:'Submitted — Pending Supervisor Approval ⏳',
-    submitSubtitle:'Update or edit any date. Amounts can be RM 0.00',
-    selectStoreDate:'Select store and date first',
-    editingWarning:'You are editing an existing submission. This will be recorded in the audit log.',
-    salesLockedEdit:'Settlement uploaded. Manager approval required to edit.',
-    lockNote:'Settlement uploaded — Daily sales locked. Manager/Admin/Boss approval required.',
-    storeLabel3:'Store',dateLabel3:'Date',
-    uploadingCloud:'Uploading to Cloud…',
-    cashDrawerManager:'Cash Drawer Manager',
-    billsLabel:'Bills / Banknotes',coinsLabel:'Coins',
-    cashInLabel:'Cash IN',cashOutLabel:'Cash OUT',
-    saveCountBtn:'Save Cash Count',closeBtnLbl:'Close',
-    addBtn:'Add',amountLbl:'Amount',reasonLbl:'Reason / Note',
-    noRecordsYet:'No records yet',
-    cashOutPending:'cash out request(s) waiting approval',
-    noteOptional:'Note (optional)',
-    approvalRequired:'Approval Required',
-    confirmSubmitBtn:'Confirm \u0026 Submit \u2713',
-    submitUploadBtn:'Submit + Upload Receipt = Confirm Daily Sales',
-    syncingCloud:'Syncing from Cloud…',syncDone:'Synced from Cloud ✓',
-    enterUsername:'Enter your username',enterPin:'Enter your PIN',
-    pin6Digits:'PIN must be 6 digits',connectingLbl:'Connecting…',
-    connectingServer:'Connecting to server…',
-    noServerCache:'Cannot reach server & no cached data. Check internet & GAS deployment.',
-    wrongPin:'Wrong PIN, please try again',
-    accountPending:'Account pending Admin approval',
-    monthly:'Monthly',cashInOutLbl:'Cash In / Out',
-    cashInDrawer:'Cash in Drawer',countedAt:'Counted at',
-    viewMode:'View Mode',storeFilter:'Store Filter',
-    todayStatus:'Today Submission Status',
-    actionType:'Action Type',allOpt:'All',
-    latLngRequired:'Enter latitude and longitude.',
-    zoneSaved:'Zone saved.',schedSaved:'Schedule saved.',
-    approvingLbl:'Approving…',savingLbl:'Saving…',
-    localCacheInfo:'Local Cache Info',localRecords:'Local Records',
-    lastSync:'Last Sync',fillAllFields:'Fill all fields!',
-    wrongCurrentPin:'Incorrect current PIN!',
-    newPin6Digits:'New PIN must be 6 digits!',
-    pinMismatch:'New PINs do not match!',
-    pinUpdated:'PIN updated!',
-    allSubmittedToday:'All branches submitted today!',
-    whatsappMsg:'Hi! Please submit today\'s sales figures ASAP, thank you!',
-    pendingStores:'Pending stores:',sendGroupReminder:'Send Group Reminder',
-    directContact:'Direct WhatsApp to staff:',
-    selectStoreFrst:'Please select a store first',
-    selectImageFirst:'Please select or take a photo first',
-    uploadSuccess:'✅ Upload successful!',
-    explainVariance:'Please explain the variance reason:',
-    inDrawer:'In Drawer',cashOutMgrOnly:'Cash OUT — Manager/Admin/Boss only',
-    cashOutAdd:'+ Cash OUT',cashInAdd:'+ Cash IN',
-    bankingReason:'e.g. Banking, Petty cash',topUpReason:'e.g. Top up change',
-    saveBtn:'Save',deleteEntry:'Delete this entry?',
-    cashCountSaved:'Cash count saved ✓',
-    cancelReject:'Reject & delete this request?',
-    sendReminders:'Send Reminders',closeReminder:'Close'
-,
-    absent:'Absent',
-    accessDenied:'Access Denied',
-    actualCount:'Actual Count',
-    addLbl:'Add',
-    admin:'Admin',
-    allOpt:'All',
-    allStores:'All Stores',
-    allStoresOpt:'All Stores',
-    alreadyCheckedIn:'Already checked in at',
-    amountLbl:'Amount',
-    attRecords:'Attendance Records',
-    attRemark:'Remark',
-    backupBtn:'Create Database Backup',
-    bank:'Bank Transfer',
-    branch:'Branch',
-    cancelBtn:'Cancel',
-    card:'Card',
-    cash:'Cash',
-    cashInAdd:'+ Add',
-    cashInOutLbl:'Cash In / Out',
-    cashInToday:'Cash In today',
-    cashOutLabel:'Cash OUT',
-    cashOutMgrOnly:'Cash Out — Manager/Admin/Boss only',
-    cashOutToday:'Cash Out today',
-    checkIn:'Check In',
-    checkInFirst:'Check in first',
-    checkOut:'Check Out',
-    closeBtnLbl:'Close',
-    coinsLabel:'Coins',
-    confirmBtn:'Confirm',
-    confirmNewPinLabel:'Confirm New PIN',
-    confirmTitle2:'Confirm Submission',
-    connectingLbl:'Connecting…',
-    counted:'Counted',
-    countedAt:'Counted at',
-    customOpt:'Custom Date',
-    daily:'Daily Trend',
-    dateLabel3:'Date',
-    deleteEntry:'Delete',
-    deleteUser:'Delete',
-    done:'Done',
-    editEntry:'Edit',
-    editUser:'Edit',
-    enterPin:'Enter PIN',
-    fillAllFields:'Fill all fields. PIN = 6 digits.',
-    gettingLocation:'Getting location…',
-    lateStatus:'Late',
-    localRecords:'Local Records',
-    logDesc:'Immutable audit trail of all submissions and edits.',
-    logout:'Logout',
-    me:'Me',
-    nameLabel:'Name',
-    newPinLabel:'New PIN',
-    noAccess:'No access',
-    noRecords:'No records',
-    noRequests:'No pending requests',
-    onTime:'On time',
-    pendingApproval:'Pending Approvals',
-    present:'Present',
-    qr:'QR / E-wallet',
-    radius:'Radius (m)',
-    reasonLbl:'Reason / Note',
-    records:'Records',
-    refresh:'Refresh',
-    rejectBtn:'Reject',
-    rejectBtn2:'Reject',
-    rejectedMsg:'Rejected.',
-    remark:'Remark',
-    saveSched:'Save Work Schedule',
-    savingLbl:'Saving…',
-    schedSaved:'Schedule saved.',
-    sendGroupReminder:'Send Group Reminder',
-    settleSelected:'Image selected — tap to change',
-    settleUploading:'Uploading…',
-    storeFilter:'Store Filter',
-    storeLabel:'Store',
-    storeLabel2:'Store',
-    storeLbl:'Store',
-    submit:'Submit',
-    submitBtn:'Submit & Sync',
-    summary:'Summary',
-    syncDone:'Sync complete.',
-    tapCheckIn:'Tap Check In to start your day',
-    timeLabel:'Time',
-    todayOpt:'Today',
-    topUpReason:'e.g. Top up change',
-    uploadCloud:'Uploading to cloud…',
-    userDeleted:'User deleted.',
-    userMgmt:'User Management',
-    yestOpt:'Yesterday'
+    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.'
   },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
@@ -1008,111 +733,7 @@ const T = {
     newEntry:'首次提交', editEntry:'已修改',
     beforeLabel:'修改前', afterLabel:'修改后',
     noLog:'暂无日志记录', logFilter:'筛选日志',
-    logAccessDenied:'仅老板、管理员及经理可查看审计日志。',
-    attendance:'考勤',checkIn:'签到',checkOut:'签退',
-    notYet:'未记录',tapCheckIn:'点击签到开始今日工作',
-    recentHistory:'近期记录',cancelBtn:'取消',confirmBtn:'确认',
-    remarkLabel:'备注（选填）',nameLabel:'姓名',storeLabel:'门店',
-    dateLabel:'日期',timeLabel:'时间',onTime:'准时',lateStatus:'迟到',
-    earlyLeave:'早退',done:'已完成',gettingLocation:'正在获取位置...',
-    attendanceSaved:'考勤已记录',alreadyCheckedIn:'今日已于此时签到：',
-    alreadyCheckedOut:'今日已于此时签退：',checkInFirst:'请先签到再签退',
-    openingBal:'开盘金额',cashInToday:'今日入款',cashOutToday:'今日出款',
-    expectedBal:'预期余额',actualCount:'实际盘点',gainLoss:'盈亏',
-    notCounted:'尚未盘点',counted:'已盘点',noPrevDay:'无前日记录',
-    locationAuto:'自动获取位置',
-    deviceResetMsg:'重置设备绑定？',
-    managerDash:'管理仪表板',present:'出勤',absent:'缺勤',
-    approval:'审批',pendingApproval:'待审批',
-    noApproval:'暂无待审批项目。',attRecords:'考勤记录',
-    noAttRecords:'暂无考勤记录。',backupBtn:'创建数据库备份',
-    backupDone:'备份已创建至 Google Drive。',
-    dateLabel2:'日期',storeLabel2:'门店',allStoresOpt:'所有门店',
-    approveBtn2:'批准',rejectBtn2:'拒绝',
-    outsideZone2:'超出允许区域',attBlocked:'考勤已拦截',
-    uploadReceiptBtn:'提交并上传日结单（确认当日销售）',
-    uploadAndConfirm:'日结单已上传，当日销售已确认锁定',
-    salesLockedNote:'日结单已上传，当日销售已锁定。',
-    loadingMsg:'加载中...',noAccess:'无权限',
-    workZone:'工作区域与排班',branch:'门店',radius:'半径',
-    saveZone:'保存允许区域',saveSched:'保存工作排班',
-    day:'星期',startTime:'开始时间',endTime:'结束时间',
-    weekly:'每周',monthly:'每月',
-    selectStore:'-- 请选择门店 --',
-    settleTitle:'上传日结单',
-    settleInfo:'请拍摄或选择日结凭证图片（JPG/PNG）',
-    settleTapPhoto:'点击拍摄或选择图片',
-    settleNote:'备注（选填）',settleUploading:'上传中...',
-    settleUpload:'📤 上传',settleSelected:'✅ 图片已选择，点击更换',
-    enterAmounts:'所有金额均可填写为 0.00（表示无该类型销售）',
-    targetDate:'目标日期',storeLbl:'门店',
-    pendingSupervisor:'已提交 — 等待主管确认',
-    pendingSupervisorNote:'您的提交正在等待主管/经理确认。',
-    staffNoDrawer:'收银机由主管/经理管理，请联系他们开启。',
-    cashSalesRef:'今日现金销售（来自记录）',
-    variance:'差异（实际 − 预期）',
-    needsApproval:'差异需要经理审批才能保存。',
-    requestAdjustment:'申请差异审批',
-    adjustmentSent:'差异申请已发送至经理。',
-    salesPendingApproval:'销售待审批',
-    approvedMsg:'已批准。',rejectedMsg:'已拒绝。',
-    submitForApproval:'提交等待主管审批',
-    submittedPending:'已提交 — 等待主管审批 ⏳',
-    submitSubtitle:'可随时补录、覆盖或更新历史数据，金额可填 0.00',
-    selectStoreDate:'请先选择门店和日期',
-    editingWarning:'您正在修改已提交的数据，此操作将被记录在审计日志中。',
-    salesLockedEdit:'日结单已上传，需经理批准才能修改。',
-    lockNote:'日结单已上传，当日销售已锁定。如需修改请联系经理/管理员/老板。',
-    storeLabel3:'门店',dateLabel3:'日期',
-    uploadingCloud:'正在上传至云端…',
-    cashDrawerManager:'收银机管理',
-    billsLabel:'纸币',coinsLabel:'硬币',
-    cashInLabel:'现金入',cashOutLabel:'现金出',
-    saveCountBtn:'保存现金盘点',closeBtnLbl:'关闭',
-    addBtn:'添加',amountLbl:'金额',reasonLbl:'原因/备注',
-    noRecordsYet:'暂无记录',
-    cashOutPending:'笔现金出申请待审批',
-    noteOptional:'备注（选填）',
-    approvalRequired:'需要审批',
-    confirmSubmitBtn:'确认提交 ✓',
-    submitUploadBtn:'提交并上传日结单（确认当日销售）',
-    syncingCloud:'正在从云端同步…',syncDone:'云端同步成功 ✓',
-    enterUsername:'请输入用户名',enterPin:'请输入密码',
-    pin6Digits:'密码必须是6位数字',connectingLbl:'连接中…',
-    connectingServer:'正在连接服务器…',
-    noServerCache:'无法连接服务器且无缓存，请检查网络及脚本部署。',
-    wrongPin:'密码错误，请重试',
-    accountPending:'账号待审批，请联系管理员',
-    monthly:'月度',cashInOutLbl:'现金进出记录',
-    cashInDrawer:'收银机现金盘点',countedAt:'盘点时间',
-    viewMode:'查看模式',storeFilter:'门店筛选',
-    todayStatus:'今日提交状态',
-    actionType:'操作类型',allOpt:'全部',
-    latLngRequired:'请输入经纬度坐标。',
-    zoneSaved:'区域已保存。',schedSaved:'排班已保存。',
-    approvingLbl:'正在审批…',savingLbl:'正在保存…',
-    localCacheInfo:'本地缓存信息',localRecords:'本地销售记录',
-    lastSync:'最后同步',fillAllFields:'请填写完整！',
-    wrongCurrentPin:'当前密码错误！',
-    newPin6Digits:'新密码必须是6位数字！',
-    pinMismatch:'新密码不一致！',
-    pinUpdated:'密码修改成功！',
-    allSubmittedToday:'所有门店今日已提交！',
-    whatsappMsg:'您好！请尽快提交您门店今天的日销数据，谢谢！',
-    pendingStores:'未提交门店：',sendGroupReminder:'发送群组提醒',
-    directContact:'直接联系负责人：',
-    selectStoreFrst:'请先选择门店',
-    selectImageFirst:'请先拍摄或选择图片',
-    uploadSuccess:'✅ 上传成功！',
-    explainVariance:'请说明差异原因：',
-    inDrawer:'柜内现金',cashOutMgrOnly:'现金出功能仅限经理/管理员',
-    cashOutAdd:'+ 现金出',cashInAdd:'+ 现金入',
-    bankingReason:'如：银行存款、零用金',topUpReason:'如：补充找零',
-    saveBtn:'保存',deleteEntry:'删除此记录？',
-    cashCountSaved:'现金盘点已保存 ✓',
-    cancelReject:'拒绝并删除此申请？',
-    sendReminders:'发送提醒',closeReminder:'关闭',
-
+    logAccessDenied:'仅老板、管理员及经理可查看审计日志。'
   }
 };
 function t(k) { return T[lang][k] || k; }
@@ -1127,14 +748,7 @@ function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
   document.getElementById('nav-records-lbl').textContent = t('records');
   document.getElementById('nav-summary-lbl').textContent = t('summary');
-  document.getElementById('nav-attendance-lbl').textContent = t('attendance');
-  // Update confirm modal buttons (static HTML can't use t())
-  const mb1=document.getElementById('modal-cancel-btn');  if(mb1) mb1.textContent=t('cancelBtn');
-  const mb2=document.getElementById('modal-submit-btn'); if(mb2) mb2.textContent=t('confirmSubmitBtn');
-  const mb3=document.getElementById('modal-upload-btn'); if(mb3) mb3.innerHTML='📎 '+t('submitUploadBtn');
-  const sst=document.getElementById('settlement-modal-title'); if(sst) sst.textContent=t('settleTitle');
-  const sso=document.getElementById('select-store-opt'); if(sso) sso.textContent='-- '+t('selectStoreDate').split(' ')[1]+' --';
-  const mt=document.getElementById('modal-title'); if(mt&&mt.textContent.trim()!=='') mt.textContent=t('confirmTitle2');
+  document.getElementById('nav-attendance-lbl').textContent = lang==='zh'?'Attendance':'Attendance';
   document.getElementById('nav-log-lbl').textContent     = t('log');
   document.getElementById('nav-admin-lbl').textContent   = t('admin');
   document.getElementById('nav-profile-lbl').textContent = t('me');
@@ -1197,7 +811,7 @@ async function triggerSyncRefresh() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
   const btn=document.getElementById('sync-btn');
   if(btn) btn.textContent='⏳';
-  showToast(t('syncingCloud'),'pending');
+  showToast(lang==='zh'?'正在从云端同步...':'Syncing from Cloud...','pending');
   try {
     const json = await gasGet('getSales');
     let newSales = null;
@@ -1209,7 +823,7 @@ async function triggerSyncRefresh() {
       // Always re-render whichever tab is showing AND force records+summary refresh
       renderCurrentTab();
       checkAllStoresSubmitted();
-      showToast(t('syncDone'),'success');
+      showToast(lang==='zh'?'云端同步成功 ✓':'Synced from Cloud ✓','success');
       // Also pull cash drawer records
       try {
         const cdJson = await gasGet('getCashDrawer');
@@ -1270,13 +884,13 @@ async function fetchLog() {
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username){ showToast(t('enterUsername'),'error'); return; }
-  if(!pin)     { showToast(t('enterPin'),'error'); return; }
-  if(pin.length!==6){ showToast(t('pin6Digits'),'error'); return; }
+  if(!username){ showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
+  if(!pin)     { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
+  if(pin.length!==6){ showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits','error'); return; }
 
   const loginBtn=document.getElementById('login-btn');
-  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=t('connectingLbl'); }
-  showToast(t('connectingServer'),'pending');
+  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=lang==='zh'?'连接中...':'Connecting...'; }
+  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
 
   // Try live fetch first, fall back to cache
   await fetchLiveUsers();
@@ -1285,23 +899,23 @@ async function doLogin() {
 
   // Validate
   if(Object.keys(cachedUsers).length===0){
-    showToast(t('noServerCache'),'error');
+    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
     return;
   }
   const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
   if(!userMatch){
-    const known = Object.keys(cachedUsers).slice(0,5).join(', ');
-    showToast('Username not found. Loaded users: '+known,'error'); return;
+    const known = Object.keys(cachedUsers).slice(0,8).join(', ');
+    showToast('Not found: "'+username+'" | Loaded: '+known,'error'); return;
   }
-  const _pin = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
-  if(_pin !== String(pin).trim()){
-    showToast(t('wrongPin'),'error'); return;
+  const _p = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
+  if(_p !== String(pin).trim()){
+    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
   }
-  const _st = String(userMatch.status ?? 'active').trim().toLowerCase();
-  if(_st === 'pending'){
-    showToast(t('accountPending'),'error'); return;
+  const _s = String(userMatch.status ?? 'active').trim().toLowerCase();
+  if(_s === 'pending'){
+    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
   }
-  if(_st === 'inactive' || _st === 'disabled'){
+  if(_s === 'inactive' || _s === 'disabled'){
     showToast('Account disabled — contact Admin','error'); return;
   }
 
@@ -1313,7 +927,6 @@ async function doLogin() {
   const isBoss  = currentUser.role === 'boss';
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   const isExec  = ['admin','boss','manager'].includes(currentUser.role);
-  // Boss sees only: Summary, Admin, Me
   document.getElementById('nav-submit').style.display     = isBoss ? 'none' : 'flex';
   document.getElementById('nav-records').style.display    = isBoss ? 'none' : 'flex';
   document.getElementById('nav-attendance').style.display = isBoss ? 'none' : 'flex';
@@ -1321,12 +934,12 @@ async function doLogin() {
   document.getElementById('nav-summary').style.display    = isExec  ? 'flex' : 'none';
   document.getElementById('nav-admin').style.display      = isAdmin ? 'flex' : 'none';
   updateTopBar(); updateNavLabels();
-  const _startTab = isBoss ? 'summary' : 'submit';
-  currentTab = _startTab;
+  const _st = isBoss ? 'summary' : 'submit';
+  currentTab = _st;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-'+_startTab).classList.add('active');
+  document.getElementById('nav-'+_st).classList.add('active');
   ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
-    document.getElementById('tab-'+tt).style.display=tt===_startTab?'block':'none';
+    document.getElementById('tab-'+tt).style.display=tt===_st?'block':'none';
   });
   if(isBoss) renderSummaryTab(); else renderSubmitTab();
   triggerSyncRefresh();
@@ -1369,7 +982,7 @@ function renderSubmitTab() {
   let storeOptions=!isManagerial
     ?`<input type="text" id="submit-store" value="${currentUser.store}" disabled style="background:#e2e8f0;color:var(--text2);font-weight:bold;">`
     :`<select id="submit-store" onchange="checkAndLoadExistingSales()">
-         <option value="" id="select-store-opt">-- Select Store --</option>
+         <option value="">-- Select Store --</option>
          ${allowedStores.map(s=>`<option ${s===currentUser.store?'selected':''}>${s}</option>`).join('')}
        </select>`;
 
@@ -1390,16 +1003,16 @@ function renderSubmitTab() {
   document.getElementById('tab-submit').innerHTML=`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
-      <p>${t('submitSubtitle')}</p>
+      <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0':'Update or edit any date. Amounts can be RM 0.00'}</p>
     </div>
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
       <div class="input-wrap">
-        <label class="field-label">${t('targetDate')}</label>
+        <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
         ${dateInputHtml}
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${t('storeLbl')}</label>
+        <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
         ${storeOptions}
       </div>
       <div class="input-wrap">
@@ -1437,10 +1050,12 @@ function renderSubmitTab() {
       </div>
             <div id="sales-lock-note"></div>
       <button class="btn" onclick="openConfirm()" id="sales-submit-btn" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
-
+      <button class="btn secondary" onclick="openSettlementUpload()" style="margin-top:10px;font-size:15px;border:2px solid var(--primary);">
+        📎 ${lang==='zh'?'上传日结单 / 收据':'Upload Settlement Receipt'}
+      </button>
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
-      💡 ${t('enterAmounts')}
+      💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
 
     <!-- ── CASH IN DRAWER CARD ── -->
@@ -1476,7 +1091,7 @@ function checkAndLoadExistingSales() {
     const el=document.getElementById(id);
     if(el) el.disabled = locked && restricted;
   });
-  if(note) note.innerHTML = locked ? '<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:#3730a3;font-weight:700">'+t('lockNote')+'</div>' : '';
+  if(note) note.innerHTML = locked ? '<div style="background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:#3730a3;font-weight:700">Settlement uploaded. Daily sales is locked; Manager/Admin/Boss approval is required for changes.</div>' : '';
   if(submitBtn) submitBtn.disabled = locked && restricted;
 }
 function updateLiveTotal() {
@@ -1490,7 +1105,7 @@ function updateLiveTotal() {
 function openConfirm() {
   const store     =document.getElementById('submit-store').value;
   const targetDate=document.getElementById('submit-date').value;
-  if(!store||!targetDate){showToast(t('selectStoreDate'),'error');return;}
+  if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
 
   // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
@@ -1501,7 +1116,7 @@ function openConfirm() {
 
   const locked = isSalesLocked(store, targetDate);
   if(locked && ['staff','supervisor'].includes(currentUser.role)){
-    showToast(t('salesLockedEdit'),'error'); return;
+    showToast('Settlement already uploaded. Manager/Admin/Boss approval required.','error'); return;
   }
 
   const cash  =parseFloat(document.getElementById('s-cash').value)||0;
@@ -1522,14 +1137,14 @@ function openConfirm() {
   if(isEdit){
     editWarning=`
       <div style="background:#fff3cd;border:1.5px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#78350f;font-weight:600;">
-        ✏️ ${t('editingWarning')}
+        ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
       </div>`;
   }
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 ${t('storeLabel3')}</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 ${t('dateLabel3')}</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
     <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
@@ -1543,12 +1158,7 @@ function openConfirm() {
 
 function closeModal(){document.getElementById('confirm-modal').classList.remove('open');}
 
-function confirmSubmit(withUpload=false) {
-  // Staff & Supervisor: submission goes to pending approval
-  if(['staff','supervisor'].includes(currentUser.role)){
-    submitForApprovalFlow(withUpload);
-    return;
-  }
+function confirmSubmit() {
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1560,11 +1170,11 @@ function confirmSubmit(withUpload=false) {
   const record={
     id:Date.now(),store:s.store,cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,
     total:s.total,remark:s.remark,submitter:currentUser.name,
-    role:currentUser.role,datetime:nowUTC8(),
+    role:currentUser.role,datetime:now.toISOString(),
     dateKey:s.targetDate,month:s.targetDate.slice(0,7),
     submissionType,changeLog:JSON.stringify(changeLog)
   };
-  showToast(t('uploadingCloud'),'pending');
+  showToast(lang==='zh'?'正在同步至云端...':'Uploading to Cloud...','pending');
   fetch(WEB_APP_URL,{
     method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -1579,8 +1189,7 @@ function confirmSubmit(withUpload=false) {
     renderSubmitTab();
     checkAllStoresSubmitted();
     // Pull fresh data from DB in background to confirm sync
-    if(withUpload) setTimeout(()=>openSettlementUpload(),600);
-    else setTimeout(()=>triggerSyncRefresh(),1500);
+    setTimeout(()=>triggerSyncRefresh(), 1500);
   }).catch(err=>{showToast('Error: '+err,'error');});
 }
 
@@ -1591,7 +1200,8 @@ function renderRecordsTab() {
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
   const todayKey=dateKeyUTC8();
-  const yestKey=(()=>{ const d=new Date(Date.now()+_UTC8_MS-86400000); return d.toISOString().slice(0,10); })();
+  let yest=new Date(); yest.setDate(yest.getDate()-1);
+  const yestKey=yest.toISOString().slice(0,10);
   let targetDate=todayKey;
   if(selectedDateRange==='yesterday')   targetDate=yestKey;
   if(selectedDateRange==='custom_date') targetDate=customDateValue;
@@ -1613,7 +1223,7 @@ function renderRecordsTab() {
           <option value="today"       ${selectedDateRange==='today'?'selected':''}>${t('todayOpt')}</option>
           <option value="yesterday"   ${selectedDateRange==='yesterday'?'selected':''}>${t('yestOpt')}</option>
           <option value="custom_date" ${selectedDateRange==='custom_date'?'selected':''}>${t('customOpt')}</option>
-          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${t('monthly')}</option>
+          <option value="month"       ${selectedDateRange==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
         </select>
       </div>
       <div>
@@ -1673,14 +1283,14 @@ function renderRecordsTab() {
   const mvHtml = mvFiltered.length===0 ? '' : `
     <div style="margin-top:10px">
       <div style="font-size:13px;font-weight:800;margin-bottom:6px;color:var(--text2)">
-        💸 ${t('cashInOutLbl')}
+        💸 ${lang==='zh'?'现金进出记录':'Cash In / Out'}
       </div>
       ${mvFiltered.map(r=>{
         const isIn = r.type==='in';
         return `<div class="move-item">
           <div>
             <div style="font-size:13px;font-weight:800">${r.store}
-              <span style="background:${isIn?'#d1fae5':'#fee2e2'};color:${isIn?'#065f46':'#b91c1c'};border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;margin-left:4px">${isIn?(t('cashInLabel')):(t('cashOutLabel'))}</span>
+              <span style="background:${isIn?'#d1fae5':'#fee2e2'};color:${isIn?'#065f46':'#b91c1c'};border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;margin-left:4px">${isIn?(lang==='zh'?'现金入':'Cash IN'):(lang==='zh'?'现金出':'Cash OUT')}</span>
             </div>
             <div style="font-size:11px;color:var(--text2)">${r.reason||''} · ${r.submitter||''}</div>
           </div>
@@ -1701,14 +1311,14 @@ function renderRecordsTab() {
   const cdHtml = cdFiltered.length===0 ? '' : `
     <div style="margin-top:14px">
       <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-        🗄️ ${t('cashInDrawer')}
+        🗄️ ${lang==='zh'?'收银机现金盘点':'Cash in Drawer'}
       </div>
       ${cdFiltered.map(r=>`
         <div class="record-item">
           <div class="record-icon">🗄️</div>
           <div class="record-info">
             <div class="record-store">${r.store} <span class="badge" style="background:#fff7ed;color:#92400e">${r.submitter||''}</span></div>
-            <div class="record-meta">${t('countedAt')}: ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
+            <div class="record-meta">${lang==='zh'?'盘点时间':'Counted at'}: ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
             ${r.note?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.note}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
@@ -1742,7 +1352,8 @@ function renderSummaryTab() {
   }
   const sales = getSales();
   const todayKey = dateKeyUTC8();
-  const yestKey=(()=>{ const d=new Date(Date.now()+_UTC8_MS-86400000); return d.toISOString().slice(0,10); })();
+  let yestD=new Date(); yestD.setDate(yestD.getDate()-1);
+  const yestKey = yestD.toISOString().slice(0,10);
   let allowedStores = currentUser.role==='admin' ? STORES : STORES.filter(s=>s!=='HQ');
   const branches = allowedStores.filter(s=>s!=='HQ');
 
@@ -1769,8 +1380,9 @@ function renderSummaryTab() {
   // ── 7-day trend ──────────────────────────────────────────────
   const days=[];
   for(let i=6;i>=0;i--){
-    const dk=(()=>{ const d=new Date(Date.now()+_UTC8_MS-i*86400000); return d.toISOString().slice(0,10); })();
-    const lbl=weekdayUTC8(dk);
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const dk=d.toISOString().slice(0,10);
+    const lbl=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
     const daySales = summaryStoreFilter==='all'
       ? sales.filter(s=>s.dateKey===dk)
       : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
@@ -1795,12 +1407,12 @@ function renderSummaryTab() {
     <div class="card" style="padding:14px;background:#eff6ff;margin-bottom:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">📅 ${t('viewMode')}</label>
+          <label class="field-label" style="font-size:11px;margin-bottom:4px">📅 ${lang==='zh'?'查看模式':'View Mode'}</label>
           <select onchange="summaryViewMode=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
             <option value="today"       ${vm==='today'?'selected':''}>${t('todayOpt')}</option>
             <option value="yesterday"   ${vm==='yesterday'?'selected':''}>${t('yestOpt')}</option>
             <option value="custom_date" ${vm==='custom_date'?'selected':''}>${t('customOpt')}</option>
-            <option value="month"       ${vm==='month'?'selected':''}>${t('monthly')}</option>
+            <option value="month"       ${vm==='month'?'selected':''}>${lang==='zh'?'月度':'Monthly'}</option>
           </select>
           ${vm==='custom_date'
             ?`<input type="date" value="${summaryCustDate}" onchange="summaryCustDate=this.value;renderSummaryTab()" style="padding:7px;font-size:13px;margin-top:6px;width:100%">`
@@ -1809,7 +1421,7 @@ function renderSummaryTab() {
             :''}
         </div>
         <div>
-          <label class="field-label" style="font-size:11px;margin-bottom:4px">🏪 ${t('storeFilter')}</label>
+          <label class="field-label" style="font-size:11px;margin-bottom:4px">🏪 ${lang==='zh'?'门店筛选':'Store Filter'}</label>
           <select onchange="summaryStoreFilter=this.value;renderSummaryTab()" style="padding:8px 10px;font-size:13px">
             <option value="all" ${summaryStoreFilter==='all'?'selected':''}>${t('allStores')}</option>
             ${branches.map(s=>`<option value="${s}" ${summaryStoreFilter===s?'selected':''}>${s}</option>`).join('')}
@@ -1839,7 +1451,7 @@ function renderSummaryTab() {
     <!-- TODAY STATUS STRIP -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${t('todayStatus')} · ${todayKey}
+        📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
@@ -1916,7 +1528,7 @@ async function renderLogTab() {
       </div>
       <button class="btn refresh-inline" onclick="refreshLog()">🔄 ${t('refresh')}</button>
     </div>
-    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${t('loadingMsg')}</div>
+    <div class="spinner-wrap" id="log-loading"><div class="spin"></div>${lang==='zh'?'加载中...':'Loading...'}</div>
     <div id="log-content"></div>`;
 
   await refreshLog();
@@ -1949,16 +1561,16 @@ async function refreshLog() {
   const filterHtml=`
     <div class="control-grid" style="margin-bottom:10px">
       <div>
-        <label class="field-label" style="font-size:11px">🏪 ${t('storeLbl')}</label>
+        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':'Store'}</label>
         <select onchange="logStoreFilter=this.value;renderLogEntries()">
           <option value="all">${t('allStores')}</option>
           ${allowedStores.filter(s=>s!=='HQ').map(s=>`<option value="${s}" ${logStoreFilter===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </div>
       <div>
-        <label class="field-label" style="font-size:11px">📋 ${t('actionType')}</label>
+        <label class="field-label" style="font-size:11px">📋 ${lang==='zh'?'操作类型':'Action Type'}</label>
         <select onchange="logActionFilter=this.value;renderLogEntries()">
-          <option value="all">${t('allOpt')}</option>
+          <option value="all">${lang==='zh'?'全部':'All'}</option>
           <option value="new"  ${logActionFilter==='new'?'selected':''}>${t('newEntry')}</option>
           <option value="edit" ${logActionFilter==='edit'?'selected':''}>${t('editEntry')}</option>
         </select>
@@ -2103,124 +1715,49 @@ function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Arr
 
 function renderAttendanceTab(){
   const today=dateKeyUTC8();
-  const mine=getAttendance()
-    .filter(r=>r.username===currentUser.username&&r.dateKey===today&&r.status!=='rejected')
-    .sort((a,b)=>String(a.datetime).localeCompare(String(b.datetime)));
-  const lastIn =mine.find(r=>r.type==='check_in');
+  const mine=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===today).sort((a,b)=>String(b.datetime).localeCompare(String(a.datetime)));
+  const lastIn=mine.find(r=>r.type==='check_in');
   const lastOut=mine.find(r=>r.type==='check_out');
-  const fmt=dt=>dt?fmtTimeUTC8(dt):null;
-  const inTime =fmt(lastIn &&lastIn.datetime);
-  const outTime=fmt(lastOut&&lastOut.datetime);
-  const inSt =lastIn ?(lastIn.status==='late' ?('⚠️ '+t('lateStatus')):('✅ '+t('onTime'))):t('notYet');
-  const outSt=lastOut?(lastOut.status==='early_leave'?('⚠️ '+t('earlyLeave')):('✅ '+t('done'))):t('notYet');
-  const recent=getAttendance()
-    .filter(r=>r.username===currentUser.username&&r.dateKey<today)
-    .sort((a,b)=>b.dateKey.localeCompare(a.dateKey)).slice(0,14);
-  const recRows=recent.map(r=>{
-    const ci=r.type==='check_in';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
-      +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
-        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'+(ci?t('checkIn'):t('checkOut'))+'</span></div>'
-        +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
-      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+fmtTimeUTC8(r.datetime)+'</div>'
-      +'</div>';
-  }).join('');
-  const css='att-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}';
-  const inCard='<div style="border-radius:14px;padding:14px 12px;text-align:center;border:2px solid '+(inTime?'#10b981':'#e2e8f0')+';background:'+(inTime?'#f0fdf4':'#f8fafc')+'">'
-    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:'+(inTime?'#10b981':'#94a3b8')+'">'+t('checkIn')+'</div>'
-    +'<div style="font-size:26px;font-weight:900;line-height:1;color:'+(inTime?'#10b981':'#cbd5e1')+'">'+(inTime||'--:--')+'</div>'
-    +'<div style="font-size:10px;margin-top:3px;opacity:.8">'+inSt+'</div>'
-    +'</div>';
-  const outCard='<div style="border-radius:14px;padding:14px 12px;text-align:center;border:2px solid '+(outTime?'#f59e0b':'#e2e8f0')+';background:'+(outTime?'#fff7ed':'#f8fafc')+'">'
-    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:'+(outTime?'#f59e0b':'#94a3b8')+'">'+t('checkOut')+'</div>'
-    +'<div style="font-size:26px;font-weight:900;line-height:1;color:'+(outTime?'#f59e0b':'#cbd5e1')+'">'+(outTime||'--:--')+'</div>'
-    +'<div style="font-size:10px;margin-top:3px;opacity:.8">'+outSt+'</div>'
-    +'</div>';
-  const ciDis=inTime?'disabled':'';
-  const coDis=(!inTime||outTime)?'disabled':'';
-  const ciLbl=(inTime?'✅ ':'🟢 ')+t('checkIn');
-  const coLbl=(outTime?'🟡 ':'🔴 ')+t('checkOut');
-  document.getElementById('tab-attendance').innerHTML=
-    '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+t('attendance')+'</h2>'
-    +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
-    +'<div class="card" style="margin-bottom:10px">'
-      +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '
-        +todayLabelUTC8()+'</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">'+inCard+outCard+'</div>'
-      +'<div class="input-wrap" style="margin-top:8px;margin-bottom:8px">'
-        +'<label class="field-label">'+t('remarkLabel')+'</label>'
-        +'<input type="text" id="att-remark" placeholder="'+(t('attRemark'))+'"></div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">'
-        +'<button class="btn success" '+ciDis+' onclick="confirmAttendance(\'check_in\')">'+ciLbl+'</button>'
-        +'<button class="btn warn"    '+coDis+' onclick="confirmAttendance(\'check_out\')">'+coLbl+'</button>'
-      +'</div>'
-      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+t('tapCheckIn')+'</div>':'')
-    +'</div>'
-    +(recent.length?'<div class="card"><div class="card-title">'+t('recentHistory')+'</div>'+recRows+'</div>':'');
-}
-
-function confirmAttendance(type){
-  const lbl=type==='check_in'?t('checkIn'):t('checkOut');
-  const rem=(document.getElementById('att-remark')||{value:''}).value||'';
-  const timeStr=fmtTimeSUTC8(nowUTC8());
-  const dateStr=todayLabelUTC8();
-  const ov=document.createElement('div'); ov.className='modal-overlay open'; ov.id='att-confirm-modal';
-  ov.innerHTML='<div class="modal-box" style="text-align:center">'
-    +'<div style="font-size:40px;margin-bottom:8px">'+(type==='check_in'?'🟢':'🔴')+'</div>'
-    +'<div class="modal-title" style="font-size:20px">'+lbl+'</div>'
-    +'<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:14px 0;text-align:left">'
-      +'<div class="stat-row"><span class="stat-label">'+t('nameLabel')+'</span><span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'
-      +'<div class="stat-row"><span class="stat-label">'+t('storeLabel')+'</span><span class="stat-value">'+currentUser.store+'</span></div>'
-      +'<div class="stat-row"><span class="stat-label">'+t('dateLabel')+'</span><span class="stat-value">'+dateStr+'</span></div>'
-      +'<div class="stat-row"><span class="stat-label">'+t('timeLabel')+'</span><span class="stat-value" style="font-size:20px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'
-      +(rem?'<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+rem+'</span></div>':'')
-    +'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:14px">'+t('locationAuto')+'</div>'
-    +'<div style="display:flex;gap:10px">'
-      +'<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'att-confirm-modal\').remove()">'+t('cancelBtn')+'</button>'
-      +'<button class="btn '+(type==='check_in'?'success':'warn')+'" style="flex:2" onclick="document.getElementById(\'att-confirm-modal\').remove();submitAttendance(\''+type+'\');">'+t('confirmBtn')+' '+lbl+'</button>'
-    +'</div>'
-  +'</div>';
-  document.body.appendChild(ov);
+  document.getElementById('tab-attendance').innerHTML=`
+    <div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">Attendance</h2><button class="btn refresh-inline" onclick="triggerSyncRefresh()">Refresh</button></div>
+    <div class="card">
+      <div class="card-title">Today - ${today}</div>
+      <div class="ops-grid" style="margin-top:12px">
+        <button class="btn success" onclick="submitAttendance('check_in')">Check In</button>
+        <button class="btn warn" onclick="submitAttendance('check_out')">Check Out</button>
+      </div>
+      <div class="input-wrap" style="margin-top:12px"><label class="field-label">Remark</label><input type="text" id="att-remark" placeholder="Optional remark"></div>
+      <div class="divider"></div>
+      <div class="stat-row"><span class="stat-label">Check In</span><span class="stat-value">${lastIn?fmtTimeUTC8(lastIn.datetime):'-'}</span></div>
+      <div class="stat-row"><span class="stat-label">Check Out</span><span class="stat-value">${lastOut?fmtTimeUTC8(lastOut.datetime):'-'}</span></div>
+    </div>
+    <div class="card"><div class="card-title">Recent Attendance</div>${mine.length?mine.map(attendanceRowHtml).join(''):'<div class="empty-state"><p>No attendance today.</p></div>'}</div>`;
 }
 
 async function submitAttendance(type){
   const remark=document.getElementById('att-remark')?.value||'';
-  const label=type==='check_in'?t('checkIn'):t('checkOut');
-  const _td=dateKeyUTC8();
-  const _att=getAttendance().filter(r=>r.username===currentUser.username&&r.dateKey===_td&&r.status!=='rejected');
-  if(type==='check_in'&&_att.find(r=>r.type==='check_in')){
-    const _t=new Date(_att.find(r=>r.type==='check_in').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    showToast(t('alreadyCheckedIn')+' '+_t,'error'); return; }
-  if(type==='check_out'){
-    if(!_att.find(r=>r.type==='check_in')){showToast(t('checkInFirst'),'error');return;}
-    if(_att.find(r=>r.type==='check_out')){
-      const _t=new Date(_att.find(r=>r.type==='check_out').datetime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      showToast(t('alreadyCheckedOut')+' '+_t,'error'); return; }}
-  showToast(t('gettingLocation'),'pending');
+  const label=type==='check_in'?'Check In':'Check Out';
+  showToast('Getting location...','pending');
   try{
     const loc=await getBestLocation();
     const now=new Date();
-    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:nowUTC8().slice(0,10),datetime:nowUTC8(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
+    const record={id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,name:currentUser.name,role:currentUser.role,store:currentUser.store,type,status:'pending',dateKey:now.toISOString().slice(0,10),datetime:now.toISOString(),lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,remark,deviceId:getDeviceId(),deviceName:getDeviceName(),userAgent:navigator.userAgent||'',platform:navigator.platform||''};
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submitAttendance',...record})}).catch(e=>console.warn('Attendance sync failed:',e));
     const zone=nearestLocalZone(record.store,record.lat,record.lng);
     if(zone && zone.distanceMeters>zone.radiusMeters){
       record.status='rejected';
       showAttendanceResult('rejected',label+' Rejected','RED NOTICE: You are outside the allowed check in / check out compound.',`Distance ${zone.distanceMeters}m / Allowed ${zone.radiusMeters}m`);
     } else {
-      const _bound = getDeviceBoundUser(record.deviceId);
-      if(_bound && _bound !== currentUser.username.toLowerCase()){
-        record.status='rejected';
-        const arr2=getAttendance(); arr2.push(record); saveAttendance(arr2);
-        renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
-        showAttendanceResult('rejected',label+' Blocked',
-          'Device registered to '+_bound+'. Use your own device. Admin can reset.',
-          record.deviceName); return;
+      const localConflict=getLocalDeviceUsers().some(u=>String(u).toLowerCase()!==String(currentUser.username).toLowerCase());
+      const cloudConflict=(cachedUserDevices.length?cachedUserDevices:loadData('user_devices',[])).some(d=>String(d.deviceId)===record.deviceId&&String(d.username).toLowerCase()!==String(currentUser.username).toLowerCase());
+      const deviceConflict=localConflict||cloudConflict;
+      if(deviceConflict){
+        record.status='pending_approval';
+        showAttendanceResult('pending',label+' Pending Approval','This device was used with another username. Store Supervisor, Manager or Admin must approve it.',record.deviceName);
+      } else {
+        record.status='present';
+        showAttendanceResult('success',label+' Saved','Attendance recorded for '+currentUser.name+'.',record.deviceName);
       }
-      bindDeviceToUser(record.deviceId,currentUser.username);
-      record.status='present';
-      showAttendanceResult('success',label+' '+t('attendanceSaved'),
-        t('attendanceSaved')+' — '+currentUser.name,record.deviceName);
     }
     const arr=getAttendance(); arr.push(record); saveAttendance(arr); renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
   }catch(e){
@@ -2251,35 +1788,33 @@ function renderOperationsDashboard(){
   const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
   const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.username));
   const absent=users.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">${t('managerDash')}</div>
-    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('dateLabel2')}</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">${t('storeLabel2')}</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">${t('allStoresOpt')}</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('present')}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('absent')}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${t('approval')}</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">${t('pendingApproval')}</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">'+t('noApproval')+'</div>'}</div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">${t('attRecords')}</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">'+t('noAttRecords')+'</div>'}</div>
+  return `<div class="card"><div class="card-title">Manager Dashboard</div>
+    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Attendance Records</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No attendance records.</div>'}</div>
+    <div style="margin-top:12px">${renderAttendanceReport(users)}</div>
     ${renderZoneScheduleTools(branches,users)}
-    <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">${t('backupBtn')}</button>
+    <button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>
   </div>`;
 }
-function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">${t('approveBtn2')}</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">${t('rejectBtn2')}</button></div></div>`; }
-async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?t('approvedMsg'):t('rejectedMsg'),'success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
+function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
+async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
-function renderZoneScheduleTools(branches,users){
-  // Only admin can set work zones — boss and manager cannot
-  if(currentUser.role !== 'admin') return '';
-  return `<div class="divider"></div><div class="card-title">${t('workZone')}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('branch')}</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">${t('radius')}</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">${t('saveZone')}</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">${t('staff')}</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">${t('day')}</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">${t('saveSched')}</button>`; }
-async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast(t('latLngRequired'),'error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(t('zoneSaved'),'success'); triggerSyncRefresh(); }
-async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast(t('schedSaved'),'success'); triggerSyncRefresh(); }
-async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast(t('backupDone'),'success'); setTimeout(()=>triggerSyncRefresh(),1500); }
+function renderZoneScheduleTools(branches,users){ return `<div class="divider"></div><div class="card-title">Work Zone & Schedule</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Branch</label><select id="zone-store">${branches.filter(s=>s!=='HQ').map(s=>`<option>${s}</option>`).join('')}</select></div><div><label class="field-label">Radius</label><input type="number" id="zone-radius" value="500" min="50" step="50"></div></div><div class="ops-grid"><input type="number" id="zone-lat" placeholder="Latitude" step="0.000001"><input type="number" id="zone-lng" placeholder="Longitude" step="0.000001"></div><button class="btn success" onclick="saveWorkZoneFromForm()">Save Allowed Zone</button><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Staff</label><select id="sched-user"><option value="ALL">All staff in branch</option>${users.map(u=>`<option value="${u.username}">${u.name||u.username}</option>`).join('')}</select></div><div><label class="field-label">Day</label><select id="sched-day"><option>ALL</option><option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option></select></div></div><div class="ops-grid"><input type="time" id="sched-start" value="10:00"><input type="time" id="sched-end" value="22:00"></div><button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`; }
+async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast('Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Zone saved.','success'); triggerSyncRefresh(); }
+async function saveWorkScheduleFromForm(){ const store=document.getElementById('zone-store').value; const payload={action:'saveWorkSchedule',role:currentUser.role,updatedBy:currentUser.name,username:document.getElementById('sched-user').value,store,dayOfWeek:document.getElementById('sched-day').value,startTime:document.getElementById('sched-start').value,endTime:document.getElementById('sched-end').value,graceMinutes:15,status:'active'}; await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Schedule saved.','success'); triggerSyncRefresh(); }
+async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createBackup',triggeredBy:currentUser.name,role:currentUser.role,note:'Manual dashboard backup'})}); showToast('Backup created in Google Drive.','success'); setTimeout(()=>triggerSyncRefresh(),1500); }
 // ============================================================
 // ADMIN TAB
 // ============================================================
 async function renderAdminTab() {
   const isAdmin=['admin','boss','manager'].includes(currentUser.role);
   if(!isAdmin){
-    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">${t('noAccess')}</div>`;
+    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
     return;
   }
-  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>${t('loadingMsg')}</div>`;
+  document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
   await fetchLiveUsers();
   const allUsers=cachedUsers;
   const pending=[]; const active=[];
@@ -2294,7 +1829,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e" onclick="adminResetDeviceBinding('${u.username}')">📱</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2303,7 +1838,7 @@ async function renderAdminTab() {
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}`;
 }
 async function approveUser(username) {
-  showToast(t('approvingLbl'),'pending');
+  showToast(lang==='zh'?'正在审批...':'Approving...','pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approveUser',username})});
     if(cachedUsers[username]){cachedUsers[username].status='active';saveData('cached_users',cachedUsers);}
@@ -2311,7 +1846,7 @@ async function approveUser(username) {
   } catch(e){showToast('Error: '+e,'error');}
 }
 async function rejectUser(username) {
-  if(!confirm(t('cancelReject'))) return;
+  if(!confirm('Reject & delete this request?')) return;
   showToast('Rejecting...','pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rejectUser',username})});
@@ -2349,7 +1884,7 @@ async function saveUserEdit() {
   const store=document.getElementById('edit-store').value;
   if(!username||!name||!pin||pin.length!==6||!phone){showToast('Fill all fields. PIN=6 digits.','error');return;}
   const userData={action:'saveUser',originalKey,username,name,phone,pin,role,store,status:'active'};
-  showToast(t('savingLbl'),'pending');
+  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)});
     if(originalKey&&originalKey!==username) delete cachedUsers[originalKey];
@@ -2359,7 +1894,7 @@ async function saveUserEdit() {
   } catch(e){showToast('Error: '+e,'error');}
 }
 async function deleteUser(username) {
-  if(!confirm(t('deleteEntry')+' @'+username)) return;
+  if(!confirm('Delete user @'+username+'?')) return;
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteUser',username})});
     delete cachedUsers[username]; saveData('cached_users',cachedUsers);
@@ -2396,14 +1931,14 @@ function renderProfileTab() {
       <button class="btn success" onclick="changeCurrentUserPin()">${t('pinSubmitBtn')}</button>
     </div>
     <div class="card">
-      <div class="card-title">${t('localCacheInfo')}</div>
+      <div class="card-title">${lang==='zh'?'本地缓存信息':'Local Cache Info'}</div>
       <div class="stat-row">
-        <span class="stat-label">${t('localRecords')}</span>
+        <span class="stat-label">${lang==='zh'?'本地销售记录':'Local Records'}</span>
         <span class="stat-value">${getSales().length}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">${t('lastSync')}</span>
-        <span class="stat-value" style="font-size:13px">${fmtTimeUTC8(nowUTC8())}</span>
+        <span class="stat-label">${lang==='zh'?'最后同步':'Last Sync'}</span>
+        <span class="stat-value" style="font-size:13px">${new Date().toLocaleTimeString()}</span>
       </div>
     </div>
     <button class="btn secondary" onclick="enableBiometricLogin()" style="margin-top:8px">Enable Face ID / Fingerprint</button>
@@ -2414,17 +1949,17 @@ async function changeCurrentUserPin() {
   const currentPin=document.getElementById('profile-curr-pin').value.trim();
   const newPin=document.getElementById('profile-new-pin').value.trim();
   const confirmPin=document.getElementById('profile-conf-pin').value.trim();
-  if(!currentPin||!newPin||!confirmPin){showToast(t('fillAllFields'),'error');return;}
-  if(String(currentPin)!==String(currentUser.pin)){showToast(t('wrongCurrentPin'),'error');return;}
-  if(newPin.length!==6||isNaN(newPin)){showToast(t('newPin6Digits'),'error');return;}
-  if(newPin!==confirmPin){showToast(t('pinMismatch'),'error');return;}
-  showToast(t('savingLbl'),'pending');
+  if(!currentPin||!newPin||!confirmPin){showToast(lang==='zh'?'请填写完整！':'Fill all fields!','error');return;}
+  if(String(currentPin)!==String(currentUser.pin)){showToast(lang==='zh'?'当前密码错误！':'Incorrect current PIN!','error');return;}
+  if(newPin.length!==6||isNaN(newPin)){showToast(lang==='zh'?'新密码必须是6位数字！':'New PIN must be 6 digits!','error');return;}
+  if(newPin!==confirmPin){showToast(lang==='zh'?'新密码不一致！':'New PINs do not match!','error');return;}
+  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
   const userPayload={action:'saveUser',originalKey:currentUser.username,username:currentUser.username,name:currentUser.name,phone:currentUser.phone||'',pin:newPin,role:currentUser.role,store:currentUser.store,status:'active'};
   try {
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(userPayload)});
     currentUser.pin=newPin;
     if(cachedUsers[currentUser.username]){cachedUsers[currentUser.username].pin=newPin;saveData('cached_users',cachedUsers);}
-    showToast(t('pinUpdated'),'success');
+    showToast(lang==='zh'?'密码修改成功！':'PIN updated!','success');
     document.getElementById('profile-curr-pin').value='';
     document.getElementById('profile-new-pin').value='';
     document.getElementById('profile-conf-pin').value='';
@@ -2477,7 +2012,7 @@ function sendReminder() {
   const todaySales=getSales().filter(s=>s.dateKey===today);
   const submittedStores=new Set(todaySales.map(s=>s.store));
   const pending=BRANCHES.filter(b=>!submittedStores.has(b));
-  if(pending.length===0){showToast(t('allSubmittedToday'),'success');return;}
+  if(pending.length===0){showToast(lang==='zh'?'所有门店今日已提交！':'All branches submitted today!','success');return;}
   const msgEn=`🔔 *Sales Report Reminder*\nDate: ${today}\n\nPending branches:\n${pending.map(p=>'- '+p).join('\n')}\n\nPlease submit ASAP. Thank you!`;
   const msgZh=`🔔 *销售报告提醒*\n日期: ${today}\n\n以下门店尚未提交：\n${pending.map(p=>'- '+p).join('\n')}\n\n请尽快通过系统提交。谢谢！`;
   let contactsHtml='';
@@ -2504,12 +2039,12 @@ function sendReminder() {
     overlay.innerHTML=`
       <div class="modal-box">
         <div class="modal-title">🔔 Send Reminders</div>
-        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${t('pendingStores')} <strong>${pending.join(', ')}</strong></p>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:14px">${lang==='zh'?'未提交门店：':'Pending stores:'} <strong>${pending.join(', ')}</strong></p>
         <button class="btn warn" onclick="window.open('https://wa.me/?text=${encodeURIComponent(lang==='zh'?msgZh:msgEn)}','_blank');document.getElementById('reminder-modal').remove();" style="margin-bottom:14px">
-          📢 ${t('sendGroupReminder')}
+          📢 ${lang==='zh'?'发送群组提醒':'Send Group Reminder'}
         </button>
         <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:var(--text);border-top:1px solid var(--border);padding-top:10px">
-          ${t('directContact')}
+          ${lang==='zh'?'直接联系负责人：':'Direct WhatsApp to staff:'}
         </div>
         ${contactsHtml}
         <button class="btn secondary" onclick="document.getElementById('reminder-modal').remove();" style="margin-top:16px">Close 关闭</button>
@@ -2531,22 +2066,22 @@ function openSettlementUpload() {
   const dateKey = dateEl  ? dateEl.value  : dateKeyUTC8();
 
   if(!store) {
-    showToast(t('selectStoreFrst'),'error');
+    showToast(lang==='zh'?'请先选择门店':'Please select a store first','error');
     return;
   }
 
   // Update modal text language
   document.getElementById('settlement-modal-title').textContent =
-    t('settleTitle');
+    lang==='zh' ? '上传日结单 / 收据' : 'Upload Settlement Receipt';
   document.getElementById('settlement-modal-info').innerHTML =
     `🏪 <strong>${store}</strong> &nbsp;·&nbsp; 📅 <strong>${dateKey}</strong><br>
-     <span style="font-size:12px">${t('settleInfo')}</span>`;
+     <span style="font-size:12px">${lang==='zh'?'请拍摄或选择日结凭证图片（JPG/PNG）':'Take a photo or select the settlement receipt image (JPG/PNG)'}</span>`;
   document.getElementById('upload-label-text').textContent =
-    t('settleTapPhoto');
+    lang==='zh' ? '点击拍摄 / 选择图片' : 'Tap to take photo or select image';
   document.getElementById('settlement-note-label').textContent =
-    t('settleNote');
+    lang==='zh' ? '备注（选填）' : 'Note (optional)';
   document.getElementById('upload-progress-label').textContent =
-    t('settleUploading');
+    lang==='zh' ? '正在上传...' : 'Uploading...';
 
   // Reset state
   document.getElementById('settlement-file').value = '';
@@ -2580,7 +2115,7 @@ function previewSettlement(input) {
         : Math.round(file.size/1024)+'KB');
     document.getElementById('upload-preview').style.display = 'block';
     document.getElementById('upload-label-text').textContent =
-      t('settleSelected');
+      lang==='zh' ? '✅ 图片已选择，点击更换' : '✅ Image selected — tap to change';
   };
   reader.readAsDataURL(file);
 }
@@ -2592,7 +2127,7 @@ async function uploadSettlement() {
   const note    = document.getElementById('settlement-note').value || '';
 
   if(!fileInput || !fileInput.files || !fileInput.files[0]) {
-    showToast(t('selectImageFirst'),'error');
+    showToast(lang==='zh'?'请先拍摄或选择图片':'Please select or take a photo first','error');
     return;
   }
 
@@ -2602,7 +2137,7 @@ async function uploadSettlement() {
   const progressBar  = document.getElementById('upload-progress-bar');
   const progressLabel= document.getElementById('upload-progress-label');
 
-  if(btn) { btn.disabled=true; btn.textContent = t('settleUploading'); }
+  if(btn) { btn.disabled=true; btn.textContent = lang==='zh'?'上传中...':'Uploading...'; }
   if(progressWrap) progressWrap.style.display = 'block';
 
   // Animate progress bar
@@ -2643,11 +2178,11 @@ async function uploadSettlement() {
 
     clearInterval(ticker);
     if(progressBar)  progressBar.style.width = '100%';
-    if(progressLabel) progressLabel.textContent = t('uploadSuccess');
+    if(progressLabel) progressLabel.textContent = lang==='zh' ? '✅ 上传成功！' : '✅ Upload successful!';
 
     setTimeout(() => {
       closeSettlementModal();
-      confirmAndLockAfterUpload(store, dateKey);
+      showToast(lang==='zh'?'Settlement Receipt uploaded to Cloud ✅':'Settlement Receipt uploaded to Cloud ✅','success');
     }, 900);
 
   } catch(e) {
@@ -2655,6 +2190,8 @@ async function uploadSettlement() {
     if(btn) { btn.disabled=false; btn.textContent='📤 Upload 上传'; }
     if(progressWrap) progressWrap.style.display = 'none';
     showToast('Upload failed: ' + e.message, 'error');
+  }
+}
 
 // ============================================================
 // CASH IN DRAWER — functions
@@ -2662,18 +2199,6 @@ async function uploadSettlement() {
 // ============================================================
 // CASH DRAWER — denomination constants
 // ============================================================
-function getPreviousDayClosing(store,dateKey){
-  const all=getCashDrawer().filter(r=>r.store===store&&r.dateKey<dateKey)
-    .sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
-  if(!all.length) return null;
-  return{amount:parseFloat(all[0].total||all[0].amount||0),dateKey:all[0].dateKey};
-}
-// Get cash sales amount for a store/date from saved sales records
-function getCashSalesForDate(store,dateKey){
-  const rec=getSales().find(r=>r.store===store&&r.dateKey===dateKey);
-  return rec?parseFloat(rec.cash||0):0;
-}
-
 const BILLS = [
   {val:100, label:'RM 100', color:'#1e3a8a'},
   {val:50,  label:'RM 50',  color:'#065f46'},
@@ -2694,80 +2219,47 @@ const ALL_DENOMS = [...BILLS, ...COINS];
 let _cdStore='', _cdDate='', _cdQty={};
 
 function renderCashDrawerCard(store, dateKey) {
-  const existing  = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
-  const mvToday   = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
-  const totalIn   = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const totalOut  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
-  const drawerTotal = existing ? parseFloat(existing.total||existing.amount||0) : 0;
+  const existing = getCashDrawer().find(r=>r.dateKey===dateKey&&r.store===store);
+  const today = dateKeyUTC8();
+  const mvToday = getCashMovements().filter(r=>r.dateKey===dateKey&&r.store===store);
+  const totalIn  = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='in').reduce((a,r)=>a+parseFloat(r.amount||0),0);
+  const totalOut = mvToday.filter(isCashMovementApproved).filter(r=>r.type==='out').reduce((a,r)=>a+parseFloat(r.amount||0),0);
 
-  // Formula: Opening(yesterday) + CashSales + CashIn - CashOut = Expected
-  // Variance = Actual - Expected  → needs Manager approval if ≠ 0
-  const prevDay   = getPreviousDayClosing(store, dateKey);
-  const opening   = prevDay ? prevDay.amount : 0;
-  const cashSales = getCashSalesForDate(store, dateKey);
-  const expected  = opening + cashSales + totalIn - totalOut;
-  const variance  = existing ? (drawerTotal - expected) : null;
-  const isStaff   = currentUser.role === 'staff';
-  const canOpen   = !isStaff;
+  let drawerTotal = 0;
+  if(existing && existing.breakdown) {
+    try {
+      const bd = typeof existing.breakdown==='string'?JSON.parse(existing.breakdown):existing.breakdown;
+      drawerTotal = parseFloat(existing.total||0);
+    } catch(e) { drawerTotal = parseFloat(existing.amount||existing.total||0); }
+  } else if(existing) {
+    drawerTotal = parseFloat(existing.amount||existing.total||0);
+  }
 
-  // Variance display
-  const varColor  = variance===null?'#94a3b8':variance>0?'#10b981':variance<0?'#ef4444':'#10b981';
-  const varLabel  = variance===null?'-':variance>0?'+RM '+variance.toFixed(2)+' \u2191':variance<0?'-RM '+Math.abs(variance).toFixed(2)+' \u2193':'RM 0.00 \u2713';
-  const varBg     = variance===null?'#f8fafc':variance>=0?'#f0fdf4':'#fff1f2';
-  const needsAppr = variance!==null && variance!==0;
-
-  // Carry-forward rows (string concat — no nested template literals)
-  const prevLbl   = prevDay?'('+prevDay.dateKey+')':'';
-  const carryRows = '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+t('openingBal')+' '+prevLbl+'</span><span style="font-weight:900;color:#92400e">RM '+opening.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashSalesRef')+'</span><span style="font-weight:900;color:#1e3a8a">+RM '+cashSales.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+t('cashInToday')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+t('cashOutToday')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+t('expectedBal')+'</span><span style="color:#92400e">RM '+expected.toFixed(2)+'</span></div>'
-    +'</div>';
-
-  const actualVarGrid = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+t('actualCount')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+drawerTotal.toFixed(2)+'</div></div>'
-    +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+varColor+';background:'+varBg+'"><div style="font-size:10px;font-weight:700;color:'+varColor+'">'+t('variance')+'</div><div style="font-size:18px;font-weight:900;color:'+varColor+'">'+varLabel+'</div></div>'
-    +'</div>';
-
-  const approvalWarn = needsAppr
-    ? '<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#92400e;font-weight:700">&#9888; '+t('needsApproval')
-      +'<br><button class="btn warn" style="margin-top:8px;font-size:13px" onclick="requestCashDrawerAdjustment(\''+store+'\',\''+dateKey+'\','+variance.toFixed(2)+')">'+t('requestAdjustment')+'</button></div>'
-    : '';
-
-  const drawerBtn = canOpen
-    ? '<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</button>'
-    : '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:12px;color:#64748b;text-align:center">\uD83D\uDD12 '+t('staffNoDrawer')+'</div>';
-
-  const countedBadge = existing ? '<span class="drawer-badge">\u2713 '+t('counted')+'</span>' : '';
-
-  return '<div class="drawer-card">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-      +'<span style="font-size:15px;font-weight:800;color:#92400e">\uD83D\uDDC4\uFE0F '+t('cashDrawer')+'</span>'
-      +countedBadge
-    +'</div>'
-    +carryRows
-    +actualVarGrid
-    +approvalWarn
-    +drawerBtn
-    +'</div>';
-}
-
-function requestCashDrawerAdjustment(store,dateKey,variance){
-  const reason=prompt(t('explainVariance'),'');
-  if(reason===null) return;
-  const req={id:String(Date.now()),type:'cash_variance',store,dateKey,
-    requester:currentUser.name,role:currentUser.role,
-    amount:Math.abs(variance),reason:'Variance: '+variance.toFixed(2)+' — '+reason,
-    status:'pending',createdAt:nowUTC8()};
-  const approvals=getApprovals(); approvals.push(req); saveApprovals(approvals);
-  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'createApprovalRequest',...req})
-  }).catch(()=>{});
-  showToast(t('adjustmentSent'),'success');
-  renderSubmitTab();
+  return `
+    <div class="drawer-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:15px;font-weight:800;color:#92400e">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer'}</span>
+        ${existing?`<span class="drawer-badge">✓ ${lang==='zh'?'已盘点':'Counted'}</span>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="text-align:center;background:#fff;border-radius:10px;padding:8px;border:1px solid #fde68a">
+          <div style="font-size:10px;color:#b45309;font-weight:700">${lang==='zh'?'在柜金额':'Drawer Total'}</div>
+          <div style="font-size:15px;font-weight:900;color:#92400e">RM ${drawerTotal.toFixed(2)}</div>
+        </div>
+        <div style="text-align:center;background:#f0fdf4;border-radius:10px;padding:8px;border:1px solid #bbf7d0">
+          <div style="font-size:10px;color:#065f46;font-weight:700">${lang==='zh'?'现金入':'Cash In'}</div>
+          <div style="font-size:15px;font-weight:900;color:#10b981">+${totalIn.toFixed(2)}</div>
+        </div>
+        <div style="text-align:center;background:#fff1f2;border-radius:10px;padding:8px;border:1px solid #fecdd3">
+          <div style="font-size:10px;color:#b91c1c;font-weight:700">${lang==='zh'?'现金出':'Cash Out'}</div>
+          <div style="font-size:15px;font-weight:900;color:#ef4444">-${totalOut.toFixed(2)}</div>
+        </div>
+      </div>
+      <button class="btn warn" onclick="openCashDrawerModal()"
+        style="font-size:15px;background:linear-gradient(135deg,#92400e,#f59e0b)">
+        🗄️ ${lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager'}
+      </button>
+    </div>`;
 }
 
 function openCashDrawerModal() {
@@ -2776,10 +2268,7 @@ function openCashDrawerModal() {
   if(!storeEl||!dateEl) return;
   const store   = storeEl.value;
   const dateKey = dateEl.value;
-  if(!store) { showToast(t('selectStoreFrst'),'error'); return; }
-  if(currentUser.role === 'staff'){
-    showToast(t('staffNoDrawer'),'error'); return;
-  }
+  if(!store) { showToast(lang==='zh'?'请选择门店':'Select a store first','error'); return; }
 
   const isRestricted = ['staff','supervisor'].includes(currentUser.role);
   const todayStr = dateKeyUTC8();
@@ -2842,7 +2331,7 @@ function renderCashDrawerModal() {
     </div>`).join('');
 
   const mvListHtml = (list, type) => list.length===0
-    ? `<div style="color:var(--text2);font-size:13px;padding:6px 0">${t('noRecordsYet')}</div>`
+    ? `<div style="color:var(--text2);font-size:13px;padding:6px 0">${lang==='zh'?'暂无记录':'No records yet'}</div>`
     : list.map(r=>`
       <div class="move-item">
         <div>
@@ -2865,7 +2354,7 @@ function renderCashDrawerModal() {
       <div class="cd-header">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
-            <div style="font-size:17px;font-weight:900">🗄️ ${t('cashDrawerManager')}</div>
+            <div style="font-size:17px;font-weight:900">🗄️ ${lang==='zh'?'收银机管理':'Cash Drawer Manager'}</div>
             <div style="font-size:12px;opacity:.85;margin-top:2px">🏪 ${_cdStore} · 📅 ${_cdDate}</div>
           </div>
           <button onclick="document.getElementById('cd-main-modal').remove()"
@@ -2874,15 +2363,15 @@ function renderCashDrawerModal() {
         <!-- Running totals -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
           <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${t('inDrawer')}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'柜内现金':'In Drawer'}</div>
             <div style="font-size:16px;font-weight:900" id="cd-live-total">RM ${cdCalcTotal().toFixed(2)}</div>
           </div>
           <div style="background:rgba(16,185,129,.3);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${t('cashInToday')}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金入':'Cash In'}</div>
             <div style="font-size:16px;font-weight:900">+${totalIn.toFixed(2)}</div>
           </div>
           <div style="background:rgba(239,68,68,.3);border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;font-weight:700;opacity:.8">${t('cashOutToday')}</div>
+            <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金出':'Cash Out'}</div>
             <div style="font-size:16px;font-weight:900">-${totalOut.toFixed(2)}</div>
           </div>
         </div>
@@ -2890,13 +2379,13 @@ function renderCashDrawerModal() {
 
       <!-- BILLS SECTION -->
       <div class="cd-section">
-        <div class="cd-section-title">💵 ${t('billsLabel')}</div>
+        <div class="cd-section-title">💵 ${lang==='zh'?'纸币':'Bills / Banknotes'}</div>
         <div class="denom-grid">${billRows}</div>
       </div>
 
       <!-- COINS SECTION -->
       <div class="cd-section">
-        <div class="cd-section-title">🪙 ${t('coinsLabel')}</div>
+        <div class="cd-section-title">🪙 ${lang==='zh'?'硬币':'Coins'}</div>
         <div class="denom-grid">${coinRows}</div>
       </div>
 
@@ -2904,11 +2393,11 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            ✅ ${t('cashInLabel')} <span style="font-weight:900;color:#10b981">+RM ${totalIn.toFixed(2)}</span>
+            ✅ ${lang==='zh'?'现金入':'Cash IN'} <span style="font-weight:900;color:#10b981">+RM ${totalIn.toFixed(2)}</span>
           </div>
           <button onclick="openAddMovement('in')"
             style="background:#10b981;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
-            + ${t('addBtn')}
+            + ${lang==='zh'?'添加':'Add'}
           </button>
         </div>
         <div id="cd-in-list">${mvListHtml(ins,'in')}</div>
@@ -2919,25 +2408,25 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            🚫 ${t('cashOutLabel')} <span style="font-weight:900;color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
+            🚫 ${lang==='zh'?'现金出':'Cash OUT'} <span style="font-weight:900;color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
           </div>
           <button onclick="openAddMovement('out')"
             style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
-            + ${t('addBtn')}
+            + ${lang==='zh'?'添加':'Add'}
           </button>
         </div>
         <div id="cd-out-list">${mvListHtml(outs,'out')}${pendingOuts.length?`<div style="margin-top:8px;font-size:12px;color:#92400e;background:#fef3c7;border-radius:10px;padding:8px;font-weight:700">${pendingOuts.length} cash out request(s) waiting approval.</div>`:''}</div>
       </div>` : `
       <div class="cd-section" style="background:#f8fafc">
         <div style="font-size:13px;color:var(--text2);font-weight:600;text-align:center;padding:6px">
-          🔒 ${t('cashOutMgrOnly')}
+          🔒 ${lang==='zh'?'现金出功能仅限经理/管理员':'Cash Out — Manager / Admin / Boss only'}
         </div>
         ${outs.length>0?`<div id="cd-out-list">${mvListHtml(outs,'out')}</div>`:''}
       </div>`}
 
       <!-- NOTE + SUBMIT -->
       <div class="cd-section">
-        <label class="field-label" style="color:#92400e">${t('noteOptional')}</label>
+        <label class="field-label" style="color:#92400e">${lang==='zh'?'备注（选填）':'Note (optional)'}</label>
         <input type="text" id="cd-final-note" placeholder="..."
           value="${(()=>{ const ex=getCashDrawer().find(r=>r.dateKey===_cdDate&&r.store===_cdStore); return ex?ex.note||'':''; })()}"
           style="border-color:#f59e0b;margin-top:4px">
@@ -2946,11 +2435,11 @@ function renderCashDrawerModal() {
       <!-- SUBMIT BAR -->
       <div class="cd-submit-bar">
         <button class="btn secondary" style="flex:1" onclick="document.getElementById('cd-main-modal').remove()">
-          ${t('closeBtnLbl')}
+          ${lang==='zh'?'关闭':'Close'}
         </button>
         <button class="btn warn" style="flex:2;background:linear-gradient(135deg,#92400e,#f59e0b)"
           onclick="submitCashDrawerFull()">
-          🗄️ ${t('saveCountBtn')}
+          🗄️ ${lang==='zh'?'保存现金盘点':'Save Cash Count'}
         </button>
       </div>
 
@@ -2992,10 +2481,10 @@ function openAddMovement(type) {
   ov.innerHTML=`
     <div class="modal-box">
       <div class="modal-title" style="color:${isOut?'#ef4444':'#10b981'}">
-        ${isOut?(t('cashOutAdd')):(t('cashInAdd'))}
+        ${isOut?(lang==='zh'?'➕ 现金出':'➕ Cash OUT'):(lang==='zh'?'➕ 现金入':'➕ Cash IN')}
       </div>
       <div class="input-wrap">
-        <label class="field-label">${t('amountLbl')} (RM)</label>
+        <label class="field-label">${lang==='zh'?'金额':'Amount'} (RM)</label>
         <div class="amount-input-wrap">
           <span class="amount-prefix" style="color:${isOut?'#ef4444':'#10b981'}">RM</span>
           <input type="number" class="amount-input" id="mv-amount" placeholder="0.00"
@@ -3004,19 +2493,19 @@ function openAddMovement(type) {
         </div>
       </div>
       <div class="input-wrap">
-        <label class="field-label">${t('reasonLbl')}</label>
+        <label class="field-label">${lang==='zh'?'原因/备注':'Reason / Note'}</label>
         <input type="text" id="mv-reason"
-          placeholder="${isOut?(t('bankingReason')):(t('topUpReason'))}"
+          placeholder="${isOut?(lang==='zh'?'如：银行存款、零用金':'e.g. Banking, Petty cash'):(lang==='zh'?'如：补充找零':'e.g. Top up change')}"
           style="border-color:${isOut?'#ef4444':'#10b981'}">
       </div>
       <div style="display:flex;gap:10px;margin-top:8px">
         <button class="btn secondary" style="flex:1"
           onclick="document.getElementById('cd-add-mv-modal').remove()">
-          ${t('cancelBtn')}
+          ${lang==='zh'?'取消':'Cancel'}
         </button>
         <button class="btn" style="flex:2;background:${isOut?'#ef4444':'#10b981'}"
           onclick="saveCashMovementEntry('${type}')">
-          ${t('saveBtn')}
+          ${lang==='zh'?'保存':'Save'}
         </button>
       </div>
     </div>`;
@@ -3060,7 +2549,7 @@ function saveCashMovementEntry(type) {
   renderCashDrawerModal();
 }
 function deleteCashMovement(id) {
-  if(!confirm(t('deleteEntry'))) return;
+  if(!confirm(lang==='zh'?'删除此记录？':'Delete this entry?')) return;
   const mvs = getCashMovements().filter(r=>r.id!==String(id));
   saveCashMovements(mvs);
   renderCashDrawerModal();
@@ -3082,7 +2571,7 @@ function submitCashDrawerFull() {
     datetime: nowUTC8()
   };
 
-  showToast(t('savingLbl'),'pending');
+  showToast(lang==='zh'?'正在保存...':'Saving...','pending');
   fetch(WEB_APP_URL, {
     method:'POST', mode:'no-cors', cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -3091,7 +2580,7 @@ function submitCashDrawerFull() {
     let cd = getCashDrawer().filter(r=>!(r.dateKey===_cdDate&&r.store===_cdStore));
     cd.push(record);
     saveCashDrawer(cd);
-    showToast(t('cashCountSaved'),'success');
+    showToast(lang==='zh'?'现金盘点已保存 ✓':'Cash count saved ✓','success');
     document.getElementById('cd-main-modal')?.remove();
     renderSubmitTab();
     if(currentTab==='records') renderRecordsTab();
@@ -3101,41 +2590,6 @@ function submitCashDrawerFull() {
 // kept for backwards compat
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
-
-// ── Sales submission approval workflow for Staff/Supervisor ──────────────
-function submitForApprovalFlow(withUpload=false){
-  const s=window._pendingSubmit;
-  if(!s){showToast('No pending submit data','error');return;}
-  const approvalId=String(Date.now());
-  const approvalRec={
-    id:approvalId, type:'sales_submission',
-    store:s.store, dateKey:s.targetDate,
-    requester:currentUser.name, role:currentUser.role,
-    amount:s.total, reason:'Staff sales submission',
-    status:'pending', createdAt:nowUTC8(),
-    payload:JSON.stringify({cash:s.cash,qr:s.qr,card:s.card,bank:s.bank,total:s.total,remark:s.remark})
-  };
-  // Save pending locally
-  const approvals=getApprovals(); approvals.push(approvalRec); saveApprovals(approvals);
-  // Send to GAS for approval queue
-  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'createApprovalRequest',...approvalRec})
-  }).catch(()=>{});
-  document.getElementById('confirm-modal')?.remove();
-  showToast(t('submittedPending'),'success');
-  renderSubmitTab(); renderRecordsTab();
-  if(withUpload) setTimeout(()=>openSettlementUpload(),600);
-  else setTimeout(()=>triggerSyncRefresh(),1500);
-}
-
-function _db(){ return loadData('device_binding',{}); }
-function getDeviceBoundUser(id){ return _db()[id]||null; }
-function bindDeviceToUser(id,u){ const b=_db(); if(!b[id]){b[id]=u.toLowerCase();saveData('device_binding',b);} }
-function adminResetDeviceBinding(u){
-  if(!confirm(t('deviceResetMsg')+' '+u)) return;
-  const b=_db(); Object.keys(b).forEach(k=>{ if(b[k]===u.toLowerCase()) delete b[k]; }); saveData('device_binding',b);
-  showToast('Device binding cleared for '+u,'success'); renderAdminTab(); }
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
