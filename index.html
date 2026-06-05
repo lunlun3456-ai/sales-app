@@ -544,7 +544,8 @@ function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVGoFVpzonwUNarMnUoPFblGaKDFjls0uozvA3E1c5WxTmas5XXsuofF8lhgZxIzGy_g/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxuAn6MptFYmLmexnrg7zCEsbCdi6ReNV6HSFCWQhk7n-zkAwuADg7N6zzMQYgx8TX9Dw/exec";
+var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
 let currentUser = null;
@@ -863,10 +864,18 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.settlementLocks)) saveSettlementLocks(appJson.settlementLocks);
           if(Array.isArray(appJson.approvals)) saveApprovals(appJson.approvals);
           if(Array.isArray(appJson.attendance)){
-            // Merge: server is authoritative but keep local records not yet on server
+            // Keep today's session records + all local records not on server
+            var _td=dateKeyUTC8();
             var serverIds=new Set(appJson.attendance.map(function(r){return String(r.id);}));
-            var localOnly=getAttendance().filter(function(r){return !serverIds.has(String(r.id));});
-            saveAttendance(appJson.attendance.concat(localOnly));
+            var localNotOnServer=getAttendance().filter(function(r){return !serverIds.has(String(r.id));});
+            saveAttendance(appJson.attendance.concat(localNotOnServer));
+            // Restore session records that may have been overwritten
+            if(_attSession.length){
+              var merged2=getAttendance();
+              var storedIds=new Set(merged2.map(function(r){return String(r.id);}));
+              _attSession.forEach(function(r){if(!storedIds.has(String(r.id)))merged2.push(r);});
+              saveAttendance(merged2);
+            }
           }
           if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
@@ -1765,14 +1774,12 @@ function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Arr
 
 function renderAttendanceTab(){
   var today=dateKeyUTC8();
-  var all=getAttendance().filter(function(r){
-    return r.username===currentUser.username&&r.dateKey===today&&r.status!=='rejected';
-  });
+  // Merge: session records (in-memory, never wiped) + stored records
+  var stored=getAttendance().filter(function(r){return r.dateKey===today&&r.username===currentUser.username&&r.status!=='rejected';});
+  var sessionIds=new Set(_attSession.map(function(r){return String(r.id);}));
+  var merged=_attSession.filter(function(r){return r.dateKey===today;}).concat(stored.filter(function(r){return !sessionIds.has(String(r.id));}));
   var lastIn=null,lastOut=null;
-  all.forEach(function(r){
-    if(r.type==='check_in'&&!lastIn)lastIn=r;
-    if(r.type==='check_out'&&!lastOut)lastOut=r;
-  });
+  merged.forEach(function(r){if(r.type==='check_in'&&!lastIn)lastIn=r;if(r.type==='check_out'&&!lastOut)lastOut=r;});
   var inTime=lastIn?fmtTimeUTC8(lastIn.datetime):null;
   var outTime=lastOut?fmtTimeUTC8(lastOut.datetime):null;
   var ZH=lang==='zh';
@@ -1793,19 +1800,15 @@ function renderAttendanceTab(){
     var ci=r.type==='check_in';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
       +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
-        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')
-        +';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'
+        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'
         +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+'</span></div>'
       +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
-      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'
-        +(r.datetime?fmtTimeUTC8(r.datetime):'')+'</div>'
+      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</div>'
     +'</div>';
   }).join('');
-  var dateLabel=new Date(Date.now()+_U8)
-    .toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var dateLabel=new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('tab-attendance').innerHTML=
-    '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '
-      +(ZH?'考勤':'Attendance')+'</h2>'
+    '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+(ZH?'考勤':'Attendance')+'</h2>'
       +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
     +'<div class="card" style="margin-bottom:10px">'
       +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '+dateLabel+'</div>'
@@ -1815,11 +1818,9 @@ function renderAttendanceTab(){
         +'<input type="text" id="att-remark" placeholder="'+(ZH?'如：看医生':'e.g. Doctor visit')+'">'
       +'</div>'
       +'<div class="att-btn-row" id="att-btns"></div>'
-      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'
-        +(ZH?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
+      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+(ZH?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
     +'</div>'
-    +(recent.length?'<div class="card"><div class="card-title">'
-      +(ZH?'近期记录':'Recent History')+'</div>'+recRows+'</div>':'');
+    +(recent.length?'<div class="card"><div class="card-title">'+(ZH?'近期记录':'Recent History')+'</div>'+recRows+'</div>':'');
   var btns=document.getElementById('att-btns');
   if(btns){
     var b1=document.createElement('button'); b1.className='btn success';
@@ -1845,8 +1846,7 @@ function confirmAttendance(type){
   var dateStr=now2.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
   var icon=type==='check_in'?'🟢':'🔴';
   var btnCls=type==='check_in'?'success':'warn';
-  var remHtml=rem?'<div class="stat-row"><span class="stat-label">📝</span>'
-    +'<span class="stat-value">'+rem+'</span></div>':'';
+  var remHtml=rem?'<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+rem+'</span></div>':'';
   var ov=document.createElement('div');
   ov.className='modal-overlay open'; ov.id='att-confirm-modal';
   ov.innerHTML=
@@ -1864,39 +1864,32 @@ function confirmAttendance(type){
         +'<span class="stat-value" style="font-size:22px;font-weight:900;color:#1e3a8a">'+timeStr+'</span></div>'
       +remHtml
     +'</div>'
-    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">📍 '
-      +(ZH?'自动获取位置':'Location captured automatically')+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">📍 '+(ZH?'自动获取位置':'Location captured automatically')+'</div>'
     +'<div style="display:flex;gap:10px">'
       +'<button class="btn secondary" style="flex:1" id="att-cancel-btn">'+(ZH?'取消':'Cancel')+'</button>'
-      +'<button class="btn '+btnCls+'" style="flex:2" id="att-confirm-btn">'
-        +(ZH?'确认 ':'Confirm ')+lbl+'</button>'
+      +'<button class="btn '+btnCls+'" style="flex:2" id="att-confirm-btn">'+(ZH?'确认 ':'Confirm ')+lbl+'</button>'
     +'</div>'
   +'</div>';
   document.body.appendChild(ov);
-  document.getElementById('att-cancel-btn').onclick=function(){
-    document.getElementById('att-confirm-modal').remove();
-  };
-  document.getElementById('att-confirm-btn').onclick=function(){
-    document.getElementById('att-confirm-modal').remove();
-    submitAttendance(type);
-  };
+  document.getElementById('att-cancel-btn').onclick=function(){document.getElementById('att-confirm-modal').remove();};
+  document.getElementById('att-confirm-btn').onclick=function(){document.getElementById('att-confirm-modal').remove();submitAttendance(type);};
 }
 async function submitAttendance(type){
   var remark=(document.getElementById('att-remark')||{value:''}).value||'';
   var ZH=lang==='zh';
   var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
-  var mine=getAttendance().filter(function(r){
-    return r.username===currentUser.username&&r.dateKey===td&&r.status!=='rejected';
-  });
+  // Use merged view for guard checks (session + stored)
+  var sessionToday=_attSession.filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
+  var stored=getAttendance().filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
+  var sIds=new Set(sessionToday.map(function(r){return String(r.id);}));
+  var mine=sessionToday.concat(stored.filter(function(r){return !sIds.has(String(r.id));}));
   if(type==='check_in'){
     var prev=mine.find(function(r){return r.type==='check_in';});
     if(prev){showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(prev.datetime),'error');return;}
   }
   if(type==='check_out'){
-    if(!mine.find(function(r){return r.type==='check_in';})){
-      showToast(ZH?'请先签到':'Check in first','error');return;
-    }
+    if(!mine.find(function(r){return r.type==='check_in';})){showToast(ZH?'请先签到':'Check in first','error');return;}
     var prev2=mine.find(function(r){return r.type==='check_out';});
     if(prev2){showToast((ZH?'今日已于 ':'Already checked out at ')+fmtTimeUTC8(prev2.datetime),'error');return;}
   }
@@ -1924,6 +1917,7 @@ async function submitAttendance(type){
       var bound=_getDeviceBound(record.deviceId);
       if(bound&&bound!==currentUser.username.toLowerCase()){
         record.status='rejected';
+        _attSession.push(record);
         var a2=getAttendance();a2.push(record);saveAttendance(a2);
         renderAttendanceTab();setTimeout(function(){triggerSyncRefresh();},1500);
         showAttendanceResult('rejected',label+' Blocked',
@@ -1937,11 +1931,13 @@ async function submitAttendance(type){
       showAttendanceResult('success',label+' Saved',
         (ZH?'考勤已记录：':'Attendance recorded for ')+currentUser.name+'.',record.deviceName);
     }
+    // Save to session memory FIRST (survives sync overwrites)
+    _attSession.push(record);
     var arr=getAttendance();arr.push(record);saveAttendance(arr);
     renderAttendanceTab();
     setTimeout(function(){triggerSyncRefresh();},1500);
   }catch(e){
-    // Still save the check-out even if location failed
+    // Location failed — still save the record
     var errRecord={
       id:String(Date.now()),username:currentUser.username,pin:currentUser.pin,
       name:currentUser.name,role:currentUser.role,store:currentUser.store,
@@ -1950,71 +1946,39 @@ async function submitAttendance(type){
       remark:remark,deviceId:getDeviceId(),deviceName:getDeviceName(),
       userAgent:navigator.userAgent||'',platform:navigator.platform||''
     };
-    var earr=getAttendance();earr.push(errRecord);saveAttendance(earr);
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(Object.assign({action:'submitAttendance'},errRecord))
     }).catch(function(){});
+    _attSession.push(errRecord);
+    var earr=getAttendance();earr.push(errRecord);saveAttendance(earr);
     showAttendanceResult('success',label+' Saved',
-      (lang==='zh'?'考勤已记录（位置不可用）':'Attendance saved (location unavailable)'),
-      getDeviceName());
+      (ZH?'考勤已记录（位置不可用）':'Attendance saved (location unavailable)'),getDeviceName());
     renderAttendanceTab();
     setTimeout(function(){triggerSyncRefresh();},1500);
   }
 }
 
 function getBestLocation(){
-  return new Promise(function(resolve,reject){
-    if(!navigator.geolocation){
-      // No geolocation API — try IP fallback
-      _ipLocation(resolve,reject); return;
-    }
-    // Phase 1: Network/WiFi location (fast, works indoors on Android)
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){_ipLoc(resolve);return;}
     navigator.geolocation.getCurrentPosition(
-      function(pos){
-        resolve({lat:pos.coords.latitude,lng:pos.coords.longitude,
-          accuracy:Math.round(pos.coords.accuracy||0),source:'network'});
-      },
+      function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0),source:'network'});},
       function(){
-        // Phase 2: GPS hardware (slower, better outdoors)
         navigator.geolocation.getCurrentPosition(
-          function(pos){
-            resolve({lat:pos.coords.latitude,lng:pos.coords.longitude,
-              accuracy:Math.round(pos.coords.accuracy||0),source:'gps'});
-          },
-          function(){
-            // Phase 3: IP-based fallback
-            _ipLocation(resolve,reject);
-          },
-          {enableHighAccuracy:true,timeout:20000,maximumAge:0}
-        );
+          function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0),source:'gps'});},
+          function(){_ipLoc(resolve);},
+          {enableHighAccuracy:true,timeout:20000,maximumAge:0});
       },
-      {enableHighAccuracy:false,timeout:8000,maximumAge:300000}
-    );
+      {enableHighAccuracy:false,timeout:8000,maximumAge:300000});
   });
 }
-function _ipLocation(resolve,reject){
-  // Try multiple IP geolocation services
-  fetch('https://ipapi.co/json/',{cache:'no-cache'})
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.latitude&&d.longitude){
-        resolve({lat:parseFloat(d.latitude),lng:parseFloat(d.longitude),accuracy:5000,source:'ip'});
-      } else throw new Error('No coords');
-    })
-    .catch(function(){
-      fetch('https://ipinfo.io/json',{cache:'no-cache'})
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if(d.loc){
-            var p=d.loc.split(',');
-            resolve({lat:parseFloat(p[0]),lng:parseFloat(p[1]),accuracy:5000,source:'ip2'});
-          } else throw new Error('No coords');
-        })
-        .catch(function(){
-          resolve({lat:0,lng:0,accuracy:9999,source:'unavailable'});
-        });
-    });
+function _ipLoc(resolve){
+  fetch('https://ipapi.co/json/',{cache:'no-cache'}).then(function(r){return r.json();})
+    .then(function(d){if(d.latitude&&d.longitude)resolve({lat:parseFloat(d.latitude),lng:parseFloat(d.longitude),accuracy:5000,source:'ip'});else throw 0;})
+    .catch(function(){fetch('https://ipinfo.io/json',{cache:'no-cache'}).then(function(r){return r.json();})
+      .then(function(d){if(d.loc){var p=d.loc.split(',');resolve({lat:parseFloat(p[0]),lng:parseFloat(p[1]),accuracy:5000,source:'ip2'});}else throw 0;})
+      .catch(function(){resolve({lat:0,lng:0,accuracy:9999,source:'unavailable'});});});
 }
 function nearestLocalZone(store,lat,lng){ const zones=(cachedWorkZones.length?cachedWorkZones:loadData('work_zones',[])).filter(z=>z.store===store&&String(z.status||'active')==='active'); if(!zones.length) return null; return zones.map(z=>({radiusMeters:parseFloat(z.radiusMeters)||500,distanceMeters:distanceMeters(lat,lng,parseFloat(z.latitude),parseFloat(z.longitude))})).sort((a,b)=>a.distanceMeters-b.distanceMeters)[0]; }
 function distanceMeters(lat1,lon1,lat2,lon2){ const R=6371000,toRad=n=>n*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))); }
@@ -2071,7 +2035,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e;font-size:10px" onclick="adminClearDeviceBind('${u.username}')" title="Reset device binding">📱 Reset</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e;font-size:10px" onclick="adminClearDeviceBind('${u.username}')">📱 Reset</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2850,16 +2814,6 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
-function _getDeviceBound(id){var b=loadData('_db',{});return b[id]||null;}
-function _bindDevice(id,u){var b=loadData('_db',{});if(!b[id]){b[id]=u.toLowerCase();saveData('_db',b);}}
-function adminClearDeviceBind(u){
-  if(!confirm((lang==='zh'?'重置设备绑定：':'Reset device binding for: ')+u)) return;
-  var b=loadData('_db',{});
-  Object.keys(b).forEach(function(k){if(b[k]===u.toLowerCase()) delete b[k];});
-  saveData('_db',b);
-  showToast((lang==='zh'?'设备绑定已重置：':'Device binding cleared: ')+u,'success');
-  renderAdminTab();
-}
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
 </body>
