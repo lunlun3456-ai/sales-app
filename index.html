@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -2859,6 +2859,35 @@ function submitCashDrawerFull() {
 // kept for backwards compat
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
+
+// ── Device binding helpers ───────────────────────────────────────────────
+function _getDeviceBound(id){
+  var b=loadData('_device_bindings',{});
+  return b[String(id)]||null;
+}
+function _bindDevice(id,username){
+  var b=loadData('_device_bindings',{});
+  if(!b[String(id)]){
+    b[String(id)]=String(username).toLowerCase();
+    saveData('_device_bindings',b);
+  }
+}
+function adminClearDeviceBind(username){
+  var msg=lang==='zh'?'重置 '+username+' 的设备绑定？':'Reset device binding for '+username+'?';
+  if(!confirm(msg)) return;
+  var b=loadData('_device_bindings',{});
+  var changed=false;
+  Object.keys(b).forEach(function(k){
+    if(b[k]===String(username).toLowerCase()){delete b[k];changed=true;}
+  });
+  if(changed){
+    saveData('_device_bindings',b);
+    showToast((lang==='zh'?'设备绑定已重置：':'Device binding cleared: ')+username,'success');
+  } else {
+    showToast((lang==='zh'?'该用户无设备绑定':'No device binding found for ')+username,'error');
+  }
+  renderAdminTab();
+}
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
