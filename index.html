@@ -307,7 +307,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.4beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -358,7 +358,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.4beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1854,8 +1854,8 @@ function confirmAttendance(type){
       +'</div>'
       +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">📍 '+(lang==='zh'?'自动获取位置':'Location captured automatically')+'</div>'
       +'<div style="display:flex;gap:10px">'
-        +'<button class="btn secondary" style="flex:1" onclick="document.getElementById('att-confirm-modal').remove()">'+(lang==='zh'?'取消':'Cancel')+'</button>'
-        +'<button class="btn '+(type==='check_in'?'success':'warn')+'" style="flex:2" onclick="document.getElementById('att-confirm-modal').remove();submitAttendance(''+type+'');">'+(lang==='zh'?'确认 ':'Confirm ')+lbl+'</button>'
+        +'<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'att-confirm-modal\').remove()">'+(lang==='zh'?'取消':'Cancel')+'</button>'
+        +'<button class="btn '+(type==='check_in'?'success':'warn')+'" style="flex:2" onclick="document.getElementById(\'att-confirm-modal\').remove();submitAttendance(\''+type+'\');">'+(lang==='zh'?'确认 ':'Confirm ')+lbl+'</button>'
       +'</div>'
     +'</div>';
   document.body.appendChild(ov);
