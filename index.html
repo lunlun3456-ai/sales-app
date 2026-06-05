@@ -560,6 +560,7 @@ function dateKeyUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,10)
 function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
 function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
+function fmtTimeSUTC8(s){if(!s)return'--:--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2)+':'+('0'+u.getUTCSeconds()).slice(-2);}catch(e){return'--:--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVGoFVpzonwUNarMnUoPFblGaKDFjls0uozvA3E1c5WxTmas5XXsuofF8lhgZxIzGy_g/exec";
 
@@ -1885,16 +1886,23 @@ async function submitAttendance(type){
       record.status='rejected';
       showAttendanceResult('rejected',label+' Rejected','RED NOTICE: You are outside the allowed check in / check out compound.',`Distance ${zone.distanceMeters}m / Allowed ${zone.radiusMeters}m`);
     } else {
-      const localConflict=getLocalDeviceUsers().some(u=>String(u).toLowerCase()!==String(currentUser.username).toLowerCase());
-      const cloudConflict=(cachedUserDevices.length?cachedUserDevices:loadData('user_devices',[])).some(d=>String(d.deviceId)===record.deviceId&&String(d.username).toLowerCase()!==String(currentUser.username).toLowerCase());
-      const deviceConflict=localConflict||cloudConflict;
-      if(deviceConflict){
-        record.status='pending_approval';
-        showAttendanceResult('pending',label+' Pending Approval','This device was used with another username. Store Supervisor, Manager or Admin must approve it.',record.deviceName);
-      } else {
-        record.status='present';
-        showAttendanceResult('success',label+' Saved','Attendance recorded for '+currentUser.name+'.',record.deviceName);
+      // Device binding: hard block if device is bound to a DIFFERENT user
+      const _bound = _getDeviceBound(record.deviceId);
+      if(_bound && _bound !== currentUser.username.toLowerCase()){
+        record.status='rejected';
+        const arr2=getAttendance(); arr2.push(record); saveAttendance(arr2);
+        renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
+        showAttendanceResult('rejected',label+' Blocked',
+          (lang==='zh'
+            ?'此设备已绑定用户 '+_bound+'。请使用您自己的设备打卡。如需重置，联系管理员。'
+            :'Device is registered to '+_bound+'. Use your own device. Contact Admin to reset.'),
+          record.deviceName);
+        return;
       }
+      // First use: bind this device to this user
+      _bindDevice(record.deviceId, currentUser.username);
+      record.status='present';
+      showAttendanceResult('success',label+' Saved','Attendance recorded for '+currentUser.name+'.',record.deviceName);
     }
     const arr=getAttendance(); arr.push(record); saveAttendance(arr); renderAttendanceTab(); setTimeout(()=>triggerSyncRefresh(),1500);
   }catch(e){
@@ -1967,7 +1975,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e;font-size:10px" onclick="adminClearDeviceBind('${u.username}')">📱 Reset</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2745,6 +2753,16 @@ function submitCashDrawerFull() {
 // kept for backwards compat
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
+
+// Device binding — prevents checking in on another person's behalf
+function _getDeviceBound(id){ const b=loadData('_db',{}); return b[id]||null; }
+function _bindDevice(id,u){ const b=loadData('_db',{}); if(!b[id]){b[id]=u.toLowerCase();saveData('_db',b);} }
+function adminClearDeviceBind(u){
+  if(!confirm((lang==='zh'?'重置设备绑定：':'Reset device binding for: ')+u)) return;
+  const b=loadData('_db',{}); Object.keys(b).forEach(k=>{if(b[k]===u.toLowerCase()) delete b[k];}); saveData('_db',b);
+  showToast((lang==='zh'?'设备绑定已重置：':'Device binding cleared: ')+u,'success');
+  renderAdminTab();
+}
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
