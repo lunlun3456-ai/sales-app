@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.5beta1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.5beta1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -2006,7 +2006,7 @@ async function renderAdminTab() {
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
   const activeHtml=active.map(u=>`
-    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
+    <div class="user-row"><div class="user-avatar">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">${u.name||u.username} <span class="role-tag ${u.role||'staff'}">${t(u.role||'staff')}</span></div><div class="user-meta">@${u.username} - ${u.store||''} - ${u.phone||'N/A'}</div></div><div class="user-actions"><button class="btn-sm edit" onclick="openEditUser('${u.username}')">${t('editUser')}</button> <button class="btn-sm" style="background:#fef3c7;color:#92400e;font-size:10px" onclick="adminClearDeviceBind('${u.username}')" title="Reset device binding">📱 Reset</button>${u.username!=='admin'?`<button class="btn-sm del" onclick="deleteUser('${u.username}')">${t('deleteUser')}</button>`:''}</div></div>`).join('');
 
   document.getElementById('tab-admin').innerHTML=`
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
@@ -2785,6 +2785,16 @@ function submitCashDrawerFull() {
 function openCashDrawerConfirm() { openCashDrawerModal(); }
 function confirmCashDrawer(store,dateKey,amount,note) { openCashDrawerModal(); }
 
+function _getDeviceBound(id){var b=loadData('_db',{});return b[id]||null;}
+function _bindDevice(id,u){var b=loadData('_db',{});if(!b[id]){b[id]=u.toLowerCase();saveData('_db',b);}}
+function adminClearDeviceBind(u){
+  if(!confirm((lang==='zh'?'重置设备绑定：':'Reset device binding for: ')+u)) return;
+  var b=loadData('_db',{});
+  Object.keys(b).forEach(function(k){if(b[k]===u.toLowerCase()) delete b[k];});
+  saveData('_db',b);
+  showToast((lang==='zh'?'设备绑定已重置：':'Device binding cleared: ')+u,'success');
+  renderAdminTab();
+}
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
 </body>
