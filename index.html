@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6 Beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6 Beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1845,7 +1845,7 @@ function renderAttendanceTab(){
     var ci=r.type==='check_in';
     var isRej=r.status==='rejected'||r.status==='voided';
     var col=isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':')+'">'
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':'')+'">'
       +'<div><div style="font-size:12px;font-weight:700">'+r.dateKey
         +' <span style="font-size:10px;background:'+(isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed')
         +';color:'+(isRej?'#94a3b8':ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 6px">'
