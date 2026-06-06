@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.5.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.5.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.5.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.5.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -864,17 +864,18 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.settlementLocks)) saveSettlementLocks(appJson.settlementLocks);
           if(Array.isArray(appJson.approvals)) saveApprovals(appJson.approvals);
           if(Array.isArray(appJson.attendance)){
-            // Keep today's session records + all local records not on server
-            var _td=dateKeyUTC8();
             var serverIds=new Set(appJson.attendance.map(function(r){return String(r.id);}));
+            // Merge: server is authoritative; keep local records not yet on server
             var localNotOnServer=getAttendance().filter(function(r){return !serverIds.has(String(r.id));});
             saveAttendance(appJson.attendance.concat(localNotOnServer));
-            // Restore session records that may have been overwritten
+            // Add unconfirmed session records (not yet on server)
             if(_attSession.length){
               var merged2=getAttendance();
               var storedIds=new Set(merged2.map(function(r){return String(r.id);}));
               _attSession.forEach(function(r){if(!storedIds.has(String(r.id)))merged2.push(r);});
               saveAttendance(merged2);
+              // Retire session records that server now has (server version is authoritative)
+              _attSession=_attSession.filter(function(r){return !serverIds.has(String(r.id));});
             }
           }
           if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
@@ -1784,10 +1785,12 @@ function renderAttendanceTab(){
     return;
   }
   var today=dateKeyUTC8();
-  // Merge: session records (in-memory, never wiped) + stored records
+  // Merge: stored (server-synced) is authoritative; session fills gaps for unconfirmed records
   var stored=getAttendance().filter(function(r){return r.dateKey===today&&r.username===currentUser.username&&r.status!=='rejected';});
-  var sessionIds=new Set(_attSession.map(function(r){return String(r.id);}));
-  var merged=_attSession.filter(function(r){return r.dateKey===today;}).concat(stored.filter(function(r){return !sessionIds.has(String(r.id));}));
+  var storedIds=new Set(stored.map(function(r){return String(r.id);}));
+  // Session records only shown if not yet confirmed by server
+  var sessionOnly=_attSession.filter(function(r){return r.dateKey===today&&!storedIds.has(String(r.id));});
+  var merged=stored.concat(sessionOnly);
   var lastIn=null,lastOut=null;
   merged.forEach(function(r){if(r.type==='check_in'&&!lastIn)lastIn=r;if(r.type==='check_out'&&!lastOut)lastOut=r;});
   var inTime=lastIn?fmtTimeUTC8(lastIn.datetime):null;
@@ -1893,10 +1896,10 @@ async function submitAttendance(type){
   var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
   // Use merged view for guard checks (session + stored)
-  var sessionToday=_attSession.filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
-  var stored=getAttendance().filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
-  var sIds=new Set(sessionToday.map(function(r){return String(r.id);}));
-  var mine=sessionToday.concat(stored.filter(function(r){return !sIds.has(String(r.id));}));
+  var stored2=getAttendance().filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
+  var stored2Ids=new Set(stored2.map(function(r){return String(r.id);}));
+  var sessionOnly2=_attSession.filter(function(r){return r.dateKey===td&&!stored2Ids.has(String(r.id));});
+  var mine=stored2.concat(sessionOnly2);
   if(type==='check_in'){
     var prev=mine.find(function(r){return r.type==='check_in';});
     if(prev){showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(prev.datetime),'error');return;}
