@@ -2018,8 +2018,8 @@ function resetStaffAttendance(username, dateKey, recordId){
 function attendanceRowHtml(r){
   var canReset=['admin','manager'].includes(currentUser.role);
   var resetBtn=canReset
-    ?('<button class="btn-sm" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
-      +' onclick="resetStaffAttendance(\''+r.username+'\',\''+r.dateKey+'\',\''+r.id+'\')">🗑 Reset</button>')
+    ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
+      +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'">🗑 Reset</button>')
     :'';
   return '<div class="record-item">'
     +'<div class="record-icon">AT</div>'
@@ -2589,7 +2589,7 @@ function renderCashDrawerCard(store, dateKey) {
     +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+vc+';background:'+(variance===null?'#f8fafc':variance>=0?'#f0fdf4':'#fff1f2')+'"><div style="font-size:10px;font-weight:700;color:'+vc+'">'+(lang==='zh'?'盈亏':'Gain/Loss')+'</div><div style="font-size:18px;font-weight:900;color:'+vc+'">'+vl+'</div></div>'
     +'</div>';
   const warnHtml = (variance!==null&&variance!==0)
-    ?'<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#92400e;font-weight:700">⚠️ '+(lang==='zh'?'差异需经理审批':'Variance requires Manager approval')+'<br><button class="btn warn" style="margin-top:6px;font-size:12px" onclick="_requestVarianceApproval(\''+store+'\',\''+dateKey+'\','+((variance||0).toFixed(2))+')">'+(lang==='zh'?'申请差异审批':'Request Approval')+'</button></div>':'';
+    ?'<div style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:8px;font-size:12px;color:#92400e;font-weight:700">⚠️ '+(lang==='zh'?'差异需经理审批':'Variance requires Manager approval')+'<br><button class="btn warn req-variance-btn" style="margin-top:6px;font-size:12px" data-store="'+store+'" data-datekey="'+dateKey+'" data-variance="'+((variance||0).toFixed(2))+'">'+(lang==='zh'?'申请差异审批':'Request Approval')+'</button></div>':'';
   const drawerBtn = isStaff
     ?'<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px;font-size:12px;color:#64748b;text-align:center">🔒 '+(lang==='zh'?'收银机由主管/经理管理':'Cash drawer: Supervisor/Manager only')+'</div>'
     :'<button class="btn warn" onclick="openCashDrawerModal()" style="font-size:14px;background:linear-gradient(135deg,#92400e,#f59e0b)">🗄️ '+(lang==='zh'?'开启收银机管理':'Open Cash Drawer Manager')+'</button>';
@@ -2959,6 +2959,14 @@ function adminClearDeviceBind(username){
   }
   renderAdminTab();
 }
+
+// Delegated click: handles dynamically rendered buttons (avoids onclick quote issues)
+document.addEventListener('click', function(e){
+  var b1=e.target.closest('.att-reset-btn');
+  if(b1){ resetStaffAttendance(b1.dataset.username, b1.dataset.datekey, b1.dataset.id); return; }
+  var b2=e.target.closest('.req-variance-btn');
+  if(b2){ _requestVarianceApproval(b2.dataset.store, b2.dataset.datekey, parseFloat(b2.dataset.variance||0)); return; }
+});
 
 window.addEventListener('DOMContentLoaded',()=>{ fetchLiveUsers(); updateBiometricButton(); });
 </script>
