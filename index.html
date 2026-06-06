@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6BETA</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6BETA</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1774,30 +1774,31 @@ function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8A
 function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
 
 function renderAttendanceTab(){
-  // HQ staff do not require attendance
   if(currentUser.store==='HQ'||currentUser.store==='hq'){
     document.getElementById('tab-attendance').innerHTML=
       '<div class="card" style="text-align:center;padding:40px">'
-        +'<div style="font-size:40px;margin-bottom:10px">🏢</div>'
-        +'<div style="font-size:16px;font-weight:700">'+
-           (lang==='zh'?'总部员工无需打卡':'HQ staff do not require attendance check-in')+'</div>'
-      +'</div>';
+      +'<div style="font-size:40px;margin-bottom:10px">🏢</div>'
+      +'<div style="font-size:16px;font-weight:700">'
+        +(lang==='zh'?'总部员工无需打卡':'HQ staff do not require attendance')
+      +'</div></div>';
     return;
   }
   var today=dateKeyUTC8();
-  // Merge: stored (server-synced) is authoritative; session fills gaps for unconfirmed records
-  var stored=getAttendance().filter(function(r){return r.dateKey===today&&r.username===currentUser.username&&r.status!=='rejected';});
+  var ZH=lang==='zh';
+  // Merge session + stored for today (all statuses)
+  var stored=getAttendance().filter(function(r){return r.username===currentUser.username&&r.dateKey===today;});
   var storedIds=new Set(stored.map(function(r){return String(r.id);}));
-  // Session records only shown if not yet confirmed by server
-  var sessionOnly=_attSession.filter(function(r){return r.dateKey===today&&!storedIds.has(String(r.id));});
-  var merged=stored.concat(sessionOnly);
+  var sess=_attSession.filter(function(r){return r.username===currentUser.username&&r.dateKey===today&&!storedIds.has(String(r.id));});
+  var todayAll=stored.concat(sess).sort(function(a,b){return String(a.datetime).localeCompare(String(b.datetime));});
+  // Successful records only for main cards
+  var success=todayAll.filter(function(r){return r.status!=='rejected'&&r.status!=='voided';});
   var lastIn=null,lastOut=null;
-  merged.forEach(function(r){if(r.type==='check_in'&&!lastIn)lastIn=r;if(r.type==='check_out'&&!lastOut)lastOut=r;});
+  success.forEach(function(r){if(r.type==='check_in'&&!lastIn)lastIn=r;if(r.type==='check_out'&&!lastOut)lastOut=r;});
   var inTime=lastIn?fmtTimeUTC8(lastIn.datetime):null;
   var outTime=lastOut?fmtTimeUTC8(lastOut.datetime):null;
-  var ZH=lang==='zh';
-  var inSub=lastIn?(lastIn.status==='late'?'! '+(ZH?'迟到':'Late'):'OK '+(ZH?'准时':'On time')):(ZH?'未打卡':'Not yet');
-  var outSub=lastOut?(lastOut.status==='early_leave'?'! '+(ZH?'早退':'Early leave'):'OK '+(ZH?'正常':'Done')):(ZH?'未打卡':'Not yet');
+  var inSub=lastIn?(lastIn.status==='late'?'⚠️ '+(ZH?'迟到':'Late'):'✅ '+(ZH?'准时':'On time')):(ZH?'未打卡':'Not yet');
+  var outSub=lastOut?(lastOut.status==='early_leave'?'⚠️ '+(ZH?'早退':'Early leave'):'✅ '+(ZH?'正常':'Done')):(ZH?'未打卡':'Not yet');
+  // Time cards
   var inCard='<div class="att-card '+(inTime?'ci-done':'ci-wait')+'">'
     +'<div class="ac-lbl">'+(ZH?'签到':'CHECK IN')+'</div>'
     +'<div class="ac-time">'+(inTime||'--:--')+'</div>'
@@ -1806,17 +1807,52 @@ function renderAttendanceTab(){
     +'<div class="ac-lbl">'+(ZH?'签退':'CHECK OUT')+'</div>'
     +'<div class="ac-time">'+(outTime||'--:--')+'</div>'
     +'<div class="ac-sub">'+outSub+'</div></div>';
+  // Today activity list (all statuses)
+  var canReset=['admin','manager'].includes(currentUser.role);
+  var todayRows=todayAll.map(function(r){
+    var ci=r.type==='check_in';
+    var isRej=r.status==='rejected'||r.status==='voided';
+    var col=isRej?'#ef4444':ci?'#10b981':'#f59e0b';
+    var bg=isRej?'#fff1f2':ci?'#f0fdf4':'#fff7ed';
+    var lbl=ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT');
+    var statusLbl=isRej?('❌ '+(r.status||'rejected')):'✅ '+(r.status||'present');
+    // Reset button — staff for own, admin/manager for any
+    var showReset=(canReset||r.username===currentUser.username)&&!isRej;
+    var resetBtn=showReset
+      ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px"'
+        +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
+        +' data-type="'+r.type+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'">'
+        +(ZH?'🗑 重置':'🗑 Reset')+'</button>')
+      :'';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+        +'<span style="background:'+bg+';color:'+col+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">'+lbl+'</span>'
+        +'<div><div style="font-size:12px;font-weight:700;color:'+(isRej?'#94a3b8':'var(--text)')+'">'+statusLbl+'</div>'
+          +(r.remark?'<div style="font-size:10px;color:var(--text2)">'+r.remark+'</div>':'')
+        +'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:16px;font-weight:900;color:'+(isRej?'#94a3b8':col)+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
+        +resetBtn
+      +'</div>'
+    +'</div>';
+  }).join('');
+  // Recent history (previous days — all statuses)
   var recent=getAttendance()
     .filter(function(r){return r.username===currentUser.username&&r.dateKey<today;})
-    .sort(function(a,b){return b.dateKey.localeCompare(a.dateKey);}).slice(0,14);
+    .sort(function(a,b){return b.dateKey.localeCompare(a.dateKey)||b.datetime.localeCompare(a.datetime);}).slice(0,20);
   var recRows=recent.map(function(r){
     var ci=r.type==='check_in';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
-      +'<div><div style="font-size:13px;font-weight:700">'+r.dateKey
-        +' <span style="font-size:10px;background:'+(ci?'#d1fae5':'#fff7ed')+';color:'+(ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 7px">'
-        +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+'</span></div>'
-      +'<div style="font-size:11px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div></div>'
-      +'<div style="font-size:18px;font-weight:900;color:'+(ci?'#10b981':'#f59e0b')+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</div>'
+    var isRej=r.status==='rejected'||r.status==='voided';
+    var col=isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':')+'">'
+      +'<div><div style="font-size:12px;font-weight:700">'+r.dateKey
+        +' <span style="font-size:10px;background:'+(isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed')
+        +';color:'+(isRej?'#94a3b8':ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 6px">'
+        +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+(isRej?' ❌':'')+'</span></div>'
+        +'<div style="font-size:10px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div>'
+      +'</div>'
+      +'<div style="font-size:16px;font-weight:900;color:'+col+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</div>'
     +'</div>';
   }).join('');
   var dateLabel=new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -1833,6 +1869,7 @@ function renderAttendanceTab(){
       +'<div class="att-btn-row" id="att-btns"></div>'
       +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+(ZH?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
     +'</div>'
+    +(todayAll.length?'<div class="card" style="margin-bottom:10px"><div class="card-title">📋 '+(ZH?'今日记录':'Today\'s Activity')+'</div>'+todayRows+'</div>':'')
     +(recent.length?'<div class="card"><div class="card-title">'+(ZH?'近期记录':'Recent History')+'</div>'+recRows+'</div>':'');
   var btns=document.getElementById('att-btns');
   if(btns){
@@ -1847,6 +1884,7 @@ function renderAttendanceTab(){
     btns.appendChild(b1); btns.appendChild(b2);
   }
 }
+
 function confirmAttendance(type){
   var ZH=lang==='zh';
   var lbl=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
@@ -1998,28 +2036,47 @@ function _ipLoc(resolve){
 }
 function nearestLocalZone(store,lat,lng){ const zones=(cachedWorkZones.length?cachedWorkZones:loadData('work_zones',[])).filter(z=>z.store===store&&String(z.status||'active')==='active'); if(!zones.length) return null; return zones.map(z=>({radiusMeters:parseFloat(z.radiusMeters)||500,distanceMeters:distanceMeters(lat,lng,parseFloat(z.latitude),parseFloat(z.longitude))})).sort((a,b)=>a.distanceMeters-b.distanceMeters)[0]; }
 function distanceMeters(lat1,lon1,lat2,lon2){ const R=6371000,toRad=n=>n*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))); }
-function resetStaffAttendance(username, dateKey, recordId){
-  var msg=lang==='zh'
-    ?('确认重置 '+username+' 在 '+dateKey+' 的该条考勤记录？')
-    :('Reset attendance record for '+username+' on '+dateKey+'?');
-  if(!confirm(msg)) return;
+function showAttResetModal(username,dateKey,recordId,type,timeStr){
+  var e2=document.getElementById('att-reset-modal'); if(e2) e2.remove();
+  var ZH=lang==='zh';
+  var ov=document.createElement('div'); ov.className='modal-overlay open'; ov.id='att-reset-modal';
+  ov.innerHTML=
+    '<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:40px;margin-bottom:8px">🗑️</div>'
+    +'<div class="modal-title" style="color:#ef4444">'+(ZH?'重置考勤记录':'Reset Attendance')+'</div>'
+    +'<div style="background:#f8fafc;border-radius:12px;padding:12px;margin:12px 0;text-align:left">'
+      +'<div class="stat-row"><span class="stat-label">👤</span><span class="stat-value">'+username+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">📅</span><span class="stat-value">'+dateKey+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">🕐</span><span class="stat-value">'+type+' '+timeStr+'</span></div>'
+    +'</div>'
+    +'<div style="color:#ef4444;font-size:12px;margin-bottom:14px">'+(ZH?'此记录将被清除，员工可重新打卡。':'This record will be cleared. Staff can check in again.')+'</div>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button class="btn secondary" style="flex:1" id="att-reset-cancel">'+(ZH?'取消':'Cancel')+'</button>'
+      +'<button class="btn" style="flex:2;background:#ef4444" id="att-reset-confirm">'+(ZH?'确认重置':'Confirm Reset')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('att-reset-cancel').onclick=function(){ov.remove();};
+  document.getElementById('att-reset-confirm').onclick=function(){ov.remove();resetStaffAttendance(username,dateKey,recordId);};
+}
+function resetStaffAttendance(username,dateKey,recordId){
   saveAttendance(getAttendance().filter(function(r){return String(r.id)!==String(recordId);}));
   _attSession=_attSession.filter(function(r){return String(r.id)!==String(recordId);});
   fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({action:'resetAttendance',
-      recordId:recordId,username:username,dateKey:dateKey,
+    body:JSON.stringify({action:'resetAttendance',recordId:recordId,username:username,dateKey:dateKey,
       resetBy:currentUser.name,resetRole:currentUser.role})}).catch(function(){});
-  showToast((lang==='zh'?'考勤记录已重置：':'Attendance reset for ')+username,'success');
-  renderAdminTab();
+  showToast((lang==='zh'?'考勤已重置：':'Attendance reset for ')+username,'success');
+  renderAttendanceTab();
+  if(['admin','manager'].includes(currentUser.role)) setTimeout(function(){renderAdminTab();},100);
   setTimeout(function(){triggerSyncRefresh();},1500);
 }
-
 function attendanceRowHtml(r){
   var canReset=['admin','manager'].includes(currentUser.role);
   var resetBtn=canReset
     ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
-      +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'">🗑 Reset</button>')
+      +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
+      +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'"'
+      +'>🗑 Reset</button>')
     :'';
   return '<div class="record-item">'
     +'<div class="record-icon">AT</div>'
@@ -2963,7 +3020,10 @@ function adminClearDeviceBind(username){
 // Delegated click: handles dynamically rendered buttons (avoids onclick quote issues)
 document.addEventListener('click', function(e){
   var b1=e.target.closest('.att-reset-btn');
-  if(b1){ resetStaffAttendance(b1.dataset.username, b1.dataset.datekey, b1.dataset.id); return; }
+  if(b1){
+    showAttResetModal(b1.dataset.username,b1.dataset.datekey,b1.dataset.id,b1.dataset.type||'',b1.dataset.time||'');
+    return;
+  }
   var b2=e.target.closest('.req-variance-btn');
   if(b2){ _requestVarianceApproval(b2.dataset.store, b2.dataset.datekey, parseFloat(b2.dataset.variance||0)); return; }
 });
