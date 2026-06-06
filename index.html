@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.5.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.5.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -544,7 +544,7 @@ function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxuAn6MptFYmLmexnrg7zCEsbCdi6ReNV6HSFCWQhk7n-zkAwuADg7N6zzMQYgx8TX9Dw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyi6NCmqUEeBxqY3KDDE_YG6zKlwu-ce_6ofals-wLCtdu8JFLIGq-5I7p53t4MxxNuuA/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1998,7 +1998,44 @@ function _ipLoc(resolve){
 }
 function nearestLocalZone(store,lat,lng){ const zones=(cachedWorkZones.length?cachedWorkZones:loadData('work_zones',[])).filter(z=>z.store===store&&String(z.status||'active')==='active'); if(!zones.length) return null; return zones.map(z=>({radiusMeters:parseFloat(z.radiusMeters)||500,distanceMeters:distanceMeters(lat,lng,parseFloat(z.latitude),parseFloat(z.longitude))})).sort((a,b)=>a.distanceMeters-b.distanceMeters)[0]; }
 function distanceMeters(lat1,lon1,lat2,lon2){ const R=6371000,toRad=n=>n*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))); }
-function attendanceRowHtml(r){ return `<div class="record-item"><div class="record-icon">AT</div><div class="record-info"><div class="record-store">${r.name||r.username} <span class="status-pill status-${r.status||'present'}">${String(r.status||'present').replace('_',' ')}</span></div><div class="record-meta">${r.store||''} - ${r.type||''} - ${r.datetime?fmtDateTimeUTC8(r.datetime):''}<br>${r.lat?('Location: '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' - '+(r.accuracy||'')+'m'):''}</div>${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px">${r.remark}</div>`:''}</div></div>`; }
+function resetStaffAttendance(username, dateKey, recordId){
+  var msg=lang==='zh'
+    ?('确认重置 '+username+' 在 '+dateKey+' 的该条考勤记录？')
+    :('Reset attendance record for '+username+' on '+dateKey+'?');
+  if(!confirm(msg)) return;
+  saveAttendance(getAttendance().filter(function(r){return String(r.id)!==String(recordId);}));
+  _attSession=_attSession.filter(function(r){return String(r.id)!==String(recordId);});
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'resetAttendance',
+      recordId:recordId,username:username,dateKey:dateKey,
+      resetBy:currentUser.name,resetRole:currentUser.role})}).catch(function(){});
+  showToast((lang==='zh'?'考勤记录已重置：':'Attendance reset for ')+username,'success');
+  renderAdminTab();
+  setTimeout(function(){triggerSyncRefresh();},1500);
+}
+
+function attendanceRowHtml(r){
+  var canReset=['admin','manager'].includes(currentUser.role);
+  var resetBtn=canReset
+    ?('<button class="btn-sm" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
+      +' onclick="resetStaffAttendance(\''+r.username+'\',\''+r.dateKey+'\',\''+r.id+'\')">🗑 Reset</button>')
+    :'';
+  return '<div class="record-item">'
+    +'<div class="record-icon">AT</div>'
+    +'<div class="record-info" style="flex:1">'
+      +'<div class="record-store" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">'
+        +'<b>'+(r.name||r.username)+'</b>'
+        +' <span class="status-pill status-'+(r.status||'present')+'">'+String(r.status||'present').replace('_',' ')+'</span>'
+        +resetBtn
+      +'</div>'
+      +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?fmtDateTimeUTC8(r.datetime):'')+'<br>'
+        +(r.lat?('📍 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' ±'+(r.accuracy||'')+'m'):'')
+      +'</div>'
+      +(r.remark?'<div style="font-size:12px;color:var(--accent);margin-top:2px">'+r.remark+'</div>':'')
+    +'</div>'
+  +'</div>';
+}
 
 function renderOperationsDashboard(){
   const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
