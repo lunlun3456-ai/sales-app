@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -885,6 +885,7 @@ async function triggerSyncRefresh() {
               // Retire session records that server now has (server version is authoritative)
               _attSession=_attSession.filter(function(r){return !serverIds.has(String(r.id));});
             }
+            if(currentTab==='attendance') renderAttendanceTab();
           }
           if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
@@ -1012,7 +1013,7 @@ function switchTab(tab,btn) {
   });
   renderCurrentTab();
   // Auto-sync from DB when switching to Records or Summary tabs
-  if(tab==='records'||tab==='summary') triggerSyncRefresh();
+  if(tab==='records'||tab==='summary'||tab==='attendance') triggerSyncRefresh();
 }
 function renderCurrentTab() {
   if(currentTab==='submit')  renderSubmitTab();
@@ -1199,8 +1200,16 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
   window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
+  window._submitWithUpload=withUpload;
+  if(withUpload){
+    // V4.6.2: Upload receipt FIRST before saving
+    window._settlementStore=store;
+    window._settlementDateKey=targetDate;
+    openSettlementUploadFirst();
+    return;
+  }
   var _ub=document.getElementById('m-upload-btn');
-  if(_ub) _ub.style.display=withUpload?'block':'none';
+  if(_ub) _ub.style.display='none';
   document.getElementById('confirm-modal').classList.add('open');
 }
 
@@ -1781,6 +1790,29 @@ function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8A
 function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
 
 function renderAttendanceTab(){
+  // Render immediately from cache
+  _renderAttendanceContent();
+  // Then fetch fresh from server in background
+  (async function(){
+    try{
+      var fresh=await gasGet('getAppData');
+      if(fresh&&Array.isArray(fresh.attendance)){
+        var sIds=new Set(fresh.attendance.map(function(r){return String(r.id);}));
+        var localOnly=getAttendance().filter(function(r){return !sIds.has(String(r.id));});
+        saveAttendance(fresh.attendance.concat(localOnly));
+        if(_attSession.length){
+          var mg=getAttendance();
+          var mgIds=new Set(mg.map(function(r){return String(r.id);}));
+          _attSession.forEach(function(r){if(!mgIds.has(String(r.id)))mg.push(r);});
+          saveAttendance(mg);
+          _attSession=_attSession.filter(function(r){return !sIds.has(String(r.id));});
+        }
+        _renderAttendanceContent();
+      }
+    }catch(e){}
+  })();
+}
+function _renderAttendanceContent(){
   if(currentUser.store==='HQ'||currentUser.store==='hq'){
     document.getElementById('tab-attendance').innerHTML=
       '<div class="card" style="text-align:center;padding:40px">'
@@ -2489,6 +2521,79 @@ function checkBdTotal(){
   var sum=parseFloat((c+q+k+b).toFixed(2));var ok=sum===(window._bdTotal||0);
   var el=document.getElementById('bd-check');
   if(el){el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+sum.toFixed(2)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+(window._bdTotal||0).toFixed(2));el.style.background=ok?'#f0fdf4':'#fff1f2';el.style.color=ok?'#10b981':'#ef4444';}
+}
+
+function openSettlementUploadFirst(){
+  var sd=window._pendingSubmit||{};
+  var EN=lang==='en';
+  var store=sd.store||'',dateKey=sd.targetDate||dateKeyUTC8(),total=parseFloat(sd.total||0);
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='upload-first-modal';
+  ov.innerHTML=
+    '<div class="modal-box" style="padding-bottom:24px">'
+    +'<div class="modal-title">📎 '+(EN?'Confirm Daily Sales':'Sahkan Jualan Harian')+'</div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:12px;font-weight:700;color:#1e3a8a">🏪 '+store+' · 📅 '+dateKey+'</span>'
+      +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</span>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:10px">'+(EN?'Upload your settlement receipt to confirm today\'s sales:':'Muat naik resit penyelesaian untuk mengesahkan jualan:')+'</div>'
+    +'<div id="uf-preview" style="display:none;margin-bottom:12px;text-align:center">'
+      +'<img id="uf-img" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid var(--border);object-fit:cover">'
+      +'<div id="uf-name" style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:600"></div>'
+    +'</div>'
+    +'<label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;margin-bottom:12px">'
+      +'<input type="file" id="uf-file" accept="image/*" capture="environment" style="display:none" onchange="ufPreview(this)">'
+      +'<div style="font-size:40px;margin-bottom:8px">📷</div>'
+      +'<div style="font-weight:800;color:var(--primary);font-size:15px">'+(EN?'Take photo or select receipt':'Ambil foto atau pilih resit')+'</div>'
+    +'</label>'
+    +'<div class="input-wrap"><label class="field-label">'+(EN?'Note (optional)':'Nota (pilihan)')+'</label>'
+      +'<input type="text" id="uf-note" placeholder="e.g. POS receipt..."></div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">'
+      +'<button id="uf-upload-btn" class="btn success" style="width:100%;font-size:18px;font-weight:800;padding:16px;border-radius:14px;background:linear-gradient(135deg,#059669,#10b981)">'
+        +(EN?'📤 Upload & Confirm Daily Sales':'📤 Muat Naik & Sahkan Jualan Harian')+'</button>'
+      +'<button id="uf-cancel-btn" style="width:100%;font-size:15px;padding:14px;border-radius:14px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer">'
+        +(EN?'✕ Cancel':'✕ Batal')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('uf-cancel-btn').onclick=function(){ov.remove();};
+  document.getElementById('uf-upload-btn').onclick=function(){ufDoUpload(ov);};
+}
+function ufPreview(inp){
+  if(!inp.files||!inp.files[0])return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var pv=document.getElementById('uf-preview'),im=document.getElementById('uf-img'),nm=document.getElementById('uf-name');
+    if(pv)pv.style.display='block';if(im)im.src=e.target.result;if(nm)nm.textContent=inp.files[0].name;
+  };reader.readAsDataURL(inp.files[0]);
+}
+async function ufDoUpload(ov){
+  var fi=document.getElementById('uf-file');
+  if(!fi||!fi.files||!fi.files[0]){showToast(lang==='en'?'Please select a receipt photo':'Sila pilih foto resit','error');return;}
+  var btn=document.getElementById('uf-upload-btn');
+  if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Uploading...':'Sedang muat naik...';}
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      var b64=e.target.result.split(',')[1];
+      var sd=window._pendingSubmit||{};
+      var note=document.getElementById('uf-note');
+      // Step 1: Upload receipt
+      await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'uploadSettlement',store:sd.store,dateKey:sd.targetDate,
+          fileData:b64,fileName:fi.files[0].name,note:note?note.value:'',
+          uploadedBy:currentUser.name,role:currentUser.role})});
+      // Step 2: Save sales to GAS
+      ov.remove();
+      confirmSubmit(false);
+      // Step 3: Lock
+      confirmAndLockAfterUpload(sd.store,sd.targetDate);
+      // Step 4: Open breakdown for cash/QR/card/bank (optional detail)
+      setTimeout(function(){openSettlementBreakdown(sd);},800);
+    }catch(err){
+      if(btn){btn.disabled=false;btn.textContent=lang==='en'?'📤 Upload & Confirm Daily Sales':'📤 Muat Naik & Sahkan';}
+      showToast(lang==='en'?'Upload failed, please try again':'Muat naik gagal, cuba lagi','error');
+    }
+  };reader.readAsDataURL(fi.files[0]);
 }
 
 function openSettlementUpload() {
