@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.02</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.02</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -505,14 +505,14 @@
 
 <!-- ===================== SETTLEMENT UPLOAD MODAL ===================== -->
 <div class="modal-overlay" id="settlement-modal">
-  <div class="modal-box">
+  <div class="modal-box" style="padding-bottom:24px">
     <div class="modal-title">📎 <span id="settlement-modal-title">Upload Settlement Receipt</span></div>
     <div id="settlement-modal-info" style="font-size:13px;color:var(--text2);margin-bottom:14px;padding:10px;background:#f8fafc;border-radius:10px;"></div>
     <div id="upload-preview" style="display:none;margin-bottom:14px;text-align:center">
       <img id="preview-img" style="max-width:100%;max-height:220px;border-radius:12px;border:2px solid var(--border);object-fit:cover">
       <div id="preview-name" style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:600"></div>
     </div>
-    <label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px" id="upload-label">
+    <label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;margin-bottom:14px" id="upload-label">
       <input type="file" id="settlement-file" accept="image/*" capture="environment" style="display:none" onchange="previewSettlement(this)">
       <div style="font-size:40px;margin-bottom:8px">📷</div>
       <div style="font-weight:800;color:var(--primary);font-size:15px" id="upload-label-text">Tap to take photo or select image</div>
@@ -528,9 +528,17 @@
         <div id="upload-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--primary),#60a5fa);border-radius:8px;width:0%;transition:width 0.4s"></div>
       </div>
     </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn secondary" style="flex:1" onclick="closeSettlementModal()">Cancel 取消</button>
-      <button class="btn success" style="flex:1" id="upload-submit-btn" onclick="uploadSettlement()">📤 Upload 上传</button>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <button class="btn success" id="upload-submit-btn" onclick="uploadSettlement()"
+        style="width:100%;font-size:18px;font-weight:800;padding:16px;letter-spacing:.3px;
+               background:linear-gradient(135deg,#059669,#10b981);border-radius:14px">
+        📤 Upload Receipt / Muat Naik Resit
+      </button>
+      <button class="btn secondary" onclick="closeSettlementModal()"
+        style="width:100%;font-size:15px;padding:14px;border-radius:14px;
+               border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:700">
+        ✕ Cancel / Batal
+      </button>
     </div>
   </div>
 </div>
