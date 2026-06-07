@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1161,11 +1161,8 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     showToast('Settlement already uploaded. Manager/Admin/Boss approval required.','error'); return;
   }
 
-  const cash  =parseFloat(document.getElementById('s-cash').value)||0;
-  const qr    =parseFloat(document.getElementById('s-qr').value)||0;
-  const card  =parseFloat(document.getElementById('s-card').value)||0;
-  const bank  =parseFloat(document.getElementById('s-bank').value)||0;
-  const total =cash+qr+card+bank;
+  const total =parseFloat(document.getElementById('s-total-main')?.value)||0;
+  const cash=total, qr=0, card=0, bank=0;
   const remark=document.getElementById('s-remark').value;
 
   // Check if this is a new submission or an edit
@@ -1185,13 +1182,12 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 Store</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 Date</span><span class="stat-value">${targetDate}</span></div>
-    <div class="stat-row"><span class="stat-label">💵 ${t('cash')}</span><span class="stat-value">RM ${cash.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">📱 ${t('qr')}</span><span class="stat-value">RM ${qr.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">💳 ${t('card')}</span><span class="stat-value">RM ${card.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">🏦 ${t('bank')}</span><span class="stat-value">RM ${bank.toFixed(2)}</span></div>
-    <div class="stat-row"><span class="stat-label">🧾 ${t('totalSales')}</span><span class="stat-value big">RM ${total.toFixed(2)}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 ${lang==='en'?'Store':'Kedai'}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 ${lang==='en'?'Date':'Tarikh'}</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row" style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px">
+      <span class="stat-label"><b>🧾 ${lang==='en'?'Total Sales':'Jumlah Jualan'}</b></span>
+      <span class="stat-value big" style="font-size:26px;color:var(--primary)">RM ${total.toFixed(2)}</span>
+    </div>
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
   window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
