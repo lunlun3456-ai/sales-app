@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6 Beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6 Beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1035,7 +1035,7 @@ function renderSubmitTab() {
       <input type="date" id="submit-date" value="${todayStr}" disabled
         style="background:#e2e8f0;color:var(--text2);font-weight:bold;">
       <div style="font-size:12px;color:#b45309;background:#fef3c7;border-radius:8px;padding:6px 10px;margin-top:6px;font-weight:600;">
-        🔒 ${t('onlyTodayAllowed')}
+        🔒 ${lang==='en'?'You can only submit today\'s sales':'Anda hanya boleh hantar jualan hari ini'}
       </div>`;
   } else {
     dateInputHtml=`<input type="date" id="submit-date" value="${todayStr}" onchange="checkAndLoadExistingSales()">`;
@@ -1057,35 +1057,19 @@ function renderSubmitTab() {
         <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
         ${storeOptions}
       </div>
+      <!-- Hidden fields kept for compatibility -->
+      <input type="hidden" id="s-cash" value="0">
+      <input type="hidden" id="s-qr" value="0">
+      <input type="hidden" id="s-card" value="0">
+      <input type="hidden" id="s-bank" value="0">
       <div class="input-wrap">
-        <label class="field-label">💵 ${t('cash')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-cash" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${lang==='en'?'Total Sales (RM)':'Jumlah Jualan (RM)'}</label>
+        <div class="amount-input-wrap" style="font-size:20px"><span class="amount-prefix" style="font-size:18px">RM</span>
+          <input type="number" class="amount-input" id="s-total-main" placeholder="0.00" min="0" step="0.01"
+            inputmode="decimal" style="font-size:22px;font-weight:900" oninput="updateTotalFromMain()">
         </div>
       </div>
-      <div class="input-wrap">
-        <label class="field-label">📱 ${t('qr')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-qr" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">💳 ${t('card')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-card" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="input-wrap">
-        <label class="field-label">🏦 ${t('bank')}</label>
-        <div class="amount-input-wrap"><span class="amount-prefix">RM</span>
-          <input type="number" class="amount-input" id="s-bank" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="stat-row">
-        <span class="stat-label">🧾 ${t('totalSales')}</span>
-        <span class="stat-value big" id="live-total">RM 0.00</span>
-      </div>
+      <div style="display:none"><span id="live-total">RM 0.00</span></div>
       <div class="input-wrap" style="margin-top:12px">
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
@@ -1105,6 +1089,12 @@ function renderSubmitTab() {
     document.getElementById(id).addEventListener('input',updateLiveTotal);
   });
   checkAndLoadExistingSales();
+}
+
+function updateTotalFromMain(){
+  var v=parseFloat(document.getElementById('s-total-main').value)||0;
+  var el=document.getElementById('live-total');
+  if(el) el.textContent='RM '+v.toFixed(2);
 }
 
 function checkAndLoadExistingSales() {
@@ -1216,9 +1206,7 @@ function _staffSubmitForApproval(withUpload) {
 }
 
 function confirmSubmit(withUpload=false) {
-  if(['staff','supervisor'].includes(currentUser.role)){
-    _staffSubmitForApproval(withUpload); return;
-  }
+  if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1248,7 +1236,7 @@ function confirmSubmit(withUpload=false) {
     showToast(t('submitted'),'success');
     renderSubmitTab();
     checkAllStoresSubmitted();
-    if(withUpload) setTimeout(()=>openSettlementUpload(),600);
+    if(withUpload) setTimeout(function(){openSettlementBreakdown(window._pendingSubmit);},600);
     else setTimeout(()=>triggerSyncRefresh(),1500);
   }).catch(err=>{showToast('Error: '+err,'error');});
 }
@@ -2445,6 +2433,43 @@ function confirmAndLockAfterUpload(store, dateKey) {
   saveSettlementLocks(locks);
   showToast(lang==='zh'?'日结单已上传，当日销售已确认锁定 ✅':'Receipt uploaded — Daily sales confirmed & locked ✅','success');
   setTimeout(()=>{ renderSubmitTab(); if(currentTab==='records') renderRecordsTab(); },800);
+}
+
+function openSettlementBreakdown(sd){
+  var EN=lang==='en'; var total=parseFloat((sd&&sd.total)||0);
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
+  ov.innerHTML='<div class="modal-box">'
+    +'<div class="modal-title">💰 '+(EN?'Daily Sales Settlement':'Penyelesaian Jualan Harian')+'</div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Enter payment breakdown:':'Masukkan pecahan pembayaran:')+'</div>'
+    +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
+    +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
+    +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
+    +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
+    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+(EN?'Enter amounts above':'Masukkan jumlah di atas')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+(EN?'Confirm & Upload Receipt':'Sahkan & Muat Naik')+'</button></div></div>';
+  document.body.appendChild(ov);
+  window._bdTotal=total;window._bdStore=(sd&&sd.store)||'';window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
+  document.getElementById('bd-skip').onclick=function(){ov.remove();openSettlementUpload();};
+  document.getElementById('bd-ok').onclick=function(){
+    var c=parseFloat(document.getElementById('bd-cash').value)||0;
+    var q=parseFloat(document.getElementById('bd-qr').value)||0;
+    var k=parseFloat(document.getElementById('bd-card').value)||0;
+    var b=parseFloat(document.getElementById('bd-bank').value)||0;
+    var sum=parseFloat((c+q+k+b).toFixed(2));
+    if(sum!==window._bdTotal){showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+sum.toFixed(2)+(lang==='en'?' must equal RM':' mesti RM')+(window._bdTotal||0).toFixed(2),'error');return;}
+    var sales=getSales();var ri=sales.findIndex(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
+    if(ri>=0){sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;saveSales(sales);
+      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});}
+    ov.remove();openSettlementUpload();
+  };
+}
+function checkBdTotal(){
+  var c=parseFloat(document.getElementById('bd-cash').value)||0,q=parseFloat(document.getElementById('bd-qr').value)||0;
+  var k=parseFloat(document.getElementById('bd-card').value)||0,b=parseFloat(document.getElementById('bd-bank').value)||0;
+  var sum=parseFloat((c+q+k+b).toFixed(2));var ok=sum===(window._bdTotal||0);
+  var el=document.getElementById('bd-check');
+  if(el){el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+sum.toFixed(2)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+(window._bdTotal||0).toFixed(2));el.style.background=ok?'#f0fdf4':'#fff1f2';el.style.color=ok?'#10b981':'#ef4444';}
 }
 
 function openSettlementUpload() {
