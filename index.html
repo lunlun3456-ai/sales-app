@@ -544,7 +544,7 @@ function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyi6NCmqUEeBxqY3KDDE_YG6zKlwu-ce_6ofals-wLCtdu8JFLIGq-5I7p53t4MxxNuuA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvdabAWyB5fpo2m7uLa-ZgRVspB3FQE6_4Ivsg-9t8cdtYdGKZEDNdPXlflslCF1V4/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -884,9 +884,14 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
+    } else if(json && !json.sales) {
+      // Server responded but no sales key — show what came back
+      saveSales([]);
+      renderCurrentTab();
+      showToast(lang==='en'?'No sales data on server yet':'Belum ada data jualan di server','success');
     } else {
       console.error('Unexpected sync response:', JSON.stringify(json).slice(0,200));
-      showToast('Sync error — unexpected server response','error');
+      showToast('Sync error — check GAS deployment (Anyone access)','error');
     }
   } catch(e){
     console.error('Sync error:', e.message);
@@ -1078,11 +1083,11 @@ function renderSubmitTab() {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
         <button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
           style="font-size:17px">
-          📝 ${lang==='en'?'Submit Total Sales':'Hantar Jumlah Jualan'}
+          📝 ${lang==='en'?'Update Sales':'Kemaskini Jualan'}
         </button>
         <button class="btn" onclick="openConfirm(true)" id="sales-settle-btn"
           style="font-size:14px;background:#f59e0b">
-          📎 ${lang==='en'?'Submit + Upload Receipt (Confirm Daily Sales)':'Hantar + Muat Naik Resit (Sahkan Jualan Harian)'}
+          📎 ${lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)'}
         </button>
       </div>
 
@@ -1215,7 +1220,7 @@ function _staffSubmitForApproval(withUpload) {
 }
 
 function confirmSubmit(withUpload=false) {
-  if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
+  if(currentUser.role==='boss'){ showToast(lang==='en'?'Boss role cannot submit sales':'Boss tidak boleh hantar jualan','error'); return; }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -1254,6 +1259,7 @@ function confirmSubmit(withUpload=false) {
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
+  // Auto-sync from GAS each time Records tab is opened
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
   const todayKey=dateKeyUTC8();
