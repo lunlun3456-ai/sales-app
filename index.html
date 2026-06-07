@@ -1075,15 +1075,22 @@ function renderSubmitTab() {
         <input type="text" id="s-remark" placeholder="...">
       </div>
             <div id="sales-lock-note"></div>
-      <button class="btn" onclick="openConfirm()" id="sales-submit-btn" style="margin-top:8px;font-size:18px;">${t('submitBtn')}</button>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
+          style="font-size:17px">
+          📝 ${lang==='en'?'Submit Total Sales':'Hantar Jumlah Jualan'}
+        </button>
+        <button class="btn" onclick="openConfirm(true)" id="sales-settle-btn"
+          style="font-size:14px;background:#f59e0b">
+          📎 ${lang==='en'?'Submit + Upload Receipt (Confirm Daily Sales)':'Hantar + Muat Naik Resit (Sahkan Jualan Harian)'}
+        </button>
+      </div>
 
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13px;color:#166534;font-weight:600;">
       💡 ${lang==='zh'?'所有金额均可填写为 0.00':'All amounts can be 0.00 (means no sales for that type)'}
     </div>
 
-    <!-- ── CASH IN DRAWER CARD ── -->
-    ${renderCashDrawerCard(storeVal, todayStr)}
   `;
   ['s-cash','s-qr','s-card','s-bank'].forEach(id=>{
     document.getElementById(id).addEventListener('input',updateLiveTotal);
@@ -1132,7 +1139,7 @@ function updateLiveTotal() {
   document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
 }
 
-function openConfirm() {
+function openConfirm(withUpload) { withUpload=!!withUpload;
   const store     =document.getElementById('submit-store').value;
   const targetDate=document.getElementById('submit-date').value;
   if(!store||!targetDate){showToast(lang==='zh'?'请选择门店和日期':'Select store and date','error');return;}
@@ -1183,6 +1190,8 @@ function openConfirm() {
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
   window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
+  var _ub=document.getElementById('m-upload-btn');
+  if(_ub) _ub.style.display=withUpload?'block':'none';
   document.getElementById('confirm-modal').classList.add('open');
 }
 
@@ -2443,6 +2452,7 @@ function openSettlementBreakdown(sd){
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Enter payment breakdown:':'Masukkan pecahan pembayaran:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
+    +renderCashDrawerCard(window._bdStore||'',window._bdDate||dateKeyUTC8())
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
