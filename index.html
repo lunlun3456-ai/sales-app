@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1074,7 +1074,7 @@ function renderSubmitTab() {
             inputmode="decimal" style="font-size:22px;font-weight:900" oninput="updateTotalFromMain()">
         </div>
       </div>
-      <div style="display:none"><span id="live-total">RM 0.00</span></div>
+      <div style="margin-top:10px;padding:14px;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#bfdbfe;letter-spacing:.5px;margin-bottom:4px">${lang==='en'?'TOTAL SALES':'JUMLAH JUALAN'}</div><div id="live-total" style="font-size:32px;font-weight:900;color:white;letter-spacing:1px">RM 0.00</div></div>
       <div class="input-wrap" style="margin-top:12px">
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
@@ -2454,7 +2454,6 @@ function openSettlementBreakdown(sd){
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Enter payment breakdown:':'Masukkan pecahan pembayaran:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
-    +renderCashDrawerCard(window._bdStore||'',window._bdDate||dateKeyUTC8())
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
