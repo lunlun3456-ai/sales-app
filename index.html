@@ -552,7 +552,7 @@ function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvdabAWyB5fpo2m7uLa-ZgRVspB3FQE6_4Ivsg-9t8cdtYdGKZEDNdPXlflslCF1V4/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXDReREdMwBevC2UDuGZKE4_PmivJ5fDIPzFiKso1x28LOJhqoH051EzY7IulsqbpVDg/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -931,7 +931,8 @@ async function triggerSyncRefresh() {
               _attSession.forEach(function(r){if(!storedIds.has(String(r.id)))merged2.push(r);});
               saveAttendance(merged2);
               // Retire session records that server now has (server version is authoritative)
-              _attSession=_attSession.filter(function(r){return !serverIds.has(String(r.id));});
+              // DO NOT clear _attSession — it is the source of truth for today's display
+              // Just add any session records not already saved
             }
             if(currentTab==='attendance') renderAttendanceTab();
           }
@@ -1847,16 +1848,15 @@ function renderAttendanceTab(){
     try{
       var fresh=await gasGet('getAppData');
       if(fresh&&Array.isArray(fresh.attendance)){
+        // Merge: server records + any local records not yet on server
         var sIds=new Set(fresh.attendance.map(function(r){return String(r.id);}));
         var localOnly=getAttendance().filter(function(r){return !sIds.has(String(r.id));});
-        saveAttendance(fresh.attendance.concat(localOnly));
-        if(_attSession.length){
-          var mg=getAttendance();
-          var mgIds=new Set(mg.map(function(r){return String(r.id);}));
-          _attSession.forEach(function(r){if(!mgIds.has(String(r.id)))mg.push(r);});
-          saveAttendance(mg);
-          _attSession=_attSession.filter(function(r){return !sIds.has(String(r.id));});
-        }
+        var merged=fresh.attendance.concat(localOnly);
+        // Also include session records not yet in merged (never remove from session)
+        var mergedIds=new Set(merged.map(function(r){return String(r.id);}));
+        _attSession.forEach(function(r){if(!mergedIds.has(String(r.id)))merged.push(r);});
+        saveAttendance(merged);
+        // _attSession is intentionally NOT cleared — it is the source of truth for today
         _renderAttendanceContent();
       }
     }catch(e){}
@@ -1874,11 +1874,18 @@ function _renderAttendanceContent(){
   }
   var today=dateKeyUTC8();
   var ZH=lang==='zh';
-  // Merge session + stored for today (all statuses)
-  var stored=getAttendance().filter(function(r){return r.username===currentUser.username&&r.dateKey===today;});
-  var storedIds=new Set(stored.map(function(r){return String(r.id);}));
-  var sess=_attSession.filter(function(r){return r.username===currentUser.username&&r.dateKey===today&&!storedIds.has(String(r.id));});
-  var todayAll=stored.concat(sess).sort(function(a,b){return String(a.datetime).localeCompare(String(b.datetime));});
+  // Session is truth for today; stored supplements history
+  var sessToday=_attSession.filter(function(r){
+    return r.username===currentUser.username&&r.dateKey===today;
+  });
+  var sessIds=new Set(sessToday.map(function(r){return String(r.id);}));
+  // From storage: add records for today that session doesn't have
+  var storedExtra=getAttendance().filter(function(r){
+    return r.username===currentUser.username&&r.dateKey===today&&!sessIds.has(String(r.id));
+  });
+  var todayAll=sessToday.concat(storedExtra).sort(function(a,b){
+    return String(a.datetime).localeCompare(String(b.datetime));
+  });
   // Successful records only for main cards
   var success=todayAll.filter(function(r){return r.status!=='rejected'&&r.status!=='voided';});
   var lastIn=null,lastOut=null;
@@ -2023,10 +2030,15 @@ async function submitAttendance(type){
   var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
   // Use merged view for guard checks (session + stored)
-  var stored2=getAttendance().filter(function(r){return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';});
-  var stored2Ids=new Set(stored2.map(function(r){return String(r.id);}));
-  var sessionOnly2=_attSession.filter(function(r){return r.dateKey===td&&!stored2Ids.has(String(r.id));});
-  var mine=stored2.concat(sessionOnly2);
+  // Session is source of truth for today
+  var sessForGuard=_attSession.filter(function(r){
+    return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';
+  });
+  var sessGuardIds=new Set(sessForGuard.map(function(r){return String(r.id);}));
+  var storedForGuard=getAttendance().filter(function(r){
+    return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected'&&!sessGuardIds.has(String(r.id));
+  });
+  var mine=sessForGuard.concat(storedForGuard);
   if(type==='check_in'){
     var prev=mine.find(function(r){return r.type==='check_in';});
     if(prev){showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(prev.datetime),'error');return;}
