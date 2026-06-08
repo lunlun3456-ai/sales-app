@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -615,19 +615,36 @@ function recordLoginDevice(){
     result:'success'
   })}).catch(e=>console.warn('Login device record failed:',e));
 }
-function showAttendanceResult(kind,title,message,details){
+function showAttendanceResult(kind,title,message,details,attType){
   document.getElementById('attendance-result-modal')?.remove();
-  const ov=document.createElement('div');
+  var ov=document.createElement('div');
   ov.className='modal-overlay open';
   ov.id='attendance-result-modal';
-  const icon = kind==='rejected' ? '!' : kind==='pending' ? '?' : 'OK';
-  ov.innerHTML=`<div class="attendance-result-box ${kind}">
-    <div class="attendance-result-icon">${icon}</div>
-    <div class="attendance-result-title">${title}</div>
-    <div class="attendance-result-msg">${message}</div>
-    ${details?`<div style="background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--text);font-weight:800;margin-bottom:14px">${details}</div>`:''}
-    <button class="btn ${kind==='rejected'?'danger':kind==='pending'?'warn':'success'}" onclick="document.getElementById('attendance-result-modal').remove()">OK</button>
-  </div>`;
+  var EN=lang==='en';
+  var greetHtml='';
+  if(kind==='success'){
+    var hr=new Date(Date.now()+_U8).getUTCHours();
+    var greeting=hr<12?(EN?'GOOD MORNING':'SELAMAT PAGI'):hr<18?(EN?'GOOD AFTERNOON':'SELAMAT TENGAH HARI'):(EN?'GOOD EVENING':'SELAMAT PETANG');
+    if(attType==='check_in'){
+      greetHtml='<div style="font-size:42px;margin-bottom:6px">☀️</div>'
+        +'<div style="font-size:22px;font-weight:900;color:#1e3a8a;letter-spacing:.5px;margin-bottom:4px">'+greeting+'</div>'
+        +'<div style="font-size:18px;font-weight:900;color:#1e3a8a;margin-bottom:6px">'+(currentUser.name||currentUser.username).toUpperCase()+'!</div>'
+        +'<div style="font-size:15px;color:#10b981;font-weight:700;margin-bottom:12px">'+(EN?'Have a nice day 😊':'Semoga hari anda menyenangkan 😊')+'</div>';
+    } else if(attType==='check_out'){
+      greetHtml='<div style="font-size:42px;margin-bottom:6px">🌙</div>'
+        +'<div style="font-size:16px;font-weight:900;color:#f59e0b;margin-bottom:6px;line-height:1.5">'+(EN?'Thanks for all your hard work today!':'Terima kasih atas kerja keras anda hari ini!')+'</div>'
+        +'<div style="font-size:14px;color:#64748b;font-weight:600;margin-bottom:12px">'+(EN?'Have a great evening and rest up 🌟':'Semoga malam yang indah dan berehat yang cukup 🌟')+'</div>';
+    }
+  }
+  var icon=kind==='rejected'?'❌':kind==='pending'?'⏳':(attType==='check_in'?'✅':'🟡');
+  ov.innerHTML='<div class="attendance-result-box '+kind+'">'
+    +greetHtml
+    +'<div class="attendance-result-icon">'+icon+'</div>'
+    +'<div class="attendance-result-title">'+title+'</div>'
+    +'<div class="attendance-result-msg">'+message+'</div>'
+    +(details?'<div style="background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--text);font-weight:800;margin-bottom:14px">'+details+'</div>':'')
+    +'<button class="btn '+(kind==='rejected'?'danger':kind==='pending'?'warn':'success')+'" onclick="document.getElementById(\'attendance-result-modal\').remove()">'+(EN?'OK':'OK')+'</button>'
+  +'</div>';
   document.body.appendChild(ov);
 }
 function saveData(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
@@ -1105,7 +1122,33 @@ function renderSubmitTab() {
   }
 
   const storeVal = !isManagerial ? currentUser.store : '';
-  document.getElementById('tab-submit').innerHTML=`
+  // Attendance status banner
+  var _today=dateKeyUTC8();
+  var _attArr=_attSession.filter(function(r){return r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected';});
+  if(!_attArr.length) _attArr=getAttendance().filter(function(r){return r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected';});
+  var _ci=_attArr.find(function(r){return r.type==='check_in';});
+  var _co=_attArr.find(function(r){return r.type==='check_out';});
+  var _attBanner='';
+  if(currentUser.store!=='HQ'){
+    if(_ci&&_co){
+      _attBanner='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #10b981;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="font-size:12px;font-weight:700;color:#065f46">📍 '+(lang==="en"?"Attendance Today":"Kehadiran Hari Ini")+'</div>'
+        +'<div style="display:flex;gap:12px">'
+          +'<div style="text-align:center"><div style="font-size:10px;color:#065f46;font-weight:700">IN</div><div style="font-size:14px;font-weight:900;color:#059669">'+fmtTimeUTC8(_ci.datetime)+'</div></div>'
+          +'<div style="text-align:center"><div style="font-size:10px;color:#065f46;font-weight:700">OUT</div><div style="font-size:14px;font-weight:900;color:#f59e0b">'+fmtTimeUTC8(_co.datetime)+'</div></div>'
+        +'</div></div>';
+    } else if(_ci){
+      _attBanner='<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #3b82f6;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div><div style="font-size:11px;font-weight:700;color:#1e40af">📍 '+(lang==="en"?"Checked In":"Sudah Daftar Masuk")+'</div>'
+          +'<div style="font-size:18px;font-weight:900;color:#1e3a8a">'+fmtTimeUTC8(_ci.datetime)+'</div></div>'
+        +'<div style="font-size:11px;color:#64748b;text-align:right">'+(lang==="en"?"Remember to<br>check out":"Ingat daftar<br>keluar")+'</div></div>';
+    } else {
+      _attBanner='<div onclick="switchTab(\'attendance\',document.getElementById(\'nav-attendance\'))" style="background:#fff7ed;border:1.5px solid #f59e0b;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">'
+        +'<div style="font-size:12px;font-weight:700;color:#92400e">⏰ '+(lang==="en"?"Not checked in yet":"Belum daftar masuk")+'</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#f59e0b">→ '+(lang==="en"?"Check In Now":"Daftar Masuk")+'</div></div>';
+    }
+  }
+  document.getElementById('tab-submit').innerHTML=_attBanner+`
     <div class="welcome-banner">
       <h2>📤 ${t('submitCard')}</h2>
       <p>${lang==='zh'?'可随时补录、覆盖或更新历史数据，金额可填 0':'Update or edit any date. Amounts can be RM 0.00'}</p>
@@ -2084,7 +2127,7 @@ async function submitAttendance(type){
       _bindDevice(record.deviceId,currentUser.username);
       record.status='present';
       showAttendanceResult('success',label+' Saved',
-        (ZH?'考勤已记录：':'Attendance recorded for ')+currentUser.name+'.',record.deviceName);
+        (ZH?'考勤已记录：':'Attendance recorded for ')+currentUser.name+'.',record.deviceName,type);
     }
     // Save to session memory FIRST (survives sync overwrites)
     _attSession.push(record);
