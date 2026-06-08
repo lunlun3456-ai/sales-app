@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.3.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.3.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -952,6 +952,7 @@ async function triggerSyncRefresh() {
               // Just add any session records not already saved
             }
             if(currentTab==='attendance') renderAttendanceTab();
+            if(currentTab==='admin') renderAdminTab();
           }
           if(Array.isArray(appJson.workZones)) saveWorkZones(appJson.workZones);
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
@@ -1063,6 +1064,15 @@ async function doLogin() {
   ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
     document.getElementById('tab-'+tt).style.display=tt===_st?'block':'none';
   });
+  // Restore today's attendance into session after re-login
+  var _ld=dateKeyUTC8();
+  var _todayStored=getAttendance().filter(function(r){
+    return r.username===currentUser.username&&r.dateKey===_ld;
+  });
+  if(_todayStored.length){
+    var _sessIds=new Set(_attSession.map(function(r){return String(r.id);}));
+    _todayStored.forEach(function(r){if(!_sessIds.has(String(r.id)))_attSession.push(r);});
+  }
   if(isBoss) renderSummaryTab(); else renderSubmitTab();
   triggerSyncRefresh();
 }
@@ -1079,7 +1089,7 @@ function switchTab(tab,btn) {
   });
   renderCurrentTab();
   // Auto-sync from DB when switching to Records or Summary tabs
-  if(tab==='records'||tab==='summary'||tab==='attendance') triggerSyncRefresh();
+  if(tab==='records'||tab==='summary'||tab==='attendance'||tab==='admin') triggerSyncRefresh();
 }
 function renderCurrentTab() {
   if(currentTab==='submit')  renderSubmitTab();
@@ -1129,7 +1139,7 @@ function renderSubmitTab() {
   var _ci=_attArr.find(function(r){return r.type==='check_in';});
   var _co=_attArr.find(function(r){return r.type==='check_out';});
   var _attBanner='';
-  if(currentUser.store!=='HQ'){
+  if(['staff','supervisor'].includes(currentUser.role)&&currentUser.store!=='HQ'){
     if(_ci&&_co){
       _attBanner='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #10b981;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
         +'<div style="font-size:12px;font-weight:700;color:#065f46">📍 '+(lang==="en"?"Attendance Today":"Kehadiran Hari Ini")+'</div>'
@@ -2251,7 +2261,7 @@ function renderOperationsDashboard(){
     <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Attendance Records</div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No attendance records.</div>'}</div>
+    <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 Sync</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
     ${currentUser.role==='admin'?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
   </div>`;
