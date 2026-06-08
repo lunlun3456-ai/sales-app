@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.3.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.2.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.3.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.2.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -552,7 +552,7 @@ function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXDReREdMwBevC2UDuGZKE4_PmivJ5fDIPzFiKso1x28LOJhqoH051EzY7IulsqbpVDg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdsv4kdJJEYMBqJ4e1TsCmDiBXHnZArwN3VJdUr9zE3xO--YTVnSH0Cx3AYGHF13P-wg/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -904,6 +904,39 @@ function renderSettlementReports(){
   return html;
 }
 
+async function syncAttendanceNow(){
+  // Independent attendance sync — does not depend on getSales
+  showToast(lang==='en'?'Syncing attendance...':'Memuat kehadiran...','pending');
+  try{
+    var r=await gasGet('getAttendance');
+    var attArr=null;
+    if(r&&Array.isArray(r.attendance)) attArr=r.attendance;
+    else if(Array.isArray(r)) attArr=r;
+    if(attArr===null){
+      // Fallback: try getAppData
+      var r2=await gasGet('getAppData');
+      if(r2&&Array.isArray(r2.attendance)) attArr=r2.attendance;
+    }
+    if(attArr!==null){
+      // Merge with local (keep session records)
+      var sIds=new Set(attArr.map(function(x){return String(x.id);}));
+      var localOnly=getAttendance().filter(function(x){return !sIds.has(String(x.id));});
+      var merged=attArr.concat(localOnly);
+      // Add unsynced session records
+      var mIds=new Set(merged.map(function(x){return String(x.id);}));
+      _attSession.forEach(function(x){if(!mIds.has(String(x.id)))merged.push(x);});
+      saveAttendance(merged);
+      showToast((lang==='en'?'Attendance loaded: ':'Kehadiran dimuatkan: ')+attArr.length+(lang==='en'?' records':' rekod'),'success');
+      if(currentTab==='attendance') renderAttendanceTab();
+      if(currentTab==='admin') renderAdminTab();
+    } else {
+      showToast(lang==='en'?'No attendance data from server':'Tiada data kehadiran dari server','error');
+    }
+  }catch(e){
+    showToast(lang==='en'?'Attendance sync failed: '+e.message.slice(0,40):'Gagal sync kehadiran: '+e.message.slice(0,40),'error');
+  }
+}
+
 async function triggerSyncRefresh() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
   const btn=document.getElementById('sync-btn');
@@ -1089,7 +1122,8 @@ function switchTab(tab,btn) {
   });
   renderCurrentTab();
   // Auto-sync from DB when switching to Records or Summary tabs
-  if(tab==='records'||tab==='summary'||tab==='attendance'||tab==='admin') triggerSyncRefresh();
+  if(tab==='records'||tab==='summary'||tab==='attendance') triggerSyncRefresh();
+  if(tab==='admin') syncAttendanceNow();
 }
 function renderCurrentTab() {
   if(currentTab==='submit')  renderSubmitTab();
@@ -2261,7 +2295,7 @@ function renderOperationsDashboard(){
     <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
-    <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄 Sync</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
+    <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
     ${currentUser.role==='admin'?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
   </div>`;
