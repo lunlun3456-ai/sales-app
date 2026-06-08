@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.6.2.2beta</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.6.2.2beta</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -550,9 +550,23 @@ function dateKeyUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,10)
 function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
 function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
-function fmtTimeUTC8(s){if(!s)return'--:--';try{const u=new Date(new Date(s).getTime()+_U8);return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);}catch(e){return'--:--';}}
+function fmtTimeUTC8(s){
+  if(!s||s==='') return '--:--';
+  try{
+    var str=String(s);
+    // If already +08:00 format, extract time directly (no extra shift needed)
+    if(str.endsWith('+08:00')){
+      var tp=str.slice(11,16); // HH:MM
+      if(/^\d\d:\d\d$/.test(tp)) return tp;
+    }
+    // UTC 'Z' format or raw datetime — add 8h offset
+    var u=new Date(new Date(str).getTime()+_U8);
+    if(isNaN(u.getTime())) return '--:--';
+    return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);
+  }catch(e){return '--:--';}
+}
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxn0Gysdguoy9j36Y2Fyg-Re7etOsML7DtzxtRpbc_A9XcYZbIVgTdnAcBnl1Adwq6I/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7dH1A_gbT9Iqmg9DtpQUEBxB2agehRfIaZM4eLHf3CRIDBROWgWiI9bS6Mx1su8fihQ/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -2024,18 +2038,31 @@ function _renderAttendanceContent(){
   var recent=getAttendance()
     .filter(function(r){return r.username===currentUser.username&&r.dateKey<today;})
     .sort(function(a,b){return b.dateKey.localeCompare(a.dateKey)||b.datetime.localeCompare(a.datetime);}).slice(0,20);
+  var _canResetHist=['admin','manager'].includes(currentUser.role);
   var recRows=recent.map(function(r){
     var ci=r.type==='check_in';
     var isRej=r.status==='rejected'||r.status==='voided';
     var col=isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
+    // Show delete button for admin/manager OR for own records
+    var showDel=!isRej&&(_canResetHist||r.username===currentUser.username);
+    var delBtn=showDel
+      ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
+        +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
+        +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'"'
+        +'>🗑</button>')
+      :'';
+    var _dk=r.dateKey?String(r.dateKey).slice(0,10):'';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':'')+'">'
-      +'<div><div style="font-size:12px;font-weight:700">'+r.dateKey
+      +'<div><div style="font-size:12px;font-weight:700">'+_dk
         +' <span style="font-size:10px;background:'+(isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed')
         +';color:'+(isRej?'#94a3b8':ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 6px">'
         +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+(isRej?' ❌':'')+'</span></div>'
         +'<div style="font-size:10px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div>'
       +'</div>'
-      +'<div style="font-size:16px;font-weight:900;color:'+col+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+        +'<span style="font-size:16px;font-weight:900;color:'+col+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
+        +delBtn
+      +'</div>'
     +'</div>';
   }).join('');
   var dateLabel=new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
