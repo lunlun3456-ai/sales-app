@@ -566,7 +566,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7dH1A_gbT9Iqmg9DtpQUEBxB2agehRfIaZM4eLHf3CRIDBROWgWiI9bS6Mx1su8fihQ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmu16ccqHmIPh8CYFq9ICNiJuTwOOZm4KkQqcLpvYkhT1Q-0aGtcUdIuEE9lQ5dlGcig/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1266,6 +1266,65 @@ function renderNotifSettings(){
         +(EN?'Checks every 5 minutes. Admin/Manager sees all staff not checked in.':'Semak setiap 5 minit. Admin/Pengurus boleh lihat semua pekerja yang belum daftar masuk.')
       +'</div>'
     +'</div>';
+}
+
+// ── Monthly Report ──────────────────────────────────────────────────────────
+function getReportSettings(){ return loadData('report_settings',{emails:'',autoMonth:true}); }
+function saveReportSettings(s){ saveData('report_settings',s); }
+
+async function sendMonthlyReport(month){
+  var s=getReportSettings();
+  var emails=document.getElementById('report-emails');
+  if(emails) s.emails=emails.value;
+  if(!s.emails||!s.emails.trim()){ showToast(lang==='en'?'Please enter at least one email address':'Sila masukkan sekurang-kurangnya satu alamat e-mel','error'); return; }
+  var btn=document.getElementById('report-send-btn');
+  if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Sending...':'Menghantar...';}
+  saveReportSettings(s);
+  try{
+    var resp=await fetch(WEB_APP_URL,{method:'POST',cache:'no-cache',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'sendMonthlyReport',emails:s.emails,
+        month:month||document.getElementById('report-month')?.value||dateKeyUTC8().slice(0,7),
+        sentBy:currentUser.name,role:currentUser.role})});
+    var json=await resp.json().catch(function(){return {};});
+    if(json.success){
+      showToast((lang==='en'?'Report sent! ✅ ':'Laporan dihantar! ✅ ')+json.message,'success');
+    } else {
+      showToast((lang==='en'?'Send failed: ':'Gagal hantar: ')+(json.message||'Unknown error'),'error');
+    }
+  }catch(e){
+    showToast((lang==='en'?'Error: ':'Ralat: ')+e.message.slice(0,60),'error');
+  }
+  if(btn){btn.disabled=false;btn.textContent=lang==='en'?'📧 Send Monthly Report':'📧 Hantar Laporan Bulanan';}
+}
+
+function renderMonthlyReportPanel(){
+  var el=document.getElementById('monthly-report-panel');
+  if(!el) return;
+  var EN=lang==='en';
+  var s=getReportSettings();
+  var thisMonth=dateKeyUTC8().slice(0,7);
+  var prevMonth=(function(){
+    var d=new Date(Date.now()+_U8);
+    d.setUTCMonth(d.getUTCMonth()-1);
+    return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2);
+  })();
+  el.innerHTML=
+    '<div class="card" style="margin-top:12px">'
+    +'<div class="card-title">📧 '+(EN?'Monthly Email Report':'Laporan E-mel Bulanan')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(EN?'Sends attendance + sales summary for all stores to the specified email(s).':'Menghantar ringkasan kehadiran + jualan semua cawangan ke e-mel yang ditetapkan.')+'</div>'
+    +'<label class="field-label">'+(EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
+    +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com, owner@example.com\n(one per line or comma-separated)">'+s.emails+'</textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
+      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(EN?'Month:':'Bulan:')+'</label>'
+      +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+      +'<button id="report-send-btn" class="btn success" style="flex:2;font-size:15px;padding:12px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'+(EN?'📧 Send Monthly Report':'📧 Hantar Laporan Bulanan')+'</button>'
+      +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="document.getElementById(\'report-month\').value=\''+prevMonth+'\';sendMonthlyReport(\''+prevMonth+'\')">'+(EN?'Send Last Month':'Bulan Lalu')+'</button>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+(EN?'Tip: Schedule a monthly reminder to send this on the 1st of each month.':'Petua: Tetapkan peringatan bulanan untuk menghantar ini pada hari pertama setiap bulan.')+'</div>'
+  +'</div>';
 }
 
 async function triggerSyncRefresh() {
@@ -2748,8 +2807,10 @@ async function renderAdminTab() {
     ${renderOperationsDashboard()}
     ${canManageUsers()?pendingHtml:''}
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}
-    <div id="perms-panel" style="margin-top:8px"></div>`;
+    <div id="perms-panel" style="margin-top:8px"></div>
+    <div id="monthly-report-panel"></div>`;
   renderPermissionsPanel();
+  renderMonthlyReportPanel();
 }
 async function approveUser(username) {
   showToast(lang==='zh'?'正在审批...':'Approving...','pending');
