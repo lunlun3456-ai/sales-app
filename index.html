@@ -289,14 +289,14 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.6.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7</text>
 
       </svg>
     </div><!-- /login-logo -->
 
     <div class="input-wrap">
       <label class="field-label">Username 用户名</label>
-      <input type="text" id="login-name" placeholder="e.g. jan" autocomplete="off" autocapitalize="none" autocorrect="off">
+      <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off">
     </div>
     <div class="input-wrap">
       <label class="field-label">PIN (6 digits 6位密码)</label>
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.6.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -951,6 +951,323 @@ async function syncAttendanceNow(){
   }
 }
 
+// ── Permissions System ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// PERMISSIONS SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+const PERM_FEATURES = [
+  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
+  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
+  { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
+  { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
+  { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
+  { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
+  { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
+  { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
+  { key:'work_schedule',    label:'Work Schedule',          bm:'Jadual Kerja' },
+  { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
+  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
+  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
+  { key:'db_backup',        label:'Database Backup',        bm:'Sandaran Data' },
+  { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
+];
+
+const DEFAULT_PERMS = {
+  staff:      { submit_sales:1, confirm_daily:0, view_records:1, view_summary:0, view_admin:0, attendance:1, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  supervisor: { submit_sales:1, confirm_daily:1, view_records:1, view_summary:0, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  manager:    { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:0, notifications:1 },
+  admin:      { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
+  boss:       { submit_sales:0, confirm_daily:0, view_records:1, view_summary:1, view_admin:1, attendance:0, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+};
+
+function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
+function savePerms(p){ saveData('role_permissions', p); }
+
+function hasPerm(feature){
+  if(!currentUser) return false;
+  var role = currentUser.role;
+  var p = getPerms();
+  if(!p[role]) return !!(DEFAULT_PERMS[role]&&DEFAULT_PERMS[role][feature]);
+  return !!(p[role][feature]);
+}
+
+function renderPermissionsPanel(){
+  var el = document.getElementById('perms-panel');
+  if(!el) return;
+  var EN = lang==='en';
+  var p = getPerms();
+  var roles = ['staff','supervisor','manager','admin','boss'];
+  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
+  var html =
+    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?'Role Permissions':'Kebenaran Peranan')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
+      +(EN?'Tick to allow a role to access that feature. Changes take effect immediately.':'Tandakan untuk membenarkan peranan mengakses fungsi tersebut. Perubahan berkuat kuasa serta-merta.')
+    +'</div>'
+    +'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">'
+    // Header row
+    +'<thead><tr style="background:#1e3a8a">'
+      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(EN?'Feature':'Fungsi')+'</th>'
+      +roles.map(function(r){
+        return '<th style="padding:8px 4px;text-align:center;color:white;font-weight:800;min-width:60px">'+roleLabels[r]+'</th>';
+      }).join('')
+    +'</tr></thead>'
+    +'<tbody>';
+
+  PERM_FEATURES.forEach(function(f, i){
+    var bg = i%2===0 ? '#f8fafc' : 'white';
+    html += '<tr style="background:'+bg+'">'
+      +'<td style="padding:7px 6px;font-weight:600;color:var(--text)">'
+        +'<div>'+f.label+'</div>'
+        +'<div style="font-size:10px;color:var(--text2)">'+f.bm+'</div>'
+      +'</td>'
+      +roles.map(function(r){
+        var checked = p[r]&&p[r][f.key] ? 'checked' : '';
+        return '<td style="text-align:center;padding:7px 4px">'
+          +'<input type="checkbox" class="perm-cb" '+checked
+          +' data-role="'+r+'" data-feature="'+f.key+'"'
+          +' style="width:18px;height:18px;accent-color:#1e3a8a;cursor:pointer">'
+          +'</td>';
+      }).join('')
+    +'</tr>';
+  });
+
+  html += '</tbody></table></div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px">'
+      +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
+        +(EN?'💾 Save Permissions':'💾 Simpan Kebenaran')+'</button>'
+      +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
+        +(EN?'↺ Reset':'↺ Reset')+'</button>'
+    +'</div>'
+    +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?'Permissions saved!':'Kebenaran disimpan!')+'</div>';
+  el.innerHTML = html;
+}
+
+function savePermissionsFromUI(){
+  var p = getPerms();
+  document.querySelectorAll('.perm-cb').forEach(function(cb){
+    var role = cb.dataset.role, feat = cb.dataset.feature;
+    if(!p[role]) p[role] = {};
+    p[role][feat] = cb.checked ? 1 : 0;
+  });
+  savePerms(p);
+  // Apply immediately to nav
+  applyPermissionsToNav();
+  var msg = document.getElementById('perms-saved-msg');
+  if(msg){ msg.style.display='block'; setTimeout(function(){msg.style.display='none';},2500); }
+  showToast(lang==='en'?'Permissions saved ✅':'Kebenaran disimpan ✅','success');
+}
+
+function resetPermissionsToDefault(){
+  if(!confirm(lang==='en'?'Reset all permissions to default?':'Reset semua kebenaran ke nilai asal?')) return;
+  savePerms(JSON.parse(JSON.stringify(DEFAULT_PERMS)));
+  applyPermissionsToNav();
+  renderPermissionsPanel();
+  showToast(lang==='en'?'Permissions reset to default':'Kebenaran telah direset','success');
+}
+
+function applyPermissionsToNav(){
+  if(!currentUser) return;
+  var role = currentUser.role;
+  // Nav tab visibility based on permissions
+  var navMap = {
+    'submit':     'submit_sales',
+    'records':    'view_records',
+    'summary':    'view_summary',
+    'admin':      'view_admin',
+    'attendance': 'attendance',
+  };
+  Object.keys(navMap).forEach(function(tab){
+    var el = document.getElementById('nav-'+tab);
+    if(el){
+      var allowed = hasPerm(navMap[tab]);
+      // Keep boss-specific overrides
+      if(tab==='submit' && role==='boss') allowed = false;
+      if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
+      el.style.display = allowed ? 'flex' : 'none';
+    }
+  });
+}
+
+// ── Attendance Notification System ──────────────────────────────────────────
+var _notifInterval = null;
+
+function getNotifSettings(){
+  return loadData('notif_settings', {
+    enabled: false,
+    reminderTime: '09:30',   // HH:MM — remind if not checked in by this time
+    reminderDone: {}         // { "dateKey:username": true } — already notified today
+  });
+}
+function saveNotifSettings(s){ saveData('notif_settings', s); }
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){
+    showToast(lang==='en'?'Browser does not support notifications':'Pelayar tidak menyokong notifikasi','error');
+    return false;
+  }
+  if(Notification.permission === 'granted') return true;
+  if(Notification.permission === 'denied'){
+    showToast(lang==='en'?'Notifications blocked. Enable in browser settings.':'Notifikasi disekat. Hidupkan dalam tetapan pelayar.','error');
+    return false;
+  }
+  var perm = await Notification.requestPermission();
+  return perm === 'granted';
+}
+
+function sendNotif(title, body, tag){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try{
+    var n = new Notification(title, {
+      body: body,
+      icon: 'https://lunlun3456-ai.github.io/sales-app/icon.png',
+      tag: tag || 'att-reminder',
+      requireInteraction: false
+    });
+    setTimeout(function(){ n.close(); }, 8000);
+  }catch(e){ console.warn('Notification error:', e); }
+}
+
+function checkAttendanceNotifications(){
+  var s = getNotifSettings();
+  if(!s.enabled || Notification.permission !== 'granted') return;
+  var now = new Date(Date.now() + _U8);
+  var hh = ('0'+now.getUTCHours()).slice(-2);
+  var mm = ('0'+now.getUTCMinutes()).slice(-2);
+  var nowStr = hh + ':' + mm;
+  var today = dateKeyUTC8();
+  // Only remind if current time is at or after the reminder time
+  if(nowStr < s.reminderTime) return;
+
+  var done = s.reminderDone || {};
+
+  if(['admin','manager','boss'].includes(currentUser.role)){
+    // Admin/Manager: check all active staff
+    var allUsers = Object.values(cachedUsers).filter(function(u){
+      return u.status === 'active' && ['staff','supervisor'].includes(u.role) && u.store !== 'HQ';
+    });
+    var attToday = getAttendance().filter(function(r){ return r.dateKey === today && r.status !== 'rejected' && r.status !== 'voided'; });
+    var checkedIn = new Set(attToday.filter(function(r){ return r.type === 'check_in'; }).map(function(r){ return r.username; }));
+    var missing = allUsers.filter(function(u){ return !checkedIn.has(u.username); });
+    missing.forEach(function(u){
+      var key = today + ':' + u.username;
+      if(!done[key]){
+        done[key] = true;
+        sendNotif(
+          (lang==='en'?'Staff Not Checked In':'Pekerja Belum Daftar Masuk'),
+          (u.name||u.username) + ' · ' + u.store + ' — ' + (lang==='en'?'has not checked in yet':'belum daftar masuk'),
+          'att-' + u.username
+        );
+      }
+    });
+  } else if(['staff','supervisor'].includes(currentUser.role) && currentUser.store !== 'HQ'){
+    // Staff: remind themselves
+    var key2 = today + ':self:' + currentUser.username;
+    if(!done[key2]){
+      var myAtt = getAttendance().filter(function(r){
+        return r.username === currentUser.username && r.dateKey === today &&
+               r.type === 'check_in' && r.status !== 'rejected';
+      });
+      var sessCI = _attSession.filter(function(r){
+        return r.username === currentUser.username && r.dateKey === today && r.type === 'check_in';
+      });
+      if(!myAtt.length && !sessCI.length){
+        done[key2] = true;
+        sendNotif(
+          lang==='en'?'Check In Reminder':'Peringatan Daftar Masuk',
+          lang==='en'?'You have not checked in today. Tap to open app.':'Anda belum daftar masuk hari ini.',
+          'att-self'
+        );
+      }
+    }
+  }
+  s.reminderDone = done;
+  saveNotifSettings(s);
+}
+
+function startNotifScheduler(){
+  if(_notifInterval) clearInterval(_notifInterval);
+  // Check every 5 minutes
+  _notifInterval = setInterval(checkAttendanceNotifications, 5 * 60 * 1000);
+  // Also check immediately
+  setTimeout(checkAttendanceNotifications, 3000);
+}
+
+function stopNotifScheduler(){
+  if(_notifInterval){ clearInterval(_notifInterval); _notifInterval = null; }
+}
+
+function toggleNotifications(enabled){
+  var s = getNotifSettings();
+  if(enabled){
+    requestNotifPermission().then(function(granted){
+      if(granted){
+        s.enabled = true;
+        saveNotifSettings(s);
+        startNotifScheduler();
+        showToast(lang==='en'?'Notifications enabled ✅':'Notifikasi diaktifkan ✅','success');
+        renderNotifSettings();
+      } else {
+        s.enabled = false;
+        saveNotifSettings(s);
+        renderNotifSettings();
+      }
+    });
+  } else {
+    s.enabled = false;
+    saveNotifSettings(s);
+    stopNotifScheduler();
+    showToast(lang==='en'?'Notifications disabled':'Notifikasi dimatikan','success');
+    renderNotifSettings();
+  }
+}
+
+function saveNotifTime(t){
+  var s = getNotifSettings();
+  s.reminderTime = t;
+  s.reminderDone = {}; // reset done flags when time changes
+  saveNotifSettings(s);
+  showToast(lang==='en'?'Reminder time saved: '+t:'Masa peringatan disimpan: '+t,'success');
+}
+
+function renderNotifSettings(){
+  var el = document.getElementById('notif-settings-panel');
+  if(!el) return;
+  var s = getNotifSettings();
+  var EN = lang==='en';
+  var supported = 'Notification' in window;
+  var perm = supported ? Notification.permission : 'unsupported';
+  var permLabel = perm==='granted'?'✅ '+(EN?'Allowed':'Dibenarkan'):perm==='denied'?'❌ '+(EN?'Blocked':'Disekat'):'⏳ '+(EN?'Not set':'Belum ditetapkan');
+  el.innerHTML =
+    '<div class="card" style="margin-bottom:10px">'
+      +'<div class="card-title">🔔 '+(EN?'Check-In Notifications':'Notifikasi Daftar Masuk')+'</div>'
+      +(supported?'':' <div style="color:#ef4444;font-size:12px">'+(EN?'Not supported on this browser/device':'Tidak disokong pada pelayar/peranti ini')+'</div>')
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700">'+(EN?'Enable Notifications':'Hidupkan Notifikasi')+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+permLabel+'</div>'
+        +'</div>'
+        +'<label style="position:relative;display:inline-block;width:44px;height:24px">'
+          +'<input type="checkbox" id="notif-toggle" '+(s.enabled&&perm==='granted'?'checked':'')
+          +' onchange="toggleNotifications(this.checked)" style="opacity:0;width:0;height:0">'
+          +'<span style="position:absolute;cursor:pointer;inset:0;background:'+(s.enabled&&perm==='granted'?'#10b981':'#cbd5e1')
+          +';border-radius:24px;transition:.3s">'
+          +'<span style="position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:'+(s.enabled&&perm==='granted'?'23px':'3px')+';transition:.3s"></span>'
+          +'</span></label>'
+      +'</div>'
+      +'<div style="margin-top:8px">'
+        +'<label class="field-label">'+(EN?'Remind if not checked in by:':'Ingatkan jika belum daftar masuk pada:')+'</label>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<input type="time" id="notif-time" value="'+s.reminderTime+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:15px">'
+          +'<button class="btn success" style="padding:8px 14px;font-size:13px" onclick="saveNotifTime(document.getElementById(\'notif-time\').value)">'+(EN?'Save':'Simpan')+'</button>'
+        +'</div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:6px">'
+        +(EN?'Checks every 5 minutes. Admin/Manager sees all staff not checked in.':'Semak setiap 5 minit. Admin/Pengurus boleh lihat semua pekerja yang belum daftar masuk.')
+      +'</div>'
+    +'</div>';
+}
+
 async function triggerSyncRefresh() {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")){showToast('No URL configured','error');return;}
   const btn=document.getElementById('sync-btn');
@@ -1097,12 +1414,9 @@ async function doLogin() {
   const isBoss  = currentUser.role === 'boss';
   const isAdmin = ['admin','boss'].includes(currentUser.role);
   const isExec  = ['admin','boss','manager'].includes(currentUser.role);
-  document.getElementById('nav-submit').style.display     = isBoss ? 'none' : 'flex';
-  document.getElementById('nav-records').style.display    = isBoss ? 'none' : 'flex';
-  document.getElementById('nav-attendance').style.display = isBoss ? 'none' : 'flex';
-  document.getElementById('nav-log').style.display        = (isExec&&!isBoss) ? 'flex' : 'none';
-  document.getElementById('nav-summary').style.display    = isExec  ? 'flex' : 'none';
-  document.getElementById('nav-admin').style.display      = isAdmin ? 'flex' : 'none';
+  // Permissions-based nav visibility
+  applyPermissionsToNav();
+  document.getElementById('nav-log').style.display = (isExec&&!isBoss) ? 'flex' : 'none';
   updateTopBar(); updateNavLabels();
   const _st = isBoss ? 'summary' : 'submit';
   currentTab = _st;
@@ -1111,6 +1425,8 @@ async function doLogin() {
   ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
     document.getElementById('tab-'+tt).style.display=tt===_st?'block':'none';
   });
+  // Start notification scheduler after login
+  startNotifScheduler();
   // Restore today's attendance into session after re-login
   var _ld=dateKeyUTC8();
   var _todayStored=getAttendance().filter(function(r){
@@ -2324,7 +2640,8 @@ function renderOperationsDashboard(){
     <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
-    ${currentUser.role==='admin'?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
+    ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
+    <div id="perms-panel" style="margin-top:12px"></div>
   </div>`;
 }
 function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
@@ -2430,7 +2747,9 @@ async function renderAdminTab() {
     <div class="card-header-flex" style="margin-bottom:14px"><h2 style="font-size:18px;font-weight:900">${t('adminTab')}</h2><button class="btn refresh-inline" onclick="renderAdminTab()">${t('refresh')}</button></div>
     ${renderOperationsDashboard()}
     ${canManageUsers()?pendingHtml:''}
-    ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}`;
+    ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}
+    <div id="perms-panel" style="margin-top:8px"></div>`;
+  renderPermissionsPanel();
 }
 async function approveUser(username) {
   showToast(lang==='zh'?'正在审批...':'Approving...','pending');
@@ -2537,7 +2856,9 @@ function renderProfileTab() {
       </div>
     </div>
     <button class="btn secondary" onclick="enableBiometricLogin()" style="margin-top:8px">Enable Face ID / Fingerprint</button>
+    <div id="notif-settings-panel"></div>
     <button class="btn danger" onclick="doLogout()" style="margin-top:8px">${t('logout')}</button>`;
+  renderNotifSettings();
 }
 
 async function changeCurrentUserPin() {
@@ -2565,7 +2886,7 @@ async function changeCurrentUserPin() {
 // LOGOUT & HELPERS
 // ============================================================
 function doLogout() {
-  currentUser=null;
+  stopNotifScheduler(); currentUser=null;
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
