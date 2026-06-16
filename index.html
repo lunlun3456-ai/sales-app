@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1427,6 +1427,42 @@ async function fetchLog() {
 // ============================================================
 // LOGIN — with clear feedback, cache fallback, robust error messages
 // ============================================================
+function showRegisterPopup(username){
+  var EN=lang==='en';
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='reg-popup';
+  ov.innerHTML=
+    '<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:52px;margin-bottom:8px">🔍</div>'
+    +'<div class="modal-title" style="color:#ef4444">'+(EN?'Username Not Found':'Nama Pengguna Tidak Dijumpai')+'</div>'
+    +'<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin:12px 0">'
+      +'<div style="font-size:14px;font-weight:700;color:#334155">"'+username+'"</div>'
+    +'</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:8px">'+(EN?'Kindly register before log in':'Sila daftar sebelum log masuk')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:16px">'+(EN?'Your account does not exist. Please register first and wait for Admin approval.':'Akaun anda tiada. Sila daftar dahulu dan tunggu kelulusan Admin.')+'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+      +'<button class="btn success" style="font-size:15px;padding:12px" onclick="document.getElementById(\'reg-popup\').remove();document.querySelector(\'[onclick*=showRegister\')?.click()||showRegisterModal()">'
+        +(EN?'📝 Register Now':'📝 Daftar Sekarang')+'</button>'
+      +'<button class="btn secondary" style="font-size:14px;padding:10px" onclick="document.getElementById(\'reg-popup\').remove()">'+(EN?'Back / Kembali':'Kembali')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+}
+function showPendingPopup(username){
+  var EN=lang==='en';
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='pending-popup';
+  ov.innerHTML=
+    '<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:52px;margin-bottom:8px">⏳</div>'
+    +'<div class="modal-title" style="color:#f59e0b">'+(EN?'Account Pending Approval':'Akaun Menunggu Kelulusan')+'</div>'
+    +'<div style="background:#fffbeb;border-radius:10px;padding:12px 14px;margin:12px 0">'
+      +'<div style="font-size:13px;font-weight:700;color:#92400e">@'+username+'</div>'
+      +'<div style="font-size:12px;color:#92400e;margin-top:4px">'+(EN?'Your registration is being reviewed by Admin':'Pendaftaran anda sedang disemak oleh Admin')+'</div>'
+    +'</div>'
+    +'<div style="font-size:13px;color:#64748b;margin-bottom:14px">'+(EN?'Please wait for Admin to approve your account before logging in.':'Sila tunggu Admin meluluskan akaun anda sebelum log masuk.')+'</div>'
+    +'<button class="btn secondary" style="width:100%;font-size:14px;padding:12px" onclick="document.getElementById(\'pending-popup\').remove()">'+(EN?'OK':'OK')+'</button>'
+  +'</div>';
+  document.body.appendChild(ov);
+}
+
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
@@ -1449,17 +1485,14 @@ async function doLogin() {
     return;
   }
   const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
-  if(!userMatch){
-    const known = Object.keys(cachedUsers).slice(0,8).join(', ');
-    showToast('Not found: "'+username+'" | Loaded: '+known,'error'); return;
-  }
+  if(!userMatch){ showRegisterPopup(username); return; }
   const _p = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
   if(_p !== String(pin).trim()){
     showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
   }
   const _s = String(userMatch.status ?? 'active').trim().toLowerCase();
   if(_s === 'pending'){
-    showToast(lang==='zh'?'账号待审批，请联系管理员':'Account pending Admin approval','error'); return;
+    showPendingPopup(username); return;
   }
   if(_s === 'inactive' || _s === 'disabled'){
     showToast('Account disabled — contact Admin','error'); return;
@@ -2699,14 +2732,34 @@ function renderOperationsDashboard(){
   return `<div class="card"><div class="card-title">Manager Dashboard</div>
     <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Pending Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending approvals.</div>'}</div>
+    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
     ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
     <div id="perms-panel" style="margin-top:12px"></div>
   </div>`;
 }
-function approvalRowHtml(r){ return `<div class="move-item"><div><div style="font-size:13px;font-weight:800">${String(r.type||'').replace('attendance_device','Device Attendance')} - ${r.store||''}</div><div style="font-size:11px;color:var(--text2)">${r.requester||''} - RM ${parseFloat(r.amount||0).toFixed(2)} - ${r.reason||''}</div></div><div style="display:flex;gap:6px"><button class="btn-sm approve" onclick="decideApproval('${r.id}','approve')">Approve</button><button class="btn-sm reject" onclick="decideApproval('${r.id}','reject')">Reject</button></div></div>`; }
+function approvalRowHtml(r){
+  var EN=lang==='en';
+  var typeLabel=r.type==='settlement'?(EN?'Settlement Confirm':'Sahkan Penyelesaian')
+    :r.type==='sales'?(EN?'Sales Update':'Kemaskini Jualan')
+    :String(r.type||'').replace('_',' ');
+  var amtStr=parseFloat(r.total||r.amount||0).toFixed(2);
+  return '<div class="move-item">'
+    +'<div style="flex:1">'
+      +'<div style="font-size:13px;font-weight:800">'+typeLabel+' — '+(r.store||'')+'</div>'
+      +'<div style="font-size:11px;color:var(--text2)">'+(r.name||r.submitter||'')
+        +' · '+(r.dateKey||r.datetime||'')+' · RM '+amtStr+'</div>'
+      +(r.remark?'<div style="font-size:10px;color:var(--accent)">'+r.remark+'</div>':'')
+    +'</div>'
+    +'<div style="display:flex;gap:6px">'
+      +'<button class="btn-sm approve" onclick="decideApproval(\''+r.id+'\',\'approve\')">'
+        +(EN?'Approve':'Lulus')+'</button>'
+      +'<button class="btn-sm reject" onclick="decideApproval(\''+r.id+'\',\'reject\')">'
+        +(EN?'Reject':'Tolak')+'</button>'
+    +'</div>'
+  +'</div>';
+}
 async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
 function renderZoneScheduleTools(branches,users){
@@ -2798,7 +2851,7 @@ async function renderAdminTab() {
   });
   const pendingHtml=pending.length>0?`
     <div class="pending-card">
-      <div class="card-title" style="color:#92400e">${t('pendingApprovals')} <span class="pending-badge">${pending.length}</span></div>
+      <div class="card-title" style="color:#92400e">🆕 ${lang==='en'?'Pending Registrations':'Pendaftaran Menunggu'} <span class="pending-badge">${pending.length}</span></div>
       ${pending.map(u=>`
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
