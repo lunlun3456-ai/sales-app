@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -2820,16 +2820,14 @@ function showAttResetModal(username,dateKey,recordId,type,timeStr){
   document.getElementById('att-reset-confirm').onclick=function(){ov.remove();resetStaffAttendance(username,dateKey,recordId);};
 }
 function resetStaffAttendance(username,dateKey,recordId){
-  _serverAtt=_serverAtt.map(function(r){return String(r.id)!====String(recordId);}));
+  _serverAtt=_serverAtt.map(function(r){return String(r.id)!==String(recordId)?r:Object.assign({},r,{status:'voided'});});
   _attSession=_attSession.filter(function(r){return String(r.id)!==String(recordId);});
   fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'resetAttendance',recordId:recordId,username:username,dateKey:dateKey,
       resetBy:currentUser.name,resetRole:currentUser.role})}).catch(function(){});
-  showToast((lang==='zh'?'考勤已重置：':'Attendance reset for ')+username,'success');
-  renderAttendanceTab();
-  if(['admin','manager'].includes(currentUser.role)) setTimeout(function(){renderAdminTab();},100);
-  setTimeout(function(){triggerSyncRefresh();},1500);
+  showToast((lang==='en'?'Attendance reset for ':'Kehadiran direset untuk ')+username,'success');
+  fetchServerAttendance().then(function(){renderAttendanceTab();if(currentTab==='admin')renderAdminTab();});
 }
 function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
   var ex=document.getElementById('att-edit-modal');if(ex)ex.remove();
