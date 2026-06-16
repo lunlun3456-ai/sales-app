@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -567,7 +567,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1RvayqeYXwV0iG7NbNXuDwhajAeAgdVFCRCf6EOT7lID_y27kzqabVanqtQqMZytUPg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyMnpWsvICU_tk2KQphqqgPAu8Ueifrj63Td-8mHXV-Sf457m7vq_S9FqSmaXBD2KZ79Q/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -934,15 +934,12 @@ async function syncAttendanceNow(){
     }
     if(attArr!==null){
       // Merge with local (keep session records)
-      var sIds=new Set(attArr.map(function(x){return String(x.id);}));
-      var localOnly=getAttendance().filter(function(x){return !sIds.has(String(x.id));});
-      var merged=attArr.concat(localOnly);
-      // Add unsynced session records
-      var mIds=new Set(merged.map(function(x){return String(x.id);}));
-      _attSession.forEach(function(x){if(!mIds.has(String(x.id)))merged.push(x);});
-      saveAttendance(merged);
+      // Store in memory only — no localStorage
+      _serverAtt = attArr;
+      _serverAttLoaded = true;
+      saveData('attendance_records', []); // clear any stale phone data
       showToast((lang==='en'?'Attendance loaded: ':'Kehadiran dimuatkan: ')+attArr.length+(lang==='en'?' records':' rekod'),'success');
-      if(currentTab==='attendance') renderAttendanceTab();
+      if(currentTab==='attendance') _renderAttendanceContent();
       if(currentTab==='admin') renderAdminTab();
     } else {
       showToast(lang==='en'?'No attendance data from server':'Tiada data kehadiran dari server','error');
@@ -1090,6 +1087,43 @@ function applyPermissionsToNav(){
   });
 }
 
+// ── Server-first Attendance (no localStorage) ──────────────────────────────
+var _serverAtt = [];   // fetched from GAS, in-memory only
+var _serverAttLoaded = false;
+
+async function fetchServerAttendance(){
+  try{
+    var r = await gasGet('getAttendance');
+    var arr = (r && Array.isArray(r.attendance)) ? r.attendance
+             : (Array.isArray(r) ? r : null);
+    if(!arr){
+      // try getAppData fallback
+      var r2 = await gasGet('getAppData');
+      if(r2 && Array.isArray(r2.attendance)) arr = r2.attendance;
+    }
+    if(arr){
+      _serverAtt = arr;
+      _serverAttLoaded = true;
+      // Also wipe old phone localStorage
+      saveData('attendance_records', []);
+    }
+  }catch(e){ console.warn('fetchServerAttendance error:', e); }
+}
+
+function getAllAttendance(){
+  // Merge server records + today's session records (not yet confirmed by server)
+  var sIds = new Set(_serverAtt.map(function(r){ return String(r.id); }));
+  var sessNew = _attSession.filter(function(r){ return !sIds.has(String(r.id)); });
+  return _serverAtt.concat(sessNew);
+}
+
+function getAttendanceForUser(username, dateKey){
+  return getAllAttendance().filter(function(r){
+    return r.username === username && r.dateKey === dateKey
+      && r.status !== 'voided' && r.status !== 'rejected';
+  });
+}
+
 // ── Attendance Notification System ──────────────────────────────────────────
 var _notifInterval = null;
 
@@ -1147,7 +1181,7 @@ function checkAttendanceNotifications(){
     var allUsers = Object.values(cachedUsers).filter(function(u){
       return u.status === 'active' && ['staff','supervisor'].includes(u.role) && u.store !== 'HQ';
     });
-    var attToday = getAttendance().filter(function(r){ return r.dateKey === today && r.status !== 'rejected' && r.status !== 'voided'; });
+    var attToday = getAllAttendance().filter(function(r){ return r.dateKey === today && r.status !== 'rejected' && r.status !== 'voided'; });
     var checkedIn = new Set(attToday.filter(function(r){ return r.type === 'check_in'; }).map(function(r){ return r.username; }));
     var missing = allUsers.filter(function(u){ return !checkedIn.has(u.username); });
     missing.forEach(function(u){
@@ -1165,7 +1199,7 @@ function checkAttendanceNotifications(){
     // Staff: remind themselves
     var key2 = today + ':self:' + currentUser.username;
     if(!done[key2]){
-      var myAtt = getAttendance().filter(function(r){
+      var myAtt = getAllAttendance().filter(function(r){
         return r.username === currentUser.username && r.dateKey === today &&
                r.type === 'check_in' && r.status !== 'rejected';
       });
@@ -1332,7 +1366,7 @@ function renderMonthlyReportPanel(){
 function buildMonthlyData(month){
   var EN=lang==='en';
   var sales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
-  var att=getAttendance().filter(function(r){return String(r.dateKey||'').slice(0,7)===month&&r.type==='check_in'&&r.status!=='voided'&&r.status!=='rejected';});
+  var att=getAllAttendance().filter(function(r){return String(r.dateKey||'').slice(0,7)===month&&r.type==='check_in'&&r.status!=='voided'&&r.status!=='rejected';});
   // Sales by store
   var storeMap={};
   sales.forEach(function(r){
@@ -1477,11 +1511,11 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.attendance)){
             var serverIds=new Set(appJson.attendance.map(function(r){return String(r.id);}));
             // Merge: server is authoritative; keep local records not yet on server
-            var localNotOnServer=getAttendance().filter(function(r){return !serverIds.has(String(r.id));});
+            var localNotOnServer=getAllAttendance().filter(function(r){return !serverIds.has(String(r.id));});
             saveAttendance(appJson.attendance.concat(localNotOnServer));
             // Add unconfirmed session records (not yet on server)
             if(_attSession.length){
-              var merged2=getAttendance();
+              var merged2=getAllAttendance();
               var storedIds=new Set(merged2.map(function(r){return String(r.id);}));
               _attSession.forEach(function(r){if(!storedIds.has(String(r.id)))merged2.push(r);});
               saveAttendance(merged2);
@@ -1634,15 +1668,11 @@ async function doLogin() {
   });
   // Start notification scheduler after login
   startNotifScheduler();
-  // Restore today's attendance into session after re-login
-  var _ld=dateKeyUTC8();
-  var _todayStored=getAttendance().filter(function(r){
-    return r.username===currentUser.username&&r.dateKey===_ld;
-  });
-  if(_todayStored.length){
-    var _sessIds=new Set(_attSession.map(function(r){return String(r.id);}));
-    _todayStored.forEach(function(r){if(!_sessIds.has(String(r.id)))_attSession.push(r);});
-  }
+  // Clear phone's local attendance data — server is authoritative
+  saveData('attendance_records', []);
+  _serverAtt = []; _serverAttLoaded = false;
+  // Fetch attendance from server in background
+  fetchServerAttendance();
   if(isBoss) renderSummaryTab(); else renderSubmitTab();
   triggerSyncRefresh();
 }
@@ -1705,8 +1735,7 @@ function renderSubmitTab() {
   const storeVal = !isManagerial ? currentUser.store : '';
   // Attendance status banner
   var _today=dateKeyUTC8();
-  var _attArr=_attSession.filter(function(r){return r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected';});
-  if(!_attArr.length) _attArr=getAttendance().filter(function(r){return r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected';});
+  // Use server data (getAllAttendance merges server + session)
   var _ci=_attArr.find(function(r){return r.type==='check_in';});
   var _co=_attArr.find(function(r){return r.type==='check_out';});
   var _attBanner='';
@@ -2468,8 +2497,13 @@ function arrayBufferToBase64(buf){ return btoa(String.fromCharCode(...new Uint8A
 function base64ToArrayBuffer(str){ const bin=atob(str); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
 
 function renderAttendanceTab(){
-  // Render immediately from cache
+  // Show loading state immediately
+  var attTab=document.getElementById('tab-attendance');
+  if(attTab&&!_serverAttLoaded) attTab.innerHTML='<div class="spinner-wrap"><div class="spin"></div>'+(lang==="en"?'Loading attendance...':'Memuatkan kehadiran...')+'</div>';
+  // Render cached/session data immediately
   _renderAttendanceContent();
+  // Always fetch fresh from server
+  fetchServerAttendance().then(function(){ _renderAttendanceContent(); }).catch(function(){});
   // Then fetch fresh from server in background
   (async function(){
     try{
@@ -2477,7 +2511,7 @@ function renderAttendanceTab(){
       if(fresh&&Array.isArray(fresh.attendance)){
         // Merge: server records + any local records not yet on server
         var sIds=new Set(fresh.attendance.map(function(r){return String(r.id);}));
-        var localOnly=getAttendance().filter(function(r){return !sIds.has(String(r.id));});
+        var localOnly=getAllAttendance().filter(function(r){return !sIds.has(String(r.id));});
         var merged=fresh.attendance.concat(localOnly);
         // Also include session records not yet in merged (never remove from session)
         var mergedIds=new Set(merged.map(function(r){return String(r.id);}));
@@ -2502,17 +2536,10 @@ function _renderAttendanceContent(){
   var today=dateKeyUTC8();
   var ZH=lang==='zh';
   // Session is truth for today; stored supplements history
-  var sessToday=_attSession.filter(function(r){
+  // Always use server data (merged with session)
+  var todayAll=getAllAttendance().filter(function(r){
     return r.username===currentUser.username&&r.dateKey===today;
-  });
-  var sessIds=new Set(sessToday.map(function(r){return String(r.id);}));
-  // From storage: add records for today that session doesn't have
-  var storedExtra=getAttendance().filter(function(r){
-    return r.username===currentUser.username&&r.dateKey===today&&!sessIds.has(String(r.id));
-  });
-  var todayAll=sessToday.concat(storedExtra).sort(function(a,b){
-    return String(a.datetime).localeCompare(String(b.datetime));
-  });
+  }).sort(function(a,b){ return String(a.datetime).localeCompare(String(b.datetime)); });
   // Successful records only for main cards
   var success=todayAll.filter(function(r){return r.status!=='rejected'&&r.status!=='voided';});
   var lastIn=null,lastOut=null;
@@ -2561,7 +2588,7 @@ function _renderAttendanceContent(){
     +'</div>';
   }).join('');
   // Recent history (previous days — all statuses)
-  var recent=getAttendance()
+  var recent=getAllAttendance()
     .filter(function(r){return r.username===currentUser.username&&r.dateKey<today;})
     .sort(function(a,b){return b.dateKey.localeCompare(a.dateKey)||b.datetime.localeCompare(a.datetime);}).slice(0,20);
   var _canResetHist=['admin','manager'].includes(currentUser.role);
@@ -2670,15 +2697,10 @@ async function submitAttendance(type){
   var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
   // Use merged view for guard checks (session + stored)
-  // Session is source of truth for today
-  var sessForGuard=_attSession.filter(function(r){
-    return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected';
+  // Check server + session records for today
+  var mine=getAllAttendance().filter(function(r){
+    return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected'&&r.status!=='voided';
   });
-  var sessGuardIds=new Set(sessForGuard.map(function(r){return String(r.id);}));
-  var storedForGuard=getAttendance().filter(function(r){
-    return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected'&&!sessGuardIds.has(String(r.id));
-  });
-  var mine=sessForGuard.concat(storedForGuard);
   if(type==='check_in'){
     var prev=mine.find(function(r){return r.type==='check_in';});
     if(prev){showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(prev.datetime),'error');return;}
@@ -2700,7 +2722,7 @@ async function submitAttendance(type){
       userAgent:navigator.userAgent||'',platform:navigator.platform||''
     };
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify(Object.assign({action:'submitAttendance'},record))
     }).catch(function(e){console.warn('sync fail',e);});
     var zone=nearestLocalZone(record.store,record.lat,record.lng);
@@ -2713,7 +2735,6 @@ async function submitAttendance(type){
       if(bound&&bound!==currentUser.username.toLowerCase()){
         record.status='rejected';
         _attSession.push(record);
-        var a2=getAttendance();a2.push(record);saveAttendance(a2);
         renderAttendanceTab();setTimeout(function(){triggerSyncRefresh();},1500);
         showAttendanceResult('rejected',label+' Blocked',
           ZH?'此设备已绑定用户 '+bound+'。请使用您自己的设备，如需重置请联系管理员。'
@@ -2728,7 +2749,6 @@ async function submitAttendance(type){
     }
     // Save to session memory FIRST (survives sync overwrites)
     _attSession.push(record);
-    var arr=getAttendance();arr.push(record);saveAttendance(arr);
     renderAttendanceTab();
     setTimeout(function(){triggerSyncRefresh();},1500);
   }catch(e){
@@ -2742,11 +2762,11 @@ async function submitAttendance(type){
       userAgent:navigator.userAgent||'',platform:navigator.platform||''
     };
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify(Object.assign({action:'submitAttendance'},errRecord))
     }).catch(function(){});
     _attSession.push(errRecord);
-    var earr=getAttendance();earr.push(errRecord);saveAttendance(earr);
+
     showAttendanceResult('success',label+' Saved',
       (ZH?'考勤已记录（位置不可用）':'Attendance saved (location unavailable)'),getDeviceName());
     renderAttendanceTab();
@@ -2800,7 +2820,7 @@ function showAttResetModal(username,dateKey,recordId,type,timeStr){
   document.getElementById('att-reset-confirm').onclick=function(){ov.remove();resetStaffAttendance(username,dateKey,recordId);};
 }
 function resetStaffAttendance(username,dateKey,recordId){
-  saveAttendance(getAttendance().filter(function(r){return String(r.id)!==String(recordId);}));
+  _serverAtt=_serverAtt.map(function(r){return String(r.id)!====String(recordId);}));
   _attSession=_attSession.filter(function(r){return String(r.id)!==String(recordId);});
   fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
     headers:{'Content-Type':'application/json'},
@@ -2811,13 +2831,71 @@ function resetStaffAttendance(username,dateKey,recordId){
   if(['admin','manager'].includes(currentUser.role)) setTimeout(function(){renderAdminTab();},100);
   setTimeout(function(){triggerSyncRefresh();},1500);
 }
+function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
+  var ex=document.getElementById('att-edit-modal');if(ex)ex.remove();
+  var EN=lang==='en';
+  var curTime='';
+  if(datetimeStr&&datetimeStr.endsWith('+08:00')) curTime=datetimeStr.slice(11,16);
+  else if(datetimeStr) curTime=fmtTimeUTC8(datetimeStr);
+  var typeLabel=type==='check_in'?(EN?'Check In':'Daftar Masuk'):(EN?'Check Out':'Daftar Keluar');
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='att-edit-modal';
+  ov.innerHTML='<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:36px;margin-bottom:6px">✏️</div>'
+    +'<div class="modal-title" style="color:#1e3a8a">'+(EN?'Edit Attendance Time':'Edit Masa Kehadiran')+'</div>'
+    +'<div style="background:#f8fafc;border-radius:12px;padding:12px;margin:10px 0;text-align:left">'
+      +'<div class="stat-row"><span class="stat-label">👤</span><span class="stat-value">'+username+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">📅</span><span class="stat-value">'+dateKey+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label">🕐</span><span class="stat-value">'+typeLabel+'</span></div>'
+    +'</div>'
+    +'<div style="margin:10px 0">'
+      +'<label class="field-label">'+(EN?'New Time (HH:MM)':'Masa Baru (HH:MM)')+'</label>'
+      +'<input type="time" id="att-edit-time" value="'+curTime+'" style="width:100%;padding:12px;font-size:24px;font-weight:900;text-align:center;border:2px solid #1e3a8a;border-radius:10px;margin-top:6px">'
+    +'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'+(EN?'Change will sync to server and is logged.':'Perubahan akan disegerakan dan direkodkan.')+'</div>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button class="btn secondary" style="flex:1" id="att-edit-cancel">'+(EN?'Cancel':'Batal')+'</button>'
+      +'<button class="btn success" style="flex:2" id="att-edit-save">'+(EN?'Save New Time':'Simpan Masa Baru')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('att-edit-cancel').onclick=function(){ov.remove();};
+  document.getElementById('att-edit-save').onclick=function(){
+    var t2=document.getElementById('att-edit-time').value;
+    if(!t2){showToast(EN?'Enter a valid time':'Masukkan masa yang sah','error');return;}
+    ov.remove();doEditAttendance(recordId,username,dateKey,type,t2);
+  };
+}
+
+function doEditAttendance(recordId,username,dateKey,type,newTimeHHMM){
+  var newDatetime=dateKey+'T'+newTimeHHMM+':00+08:00';
+  var idx=_serverAtt.findIndex(function(r){return String(r.id)===String(recordId);});
+  if(idx>=0){_serverAtt[idx].datetime=newDatetime;_serverAtt[idx].editedBy=currentUser.name;_serverAtt[idx].editedAt=nowUTC8();}
+  _attSession.forEach(function(r){
+    if(String(r.id)===String(recordId)){r.datetime=newDatetime;r.editedBy=currentUser.name;r.editedAt=nowUTC8();}
+  });
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'editAttendanceTime',recordId:recordId,username:username,
+      dateKey:dateKey,type:type,newDatetime:newDatetime,
+      editedBy:currentUser.name,editedRole:currentUser.role,editedAt:nowUTC8()})}).catch(function(){});
+  showToast((lang==='en'?'Time updated: ':'Masa dikemas kini: ')+username+' '+newTimeHHMM+' ✅','success');
+  renderAdminTab();
+  if(currentTab==='attendance') renderAttendanceTab();
+}
+
 function attendanceRowHtml(r){
   var canReset=['admin','manager'].includes(currentUser.role);
-  var resetBtn=canReset
+  var isVoided=r.status==='voided'||r.status==='rejected';
+  var resetBtn=canReset&&!isVoided
     ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
       +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
       +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'"'
-      +'>🗑 Reset</button>')
+      +'>🗑</button>')
+    :'';
+  var editBtn=canReset&&!isVoided
+    ?('<button class="btn-sm att-edit-btn" style="background:#eff6ff;color:#1e3a8a;font-size:10px;margin-left:4px"'
+      +' data-id="'+r.id+'" data-username="'+r.username+'" data-datekey="'+r.dateKey+'"'
+      +' data-type="'+(r.type||'')+'" data-datetime="'+(r.datetime||'')+'"'
+      +'>✏️</button>')
     :'';
   return '<div class="record-item">'
     +'<div class="record-icon">AT</div>'
@@ -2825,7 +2903,7 @@ function attendanceRowHtml(r){
       +'<div class="record-store" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">'
         +'<b>'+(r.name||r.username)+'</b>'
         +' <span class="status-pill status-'+(r.status||'present')+'">'+String(r.status||'present').replace('_',' ')+'</span>'
-        +resetBtn
+        +resetBtn+editBtn
       +'</div>'
       +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?fmtDateTimeUTC8(r.datetime):'')+'<br>'
         +(r.lat?('📍 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' ±'+(r.accuracy||'')+'m'):'')
@@ -2837,13 +2915,15 @@ function attendanceRowHtml(r){
 
 function renderOperationsDashboard(){
   const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
-  let att=getAttendance();
+  let att=getAllAttendance();
   if(attendanceStoreFilter!=='all') att=att.filter(r=>r.store===attendanceStoreFilter);
   att=att.filter(r=>r.dateKey===attendanceDateFilter);
   const pending=getApprovals().filter(r=>r.status==='pending');
   const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
-  const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.username));
-  const absent=users.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
+  // Only staff & supervisor count for attendance (not manager/admin/boss)
+  const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
+  const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
+  const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
   return `<div class="card"><div class="card-title">Manager Dashboard</div>
     <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
@@ -2876,7 +2956,7 @@ function approvalRowHtml(r){
   +'</div>';
 }
 async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
-function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
+function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAllAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
 function renderZoneScheduleTools(branches,users){
   var isAdmin=currentUser.role==='admin';
   var canSched=['admin','manager','supervisor'].includes(currentUser.role);
@@ -3948,6 +4028,11 @@ document.addEventListener('click', function(e){
   var b1=e.target.closest('.att-reset-btn');
   if(b1){
     showAttResetModal(b1.dataset.username,b1.dataset.datekey,b1.dataset.id,b1.dataset.type||'',b1.dataset.time||'');
+    return;
+  }
+  var b3=e.target.closest('.att-edit-btn');
+  if(b3){
+    showAttEditModal(b3.dataset.id,b3.dataset.username,b3.dataset.datekey,b3.dataset.type||'',b3.dataset.datetime||'');
     return;
   }
   var b2=e.target.closest('.req-variance-btn');
