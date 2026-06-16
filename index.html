@@ -1511,18 +1511,10 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.attendance)){
             var serverIds=new Set(appJson.attendance.map(function(r){return String(r.id);}));
             // Merge: server is authoritative; keep local records not yet on server
-            var localNotOnServer=getAllAttendance().filter(function(r){return !serverIds.has(String(r.id));});
-            saveAttendance(appJson.attendance.concat(localNotOnServer));
-            // Add unconfirmed session records (not yet on server)
-            if(_attSession.length){
-              var merged2=getAllAttendance();
-              var storedIds=new Set(merged2.map(function(r){return String(r.id);}));
-              _attSession.forEach(function(r){if(!storedIds.has(String(r.id)))merged2.push(r);});
-              saveAttendance(merged2);
-              // Retire session records that server now has (server version is authoritative)
-              // DO NOT clear _attSession — it is the source of truth for today's display
-              // Just add any session records not already saved
-            }
+            // Attendance: store in memory only (no localStorage)
+            _serverAtt = appJson.attendance;
+            _serverAttLoaded = true;
+            saveData('attendance_records', []); // wipe stale phone data
             if(currentTab==='attendance') renderAttendanceTab();
             if(currentTab==='admin') renderAdminTab();
           }
@@ -1735,7 +1727,9 @@ function renderSubmitTab() {
   const storeVal = !isManagerial ? currentUser.store : '';
   // Attendance status banner
   var _today=dateKeyUTC8();
-  // Use server data (getAllAttendance merges server + session)
+  var _attArr=getAllAttendance().filter(function(r){
+    return r.username===currentUser.username&&r.dateKey===_today&&r.status!=='rejected'&&r.status!=='voided';
+  });
   var _ci=_attArr.find(function(r){return r.type==='check_in';});
   var _co=_attArr.find(function(r){return r.type==='check_out';});
   var _attBanner='';
