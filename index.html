@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.7.0.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.7.0.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -566,7 +566,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyzEtZqB2oAzgBg4OlJAFwWk_Pi5ciru_9_D4qTCpj5PKg12N8FBXjQbF07vT9WcKn33Q/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbGh72JYgoNbKdS0Mu-9pJyj9HSeu-CCfvF5YQ-VXCl_UPKX8MPdSEj59DQYMlzjmilA/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1281,19 +1281,15 @@ async function sendMonthlyReport(month){
   if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Sending...':'Menghantar...';}
   saveReportSettings(s);
   try{
-    var resp=await fetch(WEB_APP_URL,{method:'POST',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
+    var reportMonth=month||document.getElementById('report-month')?.value||dateKeyUTC8().slice(0,7);
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'sendMonthlyReport',emails:s.emails,
-        month:month||document.getElementById('report-month')?.value||dateKeyUTC8().slice(0,7),
-        sentBy:currentUser.name,role:currentUser.role})});
-    var json=await resp.json().catch(function(){return {};});
-    if(json.success){
-      showToast((lang==='en'?'Report sent! ✅ ':'Laporan dihantar! ✅ ')+json.message,'success');
-    } else {
-      showToast((lang==='en'?'Send failed: ':'Gagal hantar: ')+(json.message||'Unknown error'),'error');
-    }
+        month:reportMonth,sentBy:currentUser.name,role:currentUser.role})});
+    var firstEmail=(s.emails.split(/[,;\n]/)[0]||'').trim();
+    showToast((lang==='en'?'Report sent ✅ — check inbox: ':'Laporan dihantar ✅ — semak: ')+firstEmail,'success');
   }catch(e){
-    showToast((lang==='en'?'Error: ':'Ralat: ')+e.message.slice(0,60),'error');
+    showToast((lang==='en'?'Send failed: ':'Gagal: ')+e.message.slice(0,50),'error');
   }
   if(btn){btn.disabled=false;btn.textContent=lang==='en'?'📧 Send Monthly Report':'📧 Hantar Laporan Bulanan';}
 }
