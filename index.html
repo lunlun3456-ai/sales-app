@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -566,7 +566,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUcBI-3KmNGILhc2lgsH8HyU4pBcLz6DUeMXpatnoY5-LyNLrIKYuhiuJBxGYTUG6Y/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyzEtZqB2oAzgBg4OlJAFwWk_Pi5ciru_9_D4qTCpj5PKg12N8FBXjQbF07vT9WcKn33Q/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1399,7 +1399,7 @@ async function triggerSyncRefresh() {
   if(btn) btn.textContent='🔄';
 }
 
-async function fetchLiveUsers() {
+async function fetchLiveUsers(forceRefresh) {
   if(!WEB_APP_URL||WEB_APP_URL.includes("PASTE_YOUR")) return {};
   try {
     const users = await gasGet('getUsers');
@@ -2842,7 +2842,8 @@ async function renderAdminTab() {
     return;
   }
   document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
-  await fetchLiveUsers();
+  // Force fresh fetch — bypass any stale cache
+  await fetchLiveUsers(true);
   const allUsers=cachedUsers;
   const pending=[]; const active=[];
   Object.entries(allUsers).forEach(([uname,u])=>{
@@ -2851,7 +2852,10 @@ async function renderAdminTab() {
   });
   const pendingHtml=pending.length>0?`
     <div class="pending-card">
-      <div class="card-title" style="color:#92400e">🆕 ${lang==='en'?'Pending Registrations':'Pendaftaran Menunggu'} <span class="pending-badge">${pending.length}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="card-title" style="color:#92400e;margin:0">🆕 ${lang==='en'?'Pending Registrations':'Pendaftaran Menunggu'} <span class="pending-badge">${pending.length}</span></div>
+        <button class="btn refresh-inline" onclick="renderAdminTab()">🔄</button>
+      </div>
       ${pending.map(u=>`
         <div class="user-row"><div class="user-avatar pending-av">${(u.name||u.username||'?')[0].toUpperCase()}</div><div class="user-info"><div class="user-name">@${u.username}</div><div class="user-meta">${u.name||''} - ${u.store||''} - ${u.phone||'N/A'} - ${u.role||'staff'}</div></div><div class="user-actions"><button class="btn-sm approve" onclick="approveUser('${u.username}')">${t('approveBtn')}</button><button class="btn-sm reject" onclick="rejectUser('${u.username}')">${t('rejectBtn')}</button></div></div>`).join('')}
     </div>`:`<div class="card" style="background:#f0fdf4;border:1.5px solid #bbf7d0;margin-bottom:14px"><div style="text-align:center;color:#166534;font-size:14px;font-weight:700;padding:6px">${t('noRequests')}</div></div>`;
