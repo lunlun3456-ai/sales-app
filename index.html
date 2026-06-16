@@ -567,7 +567,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyMnpWsvICU_tk2KQphqqgPAu8Ueifrj63Td-8mHXV-Sf457m7vq_S9FqSmaXBD2KZ79Q/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCDpfqMdgX-UWiRGpiK6HD98rvqtoixg8f1YSAqDNsKdZDspt77843KHf1jLTvDGyIwA/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1641,6 +1641,18 @@ async function doLogin() {
 
   // ✅ Login success
   currentUser={...userMatch, username};
+  // If admin reset this user's device binding, clear it locally
+  if(userMatch.deviceReset==='pending'){
+    var oldB=loadData('_device_bindings',{});
+    Object.keys(oldB).forEach(function(k){
+      if(String(oldB[k]).toLowerCase()===username) delete oldB[k];
+    });
+    saveData('_device_bindings',oldB);
+    // Tell GAS to confirm clear
+    fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'confirmDeviceReset',username:username})}).catch(function(){});
+  }
   recordLoginDevice();
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
@@ -3998,19 +4010,26 @@ function _bindDevice(id,username){
     saveData('_device_bindings',b);
   }
 }
-function adminClearDeviceBind(username){
-  var msg=lang==='zh'?'重置 '+username+' 的设备绑定？':'Reset device binding for '+username+'?';
-  if(!confirm(msg)) return;
+async function adminClearDeviceBind(username){
+  var EN=lang==='en';
+  if(!confirm(EN?'Reset device binding for '+username+'? They can check in from any device after this.'
+               :'Reset peranti untuk '+username+'? Mereka boleh daftar masuk dari mana-mana peranti selepas ini.')) return;
+  // 1. Clear on admin's own device (in case same device)
   var b=loadData('_device_bindings',{});
-  var changed=false;
   Object.keys(b).forEach(function(k){
-    if(b[k]===String(username).toLowerCase()){delete b[k];changed=true;}
+    if(String(b[k]).toLowerCase()===String(username).toLowerCase()) delete b[k];
   });
-  if(changed){
-    saveData('_device_bindings',b);
-    showToast((lang==='zh'?'设备绑定已重置：':'Device binding cleared: ')+username,'success');
-  } else {
-    showToast((lang==='zh'?'该用户无设备绑定':'No device binding found for ')+username,'error');
+  saveData('_device_bindings',b);
+  // 2. Send reset flag to GAS so staff phone clears on next login/sync
+  try{
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'clearDeviceBinding',username:username,
+        clearedBy:currentUser.name,clearedAt:nowUTC8()})});
+    showToast((EN?'Device reset sent. ':' Peranti direset. ')+username
+      +(EN?' — staff will be unbound on next login.':' — akan ditanggalkan semasa log masuk seterusnya.'),'success');
+  }catch(e){
+    showToast((EN?'Device reset locally only (server error): ':'Reset tempatan sahaja: ')+e.message.slice(0,40),'error');
   }
   renderAdminTab();
 }
