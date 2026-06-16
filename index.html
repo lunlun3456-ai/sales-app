@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#1e3a8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Daily Sales">
 <meta name="application-name" content="Daily Sales">
@@ -289,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.7.0.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.7.0.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1310,17 +1311,135 @@ function renderMonthlyReportPanel(){
     +'<div class="card-title">📧 '+(EN?'Monthly Email Report':'Laporan E-mel Bulanan')+'</div>'
     +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(EN?'Sends attendance + sales summary for all stores to the specified email(s).':'Menghantar ringkasan kehadiran + jualan semua cawangan ke e-mel yang ditetapkan.')+'</div>'
     +'<label class="field-label">'+(EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
-    +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com, owner@example.com\n(one per line or comma-separated)">'+s.emails+'</textarea>'
+    +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com\n60123456789  ← WhatsApp number">'+s.emails+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
       +'<label class="field-label" style="margin:0;white-space:nowrap">'+(EN?'Month:':'Bulan:')+'</label>'
       +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
     +'</div>'
-    +'<div style="display:flex;gap:8px;margin-top:10px">'
-      +'<button id="report-send-btn" class="btn success" style="flex:2;font-size:15px;padding:12px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'+(EN?'📧 Send Monthly Report':'📧 Hantar Laporan Bulanan')+'</button>'
-      +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="document.getElementById(\'report-month\').value=\''+prevMonth+'\';sendMonthlyReport(\''+prevMonth+'\')">'+(EN?'Send Last Month':'Bulan Lalu')+'</button>'
+    +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
+      +'<button class="btn success" style="font-size:15px;padding:12px" onclick="downloadMonthlyExcel(document.getElementById(\'report-month\').value)">'
+        +(EN?'📊 Download Excel Report':'📊 Muat Turun Laporan Excel')+'</button>'
+      +'<button class="btn" style="font-size:15px;padding:12px;background:#25d366" onclick="shareMonthlyWhatsApp(document.getElementById(\'report-month\').value)">'
+        +(EN?'📱 Share via WhatsApp':'📱 Kongsi melalui WhatsApp')+'</button>'
+      +'<button id="report-send-btn" class="btn secondary" style="font-size:13px;padding:10px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'
+        +(EN?'📧 Send Email (if GAS MailApp authorised)':'📧 Hantar E-mel (jika GAS MailApp dibenarkan)')+'</button>'
     +'</div>'
     +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+(EN?'Tip: Schedule a monthly reminder to send this on the 1st of each month.':'Petua: Tetapkan peringatan bulanan untuk menghantar ini pada hari pertama setiap bulan.')+'</div>'
   +'</div>';
+}
+
+// ── Monthly Report: Excel + WhatsApp ────────────────────────────────────────
+function buildMonthlyData(month){
+  var EN=lang==='en';
+  var sales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
+  var att=getAttendance().filter(function(r){return String(r.dateKey||'').slice(0,7)===month&&r.type==='check_in'&&r.status!=='voided'&&r.status!=='rejected';});
+  // Sales by store
+  var storeMap={};
+  sales.forEach(function(r){
+    if(!storeMap[r.store])storeMap[r.store]={total:0,cash:0,qr:0,card:0,bank:0,days:0};
+    storeMap[r.store].total+=parseFloat(r.total||0);
+    storeMap[r.store].cash +=parseFloat(r.cash||0);
+    storeMap[r.store].qr   +=parseFloat(r.qr||0);
+    storeMap[r.store].card +=parseFloat(r.card||0);
+    storeMap[r.store].bank +=parseFloat(r.bank||0);
+    storeMap[r.store].days++;
+  });
+  // Attendance by store+staff
+  var attMap={};
+  att.forEach(function(r){
+    if(!attMap[r.store])attMap[r.store]={};
+    if(!attMap[r.store][r.username])attMap[r.store][r.username]={name:r.name||r.username,days:0,late:0};
+    attMap[r.store][r.username].days++;
+    if(r.status==='late')attMap[r.store][r.username].late++;
+  });
+  return {storeMap:storeMap,attMap:attMap,month:month};
+}
+
+function downloadMonthlyExcel(month){
+  if(typeof XLSX==='undefined'){showToast(lang==='en'?'Loading Excel library...':'Memuatkan pustaka Excel...','pending');return;}
+  var d=buildMonthlyData(month);
+  var wb=XLSX.utils.book_new();
+  // ── Sheet 1: Sales Summary ──────────────────────────────────────────
+  var salesRows=[[lang==='en'?'Store':'Kedai',lang==='en'?'Total Sales (RM)':'Jumlah Jualan',
+    'Cash','QR','Card','Bank Transfer',lang==='en'?'Sales Days':'Hari Jualan']];
+  var grandTotal=0;
+  Object.keys(d.storeMap).sort().forEach(function(store){
+    var s=d.storeMap[store];
+    salesRows.push([store,s.total.toFixed(2),s.cash.toFixed(2),s.qr.toFixed(2),s.card.toFixed(2),s.bank.toFixed(2),s.days]);
+    grandTotal+=s.total;
+  });
+  salesRows.push(['TOTAL',grandTotal.toFixed(2),'','','','','']);
+  var ws1=XLSX.utils.aoa_to_sheet(salesRows);
+  // Style header row
+  ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,lang==='en'?'Sales Summary':'Ringkasan Jualan');
+  // ── Sheet 2: Attendance Summary ────────────────────────────────────
+  var attRows=[[lang==='en'?'Store':'Kedai',lang==='en'?'Staff Name':'Nama Pekerja',
+    lang==='en'?'Days Present':'Hari Hadir',lang==='en'?'Late':'Lambat']];
+  Object.keys(d.attMap).sort().forEach(function(store){
+    Object.values(d.attMap[store]).forEach(function(u){
+      attRows.push([store,u.name,u.days,u.late]);
+    });
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(attRows);
+  ws2['!cols']=[{wch:22},{wch:20},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws2,lang==='en'?'Attendance':'Kehadiran');
+  // ── Sheet 3: Raw Sales Data ────────────────────────────────────────
+  var rawSales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
+  var rawRows=[[lang==='en'?'Date':'Tarikh','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
+  rawSales.forEach(function(r){
+    rawRows.push([r.dateKey||'',r.store||'',parseFloat(r.total||0).toFixed(2),
+      parseFloat(r.cash||0).toFixed(2),parseFloat(r.qr||0).toFixed(2),
+      parseFloat(r.card||0).toFixed(2),parseFloat(r.bank||0).toFixed(2),
+      r.submitter||'',r.remark||'']);
+  });
+  var ws3=XLSX.utils.aoa_to_sheet(rawRows);
+  ws3['!cols']=[{wch:12},{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws3,lang==='en'?'Sales Detail':'Detail Jualan');
+  // Download
+  var filename='Monthly_Report_'+month+'.xlsx';
+  XLSX.writeFile(wb,filename);
+  showToast((lang==='en'?'Excel downloaded: ':'Excel dimuat turun: ')+filename,'success');
+}
+
+function shareMonthlyWhatsApp(month){
+  var d=buildMonthlyData(month);
+  var EN=lang==='en';
+  var lines=[];
+  lines.push('📊 *'+(EN?'Monthly Sales Report':'Laporan Jualan Bulanan')+'*');
+  lines.push('📅 '+month);
+  lines.push('─────────────────────');
+  var grandTotal=0;
+  Object.keys(d.storeMap).sort().forEach(function(store){
+    var s=d.storeMap[store];
+    grandTotal+=s.total;
+    lines.push('🏪 *'+store+'*');
+    lines.push('  💰 Total: RM '+s.total.toFixed(2));
+    lines.push('  💵 Cash: RM '+s.cash.toFixed(2));
+    lines.push('  📱 QR: RM '+s.qr.toFixed(2));
+    lines.push('  💳 Card: RM '+s.card.toFixed(2));
+    lines.push('  🏦 Bank: RM '+s.bank.toFixed(2));
+    // Attendance
+    if(d.attMap[store]){
+      var staffList=Object.values(d.attMap[store]);
+      lines.push('  👥 '+(EN?'Staff':'Pekerja')+': '+staffList.map(function(u){
+        return u.name+(u.late?' (⚠️'+u.late+(EN?' late':' lambat')+')'):'');
+      }).join(', '));
+    }
+    lines.push('');
+  });
+  lines.push('─────────────────────');
+  lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
+  lines.push('');
+  lines.push('_Daily Sales Reporter v4.6.2_');
+  var msg=lines.join('\n');
+  // WhatsApp - check if recipient phone in email field
+  var s2=getReportSettings();
+  var phone=(s2.emails||'').replace(/[^0-9+]/g,'');
+  var url=phone&&phone.length>8
+    ?'https://wa.me/'+phone.replace('+','')+'?text='+encodeURIComponent(msg)
+    :'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
 }
 
 async function triggerSyncRefresh() {
