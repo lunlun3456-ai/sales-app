@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -547,26 +547,31 @@
 <script>
 // UTC+8 timezone helpers
 const _U8=8*3600000;
-function dateKeyUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,10);}
-function monthUTC8(){return new Date(Date.now()+_U8).toISOString().slice(0,7);}
-function nowUTC8(){const d=new Date(Date.now()+_U8);return d.toISOString().slice(0,19)+'+08:00';}
+function dateKeyUTC8(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});}
+function monthUTC8(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}).slice(0,7);}
+function nowUTC8(){
+  var s=new Date().toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
+  return s.replace(' ','T')+'+08:00';
+}
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){
   if(!s||s==='') return '--:--';
   try{
-    var str=String(s);
-    // If already +08:00 format, extract time directly (no extra shift needed)
-    if(str.endsWith('+08:00')){
-      var tp=str.slice(11,16); // HH:MM
-      if(/^\d\d:\d\d$/.test(tp)) return tp;
-    }
-    // UTC 'Z' format or raw datetime — add 8h offset
-    var u=new Date(new Date(str).getTime()+_U8);
-    if(isNaN(u.getTime())) return '--:--';
-    return('0'+u.getUTCHours()).slice(-2)+':'+('0'+u.getUTCMinutes()).slice(-2);
+    var d=new Date(s);
+    if(isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',hour12:false});
   }catch(e){return '--:--';}
 }
-function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
+function fmtDateTimeUTC8(s){
+  if(!s) return '';
+  try{
+    var d=new Date(s);
+    if(isNaN(d.getTime())) return '';
+    var dt=new Date().toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
+    var t=d.toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
+    return t.slice(0,10)+' '+t.slice(11,16);
+  }catch(e){return '';}
+}
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx3JWvMK6q2YC3yRx3AqbbXoHmnNt3f-06cTE1fRAzzfnl6GC8EKYCTXrkpn9wFIHGjRw/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
@@ -638,7 +643,7 @@ function showAttendanceResult(kind,title,message,details,attType){
   var EN=lang==='en';
   var greetHtml='';
   if(kind==='success'){
-    var hr=new Date(Date.now()+_U8).getUTCHours();
+    var hr=parseInt(new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',hour12:false}));
     var greeting=hr<12?(EN?'GOOD MORNING':'SELAMAT PAGI'):hr<18?(EN?'GOOD AFTERNOON':'SELAMAT TENGAH HARI'):(EN?'GOOD EVENING':'SELAMAT PETANG');
     if(attType==='check_in'){
       greetHtml='<div style="font-size:42px;margin-bottom:6px">☀️</div>'
@@ -1336,9 +1341,10 @@ function renderMonthlyReportPanel(){
   var s=getReportSettings();
   var thisMonth=dateKeyUTC8().slice(0,7);
   var prevMonth=(function(){
-    var d=new Date(Date.now()+_U8);
-    d.setUTCMonth(d.getUTCMonth()-1);
-    return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2);
+    var _p=new Date();
+    _p=new Date(_p.getFullYear(),_p.getMonth()-1,1);
+    var _ps=_p.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+    return _ps.slice(0,7);
   })();
   el.innerHTML=
     '<div class="card" style="margin-top:12px">'
@@ -2171,7 +2177,7 @@ function renderSummaryTab() {
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
     const dk=d.toISOString().slice(0,10);
-    const lbl=d.toLocaleDateString([],{weekday:'short'}).slice(0,2);
+    const lbl=d.toLocaleDateString('en-MY',{weekday:'short',timeZone:'Asia/Kuala_Lumpur'}).slice(0,2);
     const daySales = summaryStoreFilter==='all'
       ? sales.filter(s=>s.dateKey===dk)
       : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
@@ -2624,7 +2630,7 @@ function _renderAttendanceContent(){
       +'</div>'
     +'</div>';
   }).join('');
-  var dateLabel=new Date(Date.now()+_U8).toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var dateLabel=new Date().toLocaleDateString('en-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Kuala_Lumpur'});
   document.getElementById('tab-attendance').innerHTML=
     '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+(ZH?'考勤':'Attendance')+'</h2>'
       +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
@@ -2658,12 +2664,9 @@ function confirmAttendance(type){
   var ZH=lang==='zh';
   var lbl=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var rem=(document.getElementById('att-remark')||{value:''}).value||'';
-  var now2=new Date(Date.now()+_U8);
-  var hh=('0'+now2.getUTCHours()).slice(-2);
-  var mm2=('0'+now2.getUTCMinutes()).slice(-2);
-  var ss=('0'+now2.getUTCSeconds()).slice(-2);
-  var timeStr=hh+':'+mm2+':'+ss;
-  var dateStr=now2.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  var now2=new Date(); // device time — displayed in MYT via timeZone option
+  var timeStr=now2.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  var dateStr=now2.toLocaleDateString('en-MY',{weekday:'short',month:'short',day:'numeric',timeZone:'Asia/Kuala_Lumpur'});
   var icon=type==='check_in'?'🟢':'🔴';
   var btnCls=type==='check_in'?'success':'warn';
   var remHtml=rem?'<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value">'+rem+'</span></div>':'';
