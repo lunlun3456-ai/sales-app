@@ -289,7 +289,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -340,7 +340,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -566,7 +566,7 @@ function fmtTimeUTC8(s){
   }catch(e){return '--:--';}
 }
 function fmtDateTimeUTC8(s){if(!s)return'';try{const u=new Date(new Date(s).getTime()+_U8);return u.toISOString().slice(0,10)+' '+u.toISOString().slice(11,16);}catch(e){return'';}}
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmu16ccqHmIPh8CYFq9ICNiJuTwOOZm4KkQqcLpvYkhT1Q-0aGtcUdIuEE9lQ5dlGcig/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUcBI-3KmNGILhc2lgsH8HyU4pBcLz6DUeMXpatnoY5-LyNLrIKYuhiuJBxGYTUG6Y/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1619,10 +1619,13 @@ function renderSubmitTab() {
           style="font-size:17px">
           📝 ${lang==='en'?'Update Sales':'Kemaskini Jualan'}
         </button>
-        <button class="btn" onclick="openConfirm(true)" id="sales-settle-btn"
-          style="font-size:14px;background:#f59e0b">
-          📎 ${lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)'}
-        </button>
+        ${hasPerm('confirm_daily')
+          ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
+              📎 ${lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)'}
+            </button>`
+          :`<button class="btn" onclick="requestSettlementApproval()" style="font-size:14px;background:#94a3b8">
+              📋 ${lang==='en'?'Request Settlement Approval':'Mohon Kelulusan Penyelesaian'}
+            </button>`}
       </div>
 
     </div>
@@ -3042,6 +3045,46 @@ function confirmAndLockAfterUpload(store, dateKey) {
   saveSettlementLocks(locks);
   showToast(lang==='zh'?'日结单已上传，当日销售已确认锁定 ✅':'Receipt uploaded — Daily sales confirmed & locked ✅','success');
   setTimeout(()=>{ renderSubmitTab(); if(currentTab==='records') renderRecordsTab(); },800);
+}
+
+function requestSettlementApproval(){
+  var store=document.getElementById('submit-store')?.value||currentUser.store||'';
+  var dateVal=document.getElementById('submit-date')?.value||dateKeyUTC8();
+  var total=parseFloat(document.getElementById('s-total-main')?.value)||0;
+  var remark=document.getElementById('s-remark')?.value||'';
+  if(!total){showToast(lang==='en'?'Enter total sales first':'Masukkan jumlah jualan dahulu','error');return;}
+  var EN=lang==='en';
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-appr-modal';
+  ov.innerHTML=
+    '<div class="modal-box" style="text-align:center">'
+    +'<div style="font-size:36px;margin-bottom:8px">📋</div>'
+    +'<div class="modal-title">'+(EN?'Request Settlement Approval':'Mohon Kelulusan Penyelesaian')+'</div>'
+    +'<div style="background:#f8fafc;border-radius:10px;padding:12px;margin:10px 0;text-align:left">'
+      +'<div class="stat-row"><span class="stat-label">🏪 '+store+'</span><span class="stat-value">'+dateVal+'</span></div>'
+      +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?'Total Sales':'Jumlah')+'</b></span>'
+        +'<span class="stat-value big" style="color:#1e3a8a">RM '+total.toFixed(2)+'</span></div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+(EN?'Your settlement requires approval from Supervisor / Manager / Admin.':'Penyelesaian anda memerlukan kelulusan daripada Penyelia / Pengurus / Admin.')+'</div>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button class="btn secondary" style="flex:1" id="sa-cancel">'+(EN?'Cancel':'Batal')+'</button>'
+      +'<button class="btn success" style="flex:2" id="sa-ok">'+(EN?'Submit for Approval':'Hantar untuk Kelulusan')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('sa-cancel').onclick=function(){ov.remove();};
+  document.getElementById('sa-ok').onclick=async function(){
+    var btn2=document.getElementById('sa-ok');
+    if(btn2){btn2.disabled=true;btn2.textContent=EN?'Submitting...':'Menghantar...';}
+    var rec={id:String(Date.now()),type:'settlement',status:'pending',
+      store:store,dateKey:dateVal,total:total,cash:total,qr:0,card:0,bank:0,remark:remark,
+      submitter:currentUser.username,name:currentUser.name,role:currentUser.role,
+      datetime:nowUTC8(),month:dateVal.slice(0,7)};
+    var appr=getApprovals(); appr.push(rec); saveApprovals(appr);
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({action:'submitApprovalRequest'},rec))}).catch(function(){});
+    ov.remove();
+    showToast(EN?'Settlement approval requested ✅':'Kelulusan penyelesaian diminta ✅','success');
+  };
 }
 
 function openSettlementBreakdown(sd){
