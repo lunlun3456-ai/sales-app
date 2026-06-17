@@ -1415,7 +1415,7 @@ async function sendMonthlyReport(month){
 function renderMonthlyReportPanel(){
   var el=document.getElementById('monthly-report-panel');
   if(!el) return;
-  var EN=lang==='en';
+  var ZH=lang==='zh'; var EN=lang==='en';
   var s=getReportSettings();
   var thisMonth=dateKeyUTC8().slice(0,7);
   var prevMonth=(function(){
@@ -3021,6 +3021,7 @@ function attendanceRowHtml(r){
 }
 
 function renderOperationsDashboard(){
+  var ZH=lang==='zh'; var EN=lang==='en';
   const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
   let att=getAllAttendance();
   if(attendanceStoreFilter!=='all') att=att.filter(r=>r.store===attendanceStoreFilter);
@@ -3064,6 +3065,7 @@ function approvalRowHtml(r){
 async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAllAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
 function renderZoneScheduleTools(branches,users){
+  var ZH=lang==='zh'; var EN=lang==='en';
   var isAdmin=currentUser.role==='admin';
   var canSched=['admin','manager','supervisor'].includes(currentUser.role);
   if(!hasPerm('work_schedule')&&!hasPerm('work_zone')) return '';
@@ -3138,6 +3140,7 @@ async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mo
 // ADMIN TAB
 // ============================================================
 async function renderAdminTab() {
+  var ZH=lang==='zh'; var EN=lang==='en';
   const isAdmin=['admin','boss','manager'].includes(currentUser.role);
   if(!isAdmin){
     document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
