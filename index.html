@@ -1,7 +1,4 @@
-ript>
-</body>
-</html,
-    settlementRpt:'结算报告',monthlyRpt:'月度报告',rolePerm:'角色权限',userMgmt:'用户管理',wkSchedule:'工作时间表',wkZone:'工作区域',attRec:'出勤记录',mgrDash:'管理面板'﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -293,7 +290,7 @@ ript>
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -344,7 +341,7 @@ ript>
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -853,7 +850,19 @@ const T = {
     staffNoDrawer:'收银机由主管/经理管理，请联系他们开启。',
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
-    zoneSaved:'区域已保存。'
+    zoneSaved:'区域已保存。',
+    settlementRpt:'结算报告',monthlyRpt:'月度电邮报告',rolePerm:'角色权限',
+    userMgmt:'用户管理',wkSchedule:'工作时间表',wkZone:'工作区域 (地理围栏)',
+    attRec:'出勤记录',mgrDash:'管理面板',approveSub:'审批提交',
+    loadStaff:'加载员工',dbBackup:'数据备份',noAccess:'无权限',
+    syncing:'🔄 同步中...',syncDone:'✅ 同步完成',
+    days:'天',reports:'份报告',viewBtn:'查看',noLink:'无链接',
+    noSettlement:'暂无结算报告',savePerms:'保存权限',resetPerms:'重置',
+    permsSaved:'✅ 权限已保存！',feature:'功能',
+    recipientEmail:'收件人电邮',monthLabel:'月份',
+    sendReport:'📧 发送月度报告',sendLastMonth:'上月报告',
+    sendEmail:'📧 发送电邮 (需授权MailApp)',
+    reportSentTo:'报告已发送至 ',checkInbox:'（请查收邮件）'
   }
 };
 function t(k) { return T[lang][k] || k; }
