@@ -547,17 +547,61 @@
 <script>
 // UTC+8 timezone helpers
 const _U8=8*3600000;
-function dateKeyUTC8(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});}
-function monthUTC8(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}).slice(0,7);}
+// Reload once on fresh page open to clear any stale state
+(function(){
+  if(!sessionStorage.getItem('_appLoaded')){
+    sessionStorage.setItem('_appLoaded','1');
+    location.reload();
+  }
+})();
+
+// ── Malaysia Internet Time Sync ─────────────────────────────────────────────
+var _mytOffset = 0; // ms offset: server MYT - device local time
+var _mytSynced = false;
+
+function getMYT(){
+  // Returns Date adjusted to Malaysia internet time
+  return new Date(Date.now() + _mytOffset);
+}
+
+async function syncMalaysiaTime(){
+  try{
+    var r = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kuala_Lumpur',{cache:'no-cache'});
+    var d = await r.json();
+    var serverMs = new Date(d.datetime).getTime();
+    _mytOffset = serverMs - Date.now();
+    _mytSynced = true;
+    console.log('MYT synced, offset: '+_mytOffset+'ms');
+  } catch(e){
+    // Fallback: try alternate API
+    try{
+      var r2 = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia%2FKuala_Lumpur',{cache:'no-cache'});
+      var d2 = await r2.json();
+      var serverMs2 = new Date(d2.dateTime).getTime();
+      _mytOffset = serverMs2 - Date.now();
+      _mytSynced = true;
+    } catch(e2){
+      _mytOffset = 0; // use device time
+      console.warn('Time sync failed, using device time');
+    }
+  }
+}
+function dateKeyUTC8(){return getMYT().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});}
+function monthUTC8(){return getMYT().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}).slice(0,7);}
 function nowUTC8(){
-  var s=new Date().toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
-  return s.replace(' ','T')+'+08:00';
+  var s=getMYT().toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
+  return s.replace(' ','T'); // plain MYT — no +08:00
 }
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
 function fmtTimeUTC8(s){
   if(!s||s==='') return '--:--';
   try{
-    var d=new Date(s);
+    var str=String(s);
+    // If no timezone suffix, assume MYT (Asia/Kuala_Lumpur)
+    if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(str)&&!str.includes('Z')&&!str.includes('+')&&!str.includes('-',10)){
+      str=str+'+08:00';
+    }
+    var d=new Date(str);
     if(isNaN(d.getTime())) return '--:--';
     return d.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',hour12:false});
   }catch(e){return '--:--';}
@@ -565,9 +609,12 @@ function fmtTimeUTC8(s){
 function fmtDateTimeUTC8(s){
   if(!s) return '';
   try{
-    var d=new Date(s);
+    var str=String(s);
+    if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(str)&&!str.includes('Z')&&!str.includes('+')&&!str.includes('-',10)){
+      str=str+'+08:00';
+    }
+    var d=new Date(str);
     if(isNaN(d.getTime())) return '';
-    var dt=new Date().toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
     var t=d.toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
@@ -943,7 +990,7 @@ async function syncAttendanceNow(){
       _serverAtt = attArr;
       _serverAttLoaded = true;
       saveData('attendance_records', []); // clear any stale phone data
-      showToast((lang==='en'?'Attendance loaded: ':'Kehadiran dimuatkan: ')+attArr.length+(lang==='en'?' records':' rekod'),'success');
+      showToast(lang==='en'?'✅ SYNC DONE':'✅ SELESAI SYNC','success');
       if(currentTab==='attendance') _renderAttendanceContent();
       if(currentTab==='admin') renderAdminTab();
     } else {
@@ -1131,6 +1178,33 @@ function getAttendanceForUser(username, dateKey){
   });
 }
 
+// ── Auto-logout after 5 minutes of inactivity (except admin) ───────────────
+var _inactTimer = null;
+var INACT_MS = 5 * 60 * 1000; // 5 minutes
+
+function resetInactivityTimer(){
+  if(!currentUser || currentUser.role==='admin') return;
+  clearTimeout(_inactTimer);
+  _inactTimer = setTimeout(function(){
+    if(!currentUser || currentUser.role==='admin') return;
+    showToast(lang==='zh'?'已因无操作自动退出登录':'Auto logged out due to inactivity','error');
+    doLogout();
+  }, INACT_MS);
+}
+
+function startInactivityWatcher(){
+  if(currentUser && currentUser.role==='admin') return;
+  ['click','touchstart','keydown','scroll','touchmove'].forEach(function(ev){
+    document.addEventListener(ev, resetInactivityTimer, {passive:true,capture:true});
+  });
+  resetInactivityTimer();
+}
+
+function stopInactivityWatcher(){
+  clearTimeout(_inactTimer);
+  _inactTimer = null;
+}
+
 // ── Attendance Notification System ──────────────────────────────────────────
 var _notifInterval = null;
 
@@ -1247,6 +1321,7 @@ function toggleNotifications(enabled){
         s.enabled = true;
         saveNotifSettings(s);
         startNotifScheduler();
+  startInactivityWatcher();
         showToast(lang==='en'?'Notifications enabled ✅':'Notifikasi diaktifkan ✅','success');
         renderNotifSettings();
       } else {
@@ -1352,11 +1427,11 @@ function renderMonthlyReportPanel(){
   el.innerHTML=
     '<div class="card" style="margin-top:12px">'
     +'<div class="card-title">📧 '+(EN?'Monthly Email Report':'Laporan E-mel Bulanan')+'</div>'
-    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(EN?'Sends attendance + sales summary for all stores to the specified email(s).':'Menghantar ringkasan kehadiran + jualan semua cawangan ke e-mel yang ditetapkan.')+'</div>'
-    +'<label class="field-label">'+(EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':EN?'Sends attendance + sales summary for all stores to the specified email(s).':'Menghantar ringkasan kehadiran + jualan semua cawangan ke e-mel yang ditetapkan.')+'</div>'
+    +'<label class="field-label">'+(lang==='zh'?'收件人电邮':EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
     +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com\n60123456789  ← WhatsApp number">'+s.emails+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(EN?'Month:':'Bulan:')+'</label>'
+      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':EN?'Month:':'Bulan:')+'</label>'
       +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
@@ -1679,6 +1754,8 @@ async function doLogin() {
   ['submit','records','summary','attendance','log','admin','profile'].forEach(tt=>{
     document.getElementById('tab-'+tt).style.display=tt===_st?'block':'none';
   });
+  // Sync Malaysia internet time
+  syncMalaysiaTime();
   // Start notification scheduler after login
   startNotifScheduler();
   // Clear phone's local attendance data — server is authoritative
@@ -2730,7 +2807,7 @@ async function submitAttendance(type){
       name:currentUser.name,role:currentUser.role,store:currentUser.store,
       type:type,status:'pending',dateKey:dateKeyUTC8(),datetime:nowUTC8(),
       lat:loc.lat,lng:loc.lng,accuracy:loc.accuracy,source:loc.source,
-      remark:remark,deviceId:getDeviceId(),deviceName:getDeviceName(),
+      remark:remark,accuracy:loc.accuracy,gpsSource:loc.source,deviceId:getDeviceId(),deviceName:getDeviceName(),
       userAgent:navigator.userAgent||'',platform:navigator.platform||''
     };
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
@@ -2738,10 +2815,17 @@ async function submitAttendance(type){
       body:JSON.stringify(Object.assign({action:'submitAttendance'},record))
     }).catch(function(e){console.warn('sync fail',e);});
     var zone=nearestLocalZone(record.store,record.lat,record.lng);
-    if(zone&&zone.distanceMeters>zone.radiusMeters){
+    // iOS GPS can have 100-500m error — add accuracy as buffer to allowed radius
+    var gpsBuffer=Math.max(0,(loc.accuracy||0)-20);
+    var zoneRejected=zone&&zone.distanceMeters>(zone.radiusMeters+gpsBuffer);
+    if(zoneRejected){
       record.status='rejected';
-      showAttendanceResult('rejected',label+' Rejected',
-        'Outside allowed zone. '+zone.distanceMeters+'m away (max '+zone.radiusMeters+'m).','');
+      var EN3=lang==='en';
+      var accNote3=loc.accuracy>50?' (GPS ±'+loc.accuracy+'m)':'';
+      showAttendanceResult('rejected',EN3?label+' Rejected':label+' Ditolak',
+        (EN3?'Outside allowed zone. ':'Di luar zon yang dibenarkan. ')
+        +zone.distanceMeters+'m '+(EN3?'away (max ':'jauh (max ')+zone.radiusMeters+'m)'+accNote3+'. '
+        +(EN3?'Try moving to open area and check in again.':'Cuba pindah ke kawasan terbuka dan daftar semula.'),'');
     } else {
       var bound=_getDeviceBound(record.deviceId);
       if(bound&&bound!==currentUser.username.toLowerCase()){
@@ -2770,7 +2854,7 @@ async function submitAttendance(type){
       name:currentUser.name,role:currentUser.role,store:currentUser.store,
       type:type,status:'present',dateKey:dateKeyUTC8(),datetime:nowUTC8(),
       lat:0,lng:0,accuracy:9999,source:'location_error',
-      remark:remark,deviceId:getDeviceId(),deviceName:getDeviceName(),
+      remark:remark,accuracy:loc.accuracy,gpsSource:loc.source,deviceId:getDeviceId(),deviceName:getDeviceName(),
       userAgent:navigator.userAgent||'',platform:navigator.platform||''
     };
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
@@ -2789,15 +2873,28 @@ async function submitAttendance(type){
 function getBestLocation(){
   return new Promise(function(resolve){
     if(!navigator.geolocation){_ipLoc(resolve);return;}
+    var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent||'');
+    // iOS needs high accuracy enabled for GPS (not WiFi triangulation)
+    var opts1={enableHighAccuracy:true, timeout:isIOS?25000:15000, maximumAge:0};
+    var opts2={enableHighAccuracy:false,timeout:8000, maximumAge:60000};
+    var done=false;
+    // Try high-accuracy GPS first
     navigator.geolocation.getCurrentPosition(
-      function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0),source:'network'});},
-      function(){
-        navigator.geolocation.getCurrentPosition(
-          function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0),source:'gps'});},
-          function(){_ipLoc(resolve);},
-          {enableHighAccuracy:true,timeout:20000,maximumAge:0});
+      function(p){
+        if(done) return; done=true;
+        resolve({lat:p.coords.latitude,lng:p.coords.longitude,
+          accuracy:Math.round(p.coords.accuracy||0),source:'gps'});
       },
-      {enableHighAccuracy:false,timeout:8000,maximumAge:300000});
+      function(){
+        if(done) return; done=true;
+        // Fallback to network location
+        navigator.geolocation.getCurrentPosition(
+          function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude,
+            accuracy:Math.round(p.coords.accuracy||0),source:'network'});},
+          function(){_ipLoc(resolve);},
+          opts2);
+      },
+      opts1);
   });
 }
 function _ipLoc(resolve){
@@ -2934,9 +3031,8 @@ function renderOperationsDashboard(){
   const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
   const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
   const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">Manager Dashboard</div>
-    <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+  return `<div class="card"><div class="card-title">${ZH?'管理面板':'Manager Dashboard'}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     ${hasPerm('approve_sales')?`<div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>`:''}
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
@@ -3213,7 +3309,7 @@ async function changeCurrentUserPin() {
 // LOGOUT & HELPERS
 // ============================================================
 function doLogout() {
-  stopNotifScheduler(); currentUser=null;
+  stopNotifScheduler(); stopInactivityWatcher(); currentUser=null;
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
