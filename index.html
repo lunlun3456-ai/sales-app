@@ -290,18 +290,18 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.0.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
 
     <div class="input-wrap">
       <label class="field-label">Username 用户名</label>
-      <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off">
+      <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off" onkeydown="if(event.key==='Enter') document.getElementById('login-pin').focus()">
     </div>
     <div class="input-wrap">
       <label class="field-label">PIN (6 digits 6位密码)</label>
-      <input type="password" id="login-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
+      <input type="password" id="login-pin" maxlength="6" placeholder="••••••" inputmode="numeric" onkeydown="if(event.key==='Enter') doLogin()">
     </div>
     <button class="btn" onclick="doLogin()" id="login-btn">Login</button>
     <button class="btn secondary" onclick="biometricLogin()" id="biometric-login-btn" style="margin-top:10px;display:none">Use Face ID / Fingerprint</button>
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.0.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
