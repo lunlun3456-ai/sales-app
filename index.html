@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+ript>
+</body>
+</html,
+    settlementRpt:'结算报告',monthlyRpt:'月度报告',rolePerm:'角色权限',userMgmt:'用户管理',wkSchedule:'工作时间表',wkZone:'工作区域',attRec:'出勤记录',mgrDash:'管理面板'﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -290,7 +293,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">V4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +344,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">V4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -801,7 +804,7 @@ const T = {
     zoneSaved:'Zone saved.'  },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
-    log:'日志', admin:'管理', me:'我的',
+    log:'日志', admin:'管理后台', me:'我的',
     submitCard:'输入 / 更新销售额', cash:'现金销额', qr:'扫码销额', card:'刷卡销额', bank:'银行转账',
     totalSales:'总销售额', submitBtn:'确认提交并同步', remark:'备注（选填）',
     recordsTab:'销售记录', noRecords:'无匹配记录',
@@ -940,7 +943,7 @@ function renderSettlementReports(){
     return r.store===currentUser.store;
   });
   visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
-  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+('No settlement reports yet')+'</p></div>';
+  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(ZH?'暂无结算报告':'No settlement reports yet')+'</p></div>';
   // Group by store
   var byStore={};
   visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
@@ -950,12 +953,12 @@ function renderSettlementReports(){
     html+='<div class="card" style="margin-bottom:12px">'
       +'<div class="card-title" style="display:flex;align-items:center;gap:8px">'
         +'<span>🏪</span><span>'+store+'</span>'
-        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
+        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+(ZH?'份报告':'report(s)')+'</span>'
       +'</div>';
     rows.forEach(function(r){
       html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
         +'<div>'
-          +'<div style="font-size:13px;font-weight:700">📅 '+r.dateKey+'</div>'
+          +'<div style="font-size:13px;font-weight:700">📅 '+String(r.dateKey||'').slice(0,10)+'</div>'
           +'<div style="font-size:11px;color:var(--text2)">'
             +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
             +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
@@ -1006,20 +1009,20 @@ async function syncAttendanceNow(){
 // PERMISSIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
-  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
-  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
-  { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
-  { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
-  { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
-  { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
-  { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
-  { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
-  { key:'work_schedule',    label:'Work Schedule',          bm:'Jadual Kerja' },
-  { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
-  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
-  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
-  { key:'db_backup',        label:'Database Backup',        bm:'Sandaran Data' },
-  { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
+  { key:'submit_sales',     label:'Update Sales',           zh:'更新销售' },
+  { key:'confirm_daily',    label:'Confirm Daily Sales',    zh:'确认每日销售' },
+  { key:'view_records',     label:'View Records',           zh:'查看记录' },
+  { key:'view_summary',     label:'View Summary',           zh:'查看汇总' },
+  { key:'view_admin',       label:'Admin Panel',            zh:'管理后台' },
+  { key:'attendance',       label:'Attendance Check In/Out',zh:'出勤打卡' },
+  { key:'cash_drawer',      label:'Cash Drawer',            zh:'收银抽屉' },
+  { key:'approve_sales',    label:'Approve Submissions',    zh:'审批提交' },
+  { key:'work_schedule',    label:ZH?'工作时间表':'Work Schedule',          zh:'工作时间表' },
+  { key:'work_zone',        label:'Work Zone',              zh:'工作区域' },
+  { key:'settlement_report',label:'Settlement Reports',     zh:'结算报告' },
+  { key:'user_mgmt',        label:'User Management',        zh:'用户管理' },
+  { key:'db_backup',        label:ZH?'数据备份':'Database Backup',        zh:'数据备份' },
+  { key:'notifications',    label:'Notifications',          zh:'通知' },
 ];
 
 const DEFAULT_PERMS = {
@@ -1058,7 +1061,7 @@ function renderPermissionsPanel(){
     +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">'
     // Header row
     +'<thead><tr style="background:#1e3a8a">'
-      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(EN?'Feature':'Fungsi')+'</th>'
+      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(ZH?'功能':'Feature')+'</th>'
       +roles.map(function(r){
         return '<th style="padding:8px 4px;text-align:center;color:white;font-weight:800;min-width:60px">'+roleLabels[r]+'</th>';
       }).join('')
@@ -1069,7 +1072,7 @@ function renderPermissionsPanel(){
     var bg = i%2===0 ? '#f8fafc' : 'white';
     html += '<tr style="background:'+bg+'">'
       +'<td style="padding:7px 6px;font-weight:600;color:var(--text)">'
-        +'<div>'+f.label+'</div>'
+        +'<div>'+(ZH&&f.zh?f.zh:f.label)+'</div>'
         +'<div style="font-size:10px;color:var(--text2)">'+f.bm+'</div>'
       +'</td>'
       +roles.map(function(r){
@@ -2200,7 +2203,7 @@ function renderRecordsTab() {
     </div>`;
 
   var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
-    +'<h2 style="font-size:16px;font-weight:800">📎 '+('Settlement Reports')+'</h2>'
+    +'<h2 style="font-size:16px;font-weight:800">📎 '+(''+(ZH?'结算报告':'Settlement Reports')+'')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
   +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
@@ -3032,7 +3035,7 @@ function renderOperationsDashboard(){
   const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
   const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
   const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">${ZH?'管理面板':'Manager Dashboard'}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+  return `<div class="card"><div class="card-title">${ZH?'管理面板':ZH?'管理面板':'Manager Dashboard'}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     ${hasPerm('approve_sales')?`<div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>`:''}
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
