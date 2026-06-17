@@ -691,7 +691,7 @@ function saveWorkSchedules(arr){ cachedWorkSchedules = arr || []; saveData('work
 function saveBackups(arr){ cachedBackups = arr || []; saveData('backup_log', cachedBackups); }
 function saveUserDevices(arr){ cachedUserDevices = arr || []; saveData('user_devices', cachedUserDevices); }
 function isExecutiveRole(role){ return ['boss','admin','manager'].includes(String(role||'').toLowerCase()); }
-function canManageUsers(){ return currentUser && currentUser.role==='admin'; }
+function canManageUsers(){ return hasPerm('user_mgmt'); }
 function isCashMovementApproved(r){ return !r.status || r.status === 'approved'; }
 function isSalesLocked(store,dateKey){ return getSettlementLocks().some(r=>String(r.store)===String(store)&&String(r.dateKey)===String(dateKey)&&String(r.locked).toLowerCase()!=='false'); }
 
@@ -995,6 +995,7 @@ function hasPerm(feature){
 }
 
 function renderPermissionsPanel(){
+  if(!currentUser||currentUser.role!=='admin') return;
   var el = document.getElementById('perms-panel');
   if(!el) return;
   var EN = lang==='en';
@@ -1047,6 +1048,7 @@ function renderPermissionsPanel(){
 }
 
 function savePermissionsFromUI(){
+  if(!currentUser||currentUser.role!=='admin'){showToast('Admin only','error');return;}
   var p = getPerms();
   document.querySelectorAll('.perm-cb').forEach(function(cb){
     var role = cb.dataset.role, feat = cb.dataset.feature;
@@ -1273,6 +1275,7 @@ function saveNotifTime(t){
 function renderNotifSettings(){
   var el = document.getElementById('notif-settings-panel');
   if(!el) return;
+  if(!hasPerm('notifications')){ el.innerHTML=''; return; }
   var s = getNotifSettings();
   var EN = lang==='en';
   var supported = 'Notification' in window;
@@ -1804,10 +1807,10 @@ function renderSubmitTab() {
       </div>
             <div id="sales-lock-note"></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-        <button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
+        ${hasPerm('submit_sales')?`<button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
           style="font-size:17px">
           📝 ${lang==='en'?'Update Sales':'Kemaskini Jualan'}
-        </button>
+        </button>`:''}
         ${hasPerm('confirm_daily')
           ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
               📎 ${lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)'}
@@ -2099,7 +2102,7 @@ function renderRecordsTab() {
   }
   if(isExec && activeRecordStoreFilter!=='all') cdFiltered=cdFiltered.filter(r=>r.store===activeRecordStoreFilter);
 
-  const cdHtml = cdFiltered.length===0 ? '' : `
+  const cdHtml = !hasPerm('cash_drawer') ? '' : cdFiltered.length===0 ? '' : `
     <div style="margin-top:14px">
       <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
         🗄️ ${lang==='zh'?'收银机现金盘点':'Cash in Drawer'}
@@ -2119,10 +2122,10 @@ function renderRecordsTab() {
         </div>`).join('')}
     </div>`;
 
-  var _settHtml='<div class="card-header-flex" style="margin-top:16px">'
+  var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
     +'<h2 style="font-size:16px;font-weight:800">📎 '+(lang==='en'?'Settlement Reports':'Laporan Penyelesaian')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
-  +'</div>'+renderSettlementReports();
+  +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
     <div class="card-header-flex">
       <h2 style="font-size:18px;font-weight:900">${t('recordsTab')}</h2>
@@ -2934,7 +2937,7 @@ function renderOperationsDashboard(){
   return `<div class="card"><div class="card-title">Manager Dashboard</div>
     <div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Present</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Absent</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
-    <div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>
+    ${hasPerm('approve_sales')?`<div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>`:''}
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
     ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
@@ -2967,11 +2970,11 @@ function renderAttendanceReport(users){ const days=attendanceReportMode==='weekl
 function renderZoneScheduleTools(branches,users){
   var isAdmin=currentUser.role==='admin';
   var canSched=['admin','manager','supervisor'].includes(currentUser.role);
-  if(!isAdmin&&!canSched) return '';
+  if(!hasPerm('work_schedule')&&!hasPerm('work_zone')) return '';
   // For branch supervisor/manager, only show their own store
   var schedBranches=isAdmin?branches.filter(function(s){return s!=='HQ';})
                            :[currentUser.store];
-  var zoneSection=isAdmin?`
+  var zoneSection=hasPerm('work_zone')?`
     <div class="card-title">Work Zone (Geofence)</div>
     <div class="ops-grid" style="margin-top:10px">
       <div><label class="field-label">Branch</label>
@@ -3009,7 +3012,8 @@ function renderZoneScheduleTools(branches,users){
         <input type="time" id="sched-start" value="10:00">
         <input type="time" id="sched-end" value="22:00"></div></div>
     <button class="btn success" onclick="saveWorkScheduleFromForm()">Save Work Schedule</button>`;
-  return `<div class="divider"></div>${zoneSection}${schedSection}`;}
+  var schedSection2=hasPerm('work_schedule')?schedSection:'';
+  return `<div class="divider"></div>${zoneSection}${schedSection2}`;}
 async function saveWorkZoneFromForm(){ const payload={action:'saveWorkZone',role:currentUser.role,updatedBy:currentUser.name,store:document.getElementById('zone-store').value,latitude:document.getElementById('zone-lat').value,longitude:document.getElementById('zone-lng').value,radiusMeters:document.getElementById('zone-radius').value,status:'active'}; if(!payload.latitude||!payload.longitude){showToast('Enter latitude and longitude.','error');return;} await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); showToast('Zone saved.','success'); triggerSyncRefresh(); }
 async function saveWorkScheduleFromForm(){
   var storeEl=document.getElementById('sched-store');
@@ -3069,9 +3073,9 @@ async function renderAdminTab() {
     ${renderOperationsDashboard()}
     ${canManageUsers()?pendingHtml:''}
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}
-    <div id="perms-panel" style="margin-top:8px"></div>
+    ${currentUser.role==='admin'?'<div id="perms-panel" style="margin-top:8px"></div>':''}
     <div id="monthly-report-panel"></div>`;
-  renderPermissionsPanel();
+  if(currentUser.role==='admin') renderPermissionsPanel();
   renderMonthlyReportPanel();
 }
 async function approveUser(username) {
