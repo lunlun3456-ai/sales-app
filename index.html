@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.3beta</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.3beta</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -559,6 +559,26 @@ const _U8=8*3600000;
 var _mytOffset = 0; // ms offset: server MYT - device local time
 var _mytSynced = false;
 
+function cleanDateKey(s){
+  // Convert any date format to YYYY-MM-DD in MYT
+  if(!s) return '';
+  var str=String(s);
+  if(str.length<=10) return str.slice(0,10);
+  // Has time component — parse and convert to MYT date
+  try{ return new Date(str).toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); }catch(e){ return str.slice(0,10); }
+}
+
+function cleanDateTime(s){
+  // Convert ISO datetime to readable MYT date + time: '2026-06-17 09:15'
+  if(!s) return '';
+  try{
+    var d=new Date(String(s));
+    if(isNaN(d.getTime())) return String(s).slice(0,16);
+    var t=d.toLocaleString('sv-SE',{timeZone:'Asia/Kuala_Lumpur'});
+    return t.slice(0,16); // 'YYYY-MM-DD HH:MM'
+  }catch(e){ return String(s).slice(0,16); }
+}
+
 function getMYT(){
   // Returns Date adjusted to Malaysia internet time
   return new Date(Date.now() + _mytOffset);
@@ -596,12 +616,7 @@ function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).g
 function fmtTimeUTC8(s){
   if(!s||s==='') return '--:--';
   try{
-    var str=String(s);
-    // If no timezone suffix, assume MYT (Asia/Kuala_Lumpur)
-    if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(str)&&!str.includes('Z')&&!str.includes('+')&&!str.includes('-',10)){
-      str=str+'+08:00';
-    }
-    var d=new Date(str);
+    var d=new Date(String(s));
     if(isNaN(d.getTime())) return '--:--';
     return d.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',hour12:false});
   }catch(e){return '--:--';}
@@ -988,11 +1003,11 @@ function renderSettlementReports(){
     rows.forEach(function(r){
       html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
         +'<div>'
-          +'<div style="font-size:13px;font-weight:700">📅 '+r.dateKey+'</div>'
+          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+'</div>'
           +'<div style="font-size:11px;color:var(--text2)">'
             +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
             +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
-            +(r.datetime?fmtDateTimeUTC8(r.datetime):'')
+            +(r.datetime?cleanDateTime(r.datetime):'')
           +'</div>'
           +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
         +'</div>'
@@ -2168,7 +2183,7 @@ function renderRecordsTab() {
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
-            <div class="record-sub">${r.dateKey||''}</div>
+            <div class="record-sub">${cleanDateKey(r.dateKey)}</div>
           </div>
         </div>`;
     }).join('');
@@ -2227,7 +2242,7 @@ function renderRecordsTab() {
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:20px;font-weight:900;color:#92400e">RM ${parseFloat(r.amount||0).toFixed(2)}</div>
-            <div class="record-sub">${r.dateKey||''}</div>
+            <div class="record-sub">${cleanDateKey(r.dateKey)}</div>
           </div>
         </div>`).join('')}
     </div>`;
@@ -2564,7 +2579,7 @@ function renderLogEntries() {
           <span style="font-size:11px;color:var(--text2);white-space:nowrap">${ts}</span>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:3px">
-          📅 ${r.dateKey||''} &nbsp;·&nbsp; 👤 ${r.submitter||''} <span class="role-tag ${r.role||'staff'}" style="margin-left:2px">${t(r.role||'staff')}</span>
+          📅 ${cleanDateKey(r.dateKey)} &nbsp;·&nbsp; 👤 ${r.submitter||''} <span class="role-tag ${r.role||'staff'}" style="margin-left:2px">${t(r.role||'staff')}</span>
         </div>
         ${diffHtml}
         ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:3px">📝 ${r.remark}</div>`:''}
@@ -3045,7 +3060,7 @@ function attendanceRowHtml(r){
         +' <span class="status-pill status-'+(r.status||'present')+'">'+String(r.status||'present').replace('_',' ')+'</span>'
         +resetBtn+editBtn
       +'</div>'
-      +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?fmtDateTimeUTC8(r.datetime):'')+'<br>'
+      +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?cleanDateTime(r.datetime):'')+'<br>'
         +(r.lat?('📍 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' ±'+(r.accuracy||'')+'m'):'')
       +'</div>'
       +(r.remark?'<div style="font-size:12px;color:var(--accent);margin-top:2px">'+r.remark+'</div>':'')
@@ -3084,7 +3099,7 @@ function approvalRowHtml(r){
     +'<div style="flex:1">'
       +'<div style="font-size:13px;font-weight:800">'+typeLabel+' — '+(r.store||'')+'</div>'
       +'<div style="font-size:11px;color:var(--text2)">'+(r.name||r.submitter||'')
-        +' · '+(r.dateKey||r.datetime||'')+' · RM '+amtStr+'</div>'
+        +' · '+cleanDateKey(r.dateKey||r.datetime)+' · RM '+amtStr+'</div>'
       +(r.remark?'<div style="font-size:10px;color:var(--accent)">'+r.remark+'</div>':'')
     +'</div>'
     +'<div style="display:flex;gap:6px">'
