@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v.4.7.01</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v.4.7.01</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -691,16 +691,16 @@ function showAttendanceResult(kind,title,message,details,attType){
   var greetHtml='';
   if(kind==='success'){
     var hr=parseInt(new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',hour12:false}));
-    var greeting=hr<12?(EN?'GOOD MORNING':'SELAMAT PAGI'):hr<18?(EN?'GOOD AFTERNOON':'SELAMAT TENGAH HARI'):(EN?'GOOD EVENING':'SELAMAT PETANG');
+    var greeting=hr<12?(EN?ZH?'早上好':'GOOD MORNING':'SELAMAT PAGI'):hr<18?(EN?ZH?'下午好':'GOOD AFTERNOON':'SELAMAT TENGAH HARI'):(EN?ZH?'晚上好':'GOOD EVENING':'SELAMAT PETANG');
     if(attType==='check_in'){
       greetHtml='<div style="font-size:42px;margin-bottom:6px">☀️</div>'
         +'<div style="font-size:22px;font-weight:900;color:#1e3a8a;letter-spacing:.5px;margin-bottom:4px">'+greeting+'</div>'
         +'<div style="font-size:18px;font-weight:900;color:#1e3a8a;margin-bottom:6px">'+(currentUser.name||currentUser.username).toUpperCase()+'!</div>'
-        +'<div style="font-size:15px;color:#10b981;font-weight:700;margin-bottom:12px">'+('Have a nice day 😊')+'</div>';
+        +'<div style="font-size:15px;color:#10b981;font-weight:700;margin-bottom:12px">'+(ZH?'祝您工作愉快 😊':'Have a nice day 😊')+'</div>';
     } else if(attType==='check_out'){
       greetHtml='<div style="font-size:42px;margin-bottom:6px">🌙</div>'
-        +'<div style="font-size:16px;font-weight:900;color:#f59e0b;margin-bottom:6px;line-height:1.5">'+('Thanks for all your hard work today!')+'</div>'
-        +'<div style="font-size:14px;color:#64748b;font-weight:600;margin-bottom:12px">'+('Have a great evening and rest up 🌟')+'</div>';
+        +'<div style="font-size:16px;font-weight:900;color:#f59e0b;margin-bottom:6px;line-height:1.5">'+(ZH?'感谢您今天的辛勤工作！':'Thanks for all your hard work today!')+'</div>'
+        +'<div style="font-size:14px;color:#64748b;font-weight:600;margin-bottom:12px">'+(ZH?'祝您晚上愉快，好好休息 🌟':'Have a great evening and rest up 🌟')+'</div>';
     }
   }
   var icon=kind==='rejected'?'❌':kind==='pending'?'⏳':(attType==='check_in'?'✅':'🟡');
@@ -759,12 +759,12 @@ const T = {
     adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
     submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
     confirmTitle:'Confirm Submission', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
+    staff:'Staff', supervisor:'Supervisor', manager:ZH?'经理':'Manager', boss:'Boss', admin:'Admin',
     filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
     selectMonthLabel:'Month Filter',
     pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
     approveBtn:'Approve ✓', rejectBtn:'Reject ✗',
-    addUser:'+ Add User', editUser:'Edit', deleteUser:'Delete', userMgmt:'User Management',
+    addUser:ZH?'+ 添加用户':'+ Add User', editUser:ZH?'编辑':'Edit', deleteUser:ZH?'删除':'Delete', userMgmt:ZH?'用户管理':'User Management',
     approvedMsg:'User approved!', rejectedMsg:'Request rejected.',
     userSaved:'User saved!', userDeleted:'User deleted.',
     allSubmittedTitle:'All Branches Submitted!',
@@ -780,7 +780,7 @@ const T = {
     cashDrawer:'Cash in Drawer',
     cashDrawerDesc:'Record physical cash counted in the register at end of day',
     cashDrawerBtn:'Submit Cash Count',
-    cashDrawerNote:'Note (optional)',
+    cashDrawerNote:ZH?'备注（选填）':'Note (optional)',
     cashDrawerConfirmTitle:'Confirm Cash in Drawer',
     cashDrawerSubmitted:'Cash in Drawer submitted ✓',
     logTab:'Sales Audit Log', logDesc:'Immutable history of all submissions & edits',
@@ -940,7 +940,7 @@ function renderSettlementReports(){
     return r.store===currentUser.store;
   });
   visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
-  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+('No settlement reports yet')+'</p></div>';
+  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(ZH?'暂无结算报告':'No settlement reports yet')+'</p></div>';
   // Group by store
   var byStore={};
   visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
@@ -963,7 +963,7 @@ function renderSettlementReports(){
           +'</div>'
           +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
         +'</div>'
-        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+('View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+('No link')+'</span>')
+        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(ZH?'查看':'View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+(ZH?'无链接':'No link')+'</span>')
       +'</div>';
     });
     html+='</div>';
@@ -990,7 +990,7 @@ async function syncAttendanceNow(){
       _serverAtt = attArr;
       _serverAttLoaded = true;
       saveData('attendance_records', []); // clear any stale phone data
-      showToast(lang==='en'?'✅ SYNC DONE':'✅ SELESAI SYNC','success');
+      showToast(lang==='en'?ZH?'✅ 同步完成':'✅ SYNC DONE':'✅ SELESAI SYNC','success');
       if(currentTab==='attendance') _renderAttendanceContent();
       if(currentTab==='admin') renderAdminTab();
     } else {
@@ -1006,19 +1006,19 @@ async function syncAttendanceNow(){
 // PERMISSIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
-  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
-  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
+  { key:'submit_sales',     label:ZH?'更新销售':'Update Sales',           bm:'Kemaskini Jualan' },
+  { key:'confirm_daily',    label:ZH?'确认每日销售':'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
   { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
   { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
   { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
   { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
   { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
   { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
-  { key:'work_schedule',    label:'Work Schedule',          bm:'Jadual Kerja' },
+  { key:'work_schedule',    label:ZH?'工作时间表':'Work Schedule',          bm:'Jadual Kerja' },
   { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
-  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
-  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
-  { key:'db_backup',        label:'Database Backup',        bm:'Sandaran Data' },
+  { key:'settlement_report',label:ZH?'结算报告':'Settlement Reports',     bm:'Laporan Penyelesaian' },
+  { key:'user_mgmt',        label:ZH?'用户管理':'User Management',        bm:'Pengurusan Pengguna' },
+  { key:'db_backup',        label:ZH?'数据备份':'Database Backup',        bm:'Sandaran Data' },
   { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
 ];
 
@@ -1048,17 +1048,17 @@ function renderPermissionsPanel(){
   var EN = lang==='en';
   var p = getPerms();
   var roles = ['staff','supervisor','manager','admin','boss'];
-  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
+  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:ZH?'经理':'Manager', admin:'Admin', boss:'Boss' };
   var html =
-    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?'Role Permissions':'Kebenaran Peranan')+'</div>'
+    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?ZH?'角色权限':'Role Permissions':'Kebenaran Peranan')+'</div>'
     +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
-      +('Tick to allow a role to access that feature. Changes take effect immediately.')
+      +(ZH?'勾选允许该角色访问此功能。更改立即生效。':'Tick to allow a role to access that feature. Changes take effect immediately.')
     +'</div>'
     +'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
     +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">'
     // Header row
     +'<thead><tr style="background:#1e3a8a">'
-      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(EN?'Feature':'Fungsi')+'</th>'
+      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(EN?ZH?'功能':'Feature':'Fungsi')+'</th>'
       +roles.map(function(r){
         return '<th style="padding:8px 4px;text-align:center;color:white;font-weight:800;min-width:60px">'+roleLabels[r]+'</th>';
       }).join('')
@@ -1090,7 +1090,7 @@ function renderPermissionsPanel(){
       +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
         +(EN?'↺ Reset':'↺ Reset')+'</button>'
     +'</div>'
-    +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?'Permissions saved!':'Kebenaran disimpan!')+'</div>';
+    +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?ZH?'权限已保存！':'Permissions saved!':'Kebenaran disimpan!')+'</div>';
   el.innerHTML = html;
 }
 
@@ -1355,14 +1355,14 @@ function renderNotifSettings(){
   var EN = lang==='en';
   var supported = 'Notification' in window;
   var perm = supported ? Notification.permission : 'unsupported';
-  var permLabel = perm==='granted'?'✅ '+(EN?'Allowed':'Dibenarkan'):perm==='denied'?'❌ '+(EN?'Blocked':'Disekat'):'⏳ '+('Not set');
+  var permLabel = perm==='granted'?'✅ '+(EN?ZH?'已允许':'Allowed':'Dibenarkan'):perm==='denied'?'❌ '+(EN?ZH?'已屏蔽':'Blocked':'Disekat'):'⏳ '+(ZH?'未设置':'Not set');
   el.innerHTML =
     '<div class="card" style="margin-bottom:10px">'
-      +'<div class="card-title">🔔 '+('Check-In Notifications')+'</div>'
-      +(supported?'':' <div style="color:#ef4444;font-size:12px">'+('Not supported on this browser/device')+'</div>')
+      +'<div class="card-title">🔔 '+(ZH?'签到通知':'Check-In Notifications')+'</div>'
+      +(supported?'':' <div style="color:#ef4444;font-size:12px">'+(ZH?'此浏览器/设备不支持':'Not supported on this browser/device')+'</div>')
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">'
         +'<div>'
-          +'<div style="font-size:13px;font-weight:700">'+('Enable Notifications')+'</div>'
+          +'<div style="font-size:13px;font-weight:700">'+(ZH?'启用通知':'Enable Notifications')+'</div>'
           +'<div style="font-size:11px;color:var(--text2)">'+permLabel+'</div>'
         +'</div>'
         +'<label style="position:relative;display:inline-block;width:44px;height:24px">'
@@ -1374,14 +1374,14 @@ function renderNotifSettings(){
           +'</span></label>'
       +'</div>'
       +'<div style="margin-top:8px">'
-        +'<label class="field-label">'+('Remind if not checked in by:')+'</label>'
+        +'<label class="field-label">'+(ZH?'未签到提醒时间:':'Remind if not checked in by:')+'</label>'
         +'<div style="display:flex;align-items:center;gap:8px">'
           +'<input type="time" id="notif-time" value="'+s.reminderTime+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:15px">'
-          +'<button class="btn success" style="padding:8px 14px;font-size:13px" onclick="saveNotifTime(document.getElementById(\'notif-time\').value)">'+('Save')+'</button>'
+          +'<button class="btn success" style="padding:8px 14px;font-size:13px" onclick="saveNotifTime(document.getElementById(\'notif-time\').value)">'+(ZH?'保存':'Save')+'</button>'
         +'</div>'
       +'</div>'
       +'<div style="font-size:11px;color:var(--text2);margin-top:6px">'
-        +('Checks every 5 minutes. Admin/Manager sees all staff not checked in.')
+        +(ZH?'每5分钟检查一次。管理员/经理可查看所有未签到员工。':'Checks every 5 minutes. Admin/Manager sees all staff not checked in.')
       +'</div>'
     +'</div>';
 }
@@ -1426,12 +1426,12 @@ function renderMonthlyReportPanel(){
   })();
   el.innerHTML=
     '<div class="card" style="margin-top:12px">'
-    +'<div class="card-title">📧 '+('Monthly Email Report')+'</div>'
-    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':'Sends attendance + sales summary for all stores to the specified email(s).')+'</div>'
-    +'<label class="field-label">'+(lang==='zh'?'收件人电邮':EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
+    +'<div class="card-title">📧 '+(ZH?'月度电邮报告':'Monthly Email Report')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':ZH?'向指定邮箱发送所有门店出勤及销售摘要。':'Sends attendance + sales summary for all stores to the specified email(s).')+'</div>'
+    +'<label class="field-label">'+(lang==='zh'?'收件人电邮':EN?ZH?'收件人电邮':'Recipient Email(s)':'E-mel Penerima')+'</label>'
     +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com\n60123456789  ← WhatsApp number">'+s.emails+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':'Month:')+'</label>'
+      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':ZH?'月份:':'Month:')+'</label>'
       +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
@@ -1442,7 +1442,7 @@ function renderMonthlyReportPanel(){
       +'<button id="report-send-btn" class="btn secondary" style="font-size:13px;padding:10px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'
         +('📧 Send Email (if GAS MailApp authorised)')+'</button>'
     +'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+('Tip: Schedule a monthly reminder to send this on the 1st of each month.')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+(ZH?'提示：设置每月提醒，在每月1日发送此报告。':'Tip: Schedule a monthly reminder to send this on the 1st of each month.')+'</div>'
   +'</div>';
 }
 
@@ -1478,7 +1478,7 @@ function downloadMonthlyExcel(month){
   var d=buildMonthlyData(month);
   var wb=XLSX.utils.book_new();
   // ── Sheet 1: Sales Summary ──────────────────────────────────────────
-  var salesRows=[['Store','Total Sales (RM)',
+  var salesRows=[[ZH?'门店':'Store',ZH?'总销售额 (RM)':'Total Sales (RM)',
     'Cash','QR','Card','Bank Transfer','Sales Days']];
   var grandTotal=0;
   Object.keys(d.storeMap).sort().forEach(function(store){
@@ -1492,8 +1492,8 @@ function downloadMonthlyExcel(month){
   ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws1,'Sales Summary');
   // ── Sheet 2: Attendance Summary ────────────────────────────────────
-  var attRows=[['Store','Staff Name',
-    'Days Present',lang==='en'?'Late':'Lambat']];
+  var attRows=[[ZH?'门店':'Store','Staff Name',
+    ZH?'出勤天数':'Days Present',lang==='en'?'Late':'Lambat']];
   Object.keys(d.attMap).sort().forEach(function(store){
     Object.values(d.attMap[store]).forEach(function(u){
       attRows.push([store,u.name,u.days,u.late]);
@@ -1504,7 +1504,7 @@ function downloadMonthlyExcel(month){
   XLSX.utils.book_append_sheet(wb,ws2,'Attendance');
   // ── Sheet 3: Raw Sales Data ────────────────────────────────────────
   var rawSales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
-  var rawRows=[['Date','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
+  var rawRows=[['Date',ZH?'门店':'Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
   rawSales.forEach(function(r){
     rawRows.push([r.dateKey||'',r.store||'',parseFloat(r.total||0).toFixed(2),
       parseFloat(r.cash||0).toFixed(2),parseFloat(r.qr||0).toFixed(2),
@@ -1549,7 +1549,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.6.2_');
+  lines.push('_Daily Sales Reporter v4.7.1_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1658,11 +1658,11 @@ function showRegisterPopup(username){
   ov.innerHTML=
     '<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:52px;margin-bottom:8px">🔍</div>'
-    +'<div class="modal-title" style="color:#ef4444">'+('Username Not Found')+'</div>'
+    +'<div class="modal-title" style="color:#ef4444">'+(ZH?'找不到用户名':'Username Not Found')+'</div>'
     +'<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin:12px 0">'
       +'<div style="font-size:14px;font-weight:700;color:#334155">"'+username+'"</div>'
     +'</div>'
-    +'<div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:8px">'+('Kindly register before log in')+'</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:8px">'+(ZH?'请先注册后再登录':'Kindly register before log in')+'</div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:16px">'+('Your account does not exist. Please register first and wait for Admin approval.')+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
       +'<button class="btn success" style="font-size:15px;padding:12px" onclick="document.getElementById(\'reg-popup\').remove();document.querySelector(\'[onclick*=showRegister\')?.click()||showRegisterModal()">'
@@ -1677,7 +1677,7 @@ function showPendingPopup(username){
   ov.innerHTML=
     '<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:52px;margin-bottom:8px">⏳</div>'
-    +'<div class="modal-title" style="color:#f59e0b">'+(EN?'Account Pending Approval':'Akaun Menunggu Kelulusan')+'</div>'
+    +'<div class="modal-title" style="color:#f59e0b">'+(EN?ZH?'账号待审核':'Account Pending Approval':'Akaun Menunggu Kelulusan')+'</div>'
     +'<div style="background:#fffbeb;border-radius:10px;padding:12px 14px;margin:12px 0">'
       +'<div style="font-size:13px;font-weight:700;color:#92400e">@'+username+'</div>'
       +'<div style="font-size:12px;color:#92400e;margin-top:4px">'+('Your registration is being reviewed by Admin')+'</div>'
@@ -1858,11 +1858,11 @@ function renderSubmitTab() {
     <div class="card">
       <div class="card-title">${t('submitCard')}</div>
       <div class="input-wrap">
-        <label class="field-label">${lang==='zh'?'目标日期':'Target Date'}</label>
+        <label class="field-label">${lang==='zh'?'目标日期':ZH?'日期':'Target Date'}</label>
         ${dateInputHtml}
       </div>
       <div class="input-wrap">
-        <label class="field-label">🏪 ${lang==='zh'?'门店':'Store'}</label>
+        <label class="field-label">🏪 ${lang==='zh'?'门店':ZH?'门店':'Store'}</label>
         ${storeOptions}
       </div>
       <!-- Hidden fields kept for compatibility -->
@@ -1871,13 +1871,13 @@ function renderSubmitTab() {
       <input type="hidden" id="s-card" value="0">
       <input type="hidden" id="s-bank" value="0">
       <div class="input-wrap">
-        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${'Total Sales (RM)'}</label>
+        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${ZH?'总销售额 (RM)':'Total Sales (RM)'}</label>
         <div class="amount-input-wrap" style="font-size:20px"><span class="amount-prefix" style="font-size:18px">RM</span>
           <input type="number" class="amount-input" id="s-total-main" placeholder="0.00" min="0" step="0.01"
             inputmode="decimal" style="font-size:22px;font-weight:900" oninput="updateTotalFromMain()">
         </div>
       </div>
-      <div style="margin-top:10px;padding:14px;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#bfdbfe;letter-spacing:.5px;margin-bottom:4px">${lang==='en'?'TOTAL SALES':'JUMLAH JUALAN'}</div><div id="live-total" style="font-size:32px;font-weight:900;color:white;letter-spacing:1px">RM 0.00</div></div>
+      <div style="margin-top:10px;padding:14px;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#bfdbfe;letter-spacing:.5px;margin-bottom:4px">${lang==='en'?ZH?'总销售额':'TOTAL SALES':ZH?'总销售额':'TOTAL SALES'}</div><div id="live-total" style="font-size:32px;font-weight:900;color:white;letter-spacing:1px">RM 0.00</div></div>
       <div class="input-wrap" style="margin-top:12px">
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
@@ -1886,14 +1886,14 @@ function renderSubmitTab() {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
         ${hasPerm('submit_sales')?`<button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
           style="font-size:17px">
-          📝 ${'Update Sales'}
+          📝 ${ZH?'更新销售':'Update Sales'}
         </button>`:''}
         ${hasPerm('confirm_daily')
           ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
-              📎 ${'Confirm Daily Sales (Upload Receipt)'}
+              📎 ${ZH?'确认每日销售 (上传收据)':'Confirm Daily Sales (Upload Receipt)'}
             </button>`
           :`<button class="btn" onclick="requestSettlementApproval()" style="font-size:14px;background:#94a3b8">
-              📋 ${'Request Settlement Approval'}
+              📋 ${ZH?'申请结算审批':'Request Settlement Approval'}
             </button>`}
       </div>
 
@@ -1988,7 +1988,7 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 ${'Store'}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 ${ZH?'门店':'Store'}</span><span class="stat-value">${store}</span></div>
     <div class="stat-row"><span class="stat-label">📅 ${'Date'}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row" style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px">
       <span class="stat-label"><b>🧾 ${'Total Sales'}</b></span>
@@ -2200,7 +2200,7 @@ function renderRecordsTab() {
     </div>`;
 
   var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
-    +'<h2 style="font-size:16px;font-weight:800">📎 '+('Settlement Reports')+'</h2>'
+    +'<h2 style="font-size:16px;font-weight:800">📎 '+(ZH?'结算报告':'Settlement Reports')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
   +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
@@ -2436,7 +2436,7 @@ async function refreshLog() {
   const filterHtml=`
     <div class="control-grid" style="margin-bottom:10px">
       <div>
-        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':'Store'}</label>
+        <label class="field-label" style="font-size:11px">🏪 ${lang==='zh'?'门店':ZH?'门店':'Store'}</label>
         <select onchange="logStoreFilter=this.value;renderLogEntries()">
           <option value="all">${t('allStores')}</option>
           ${allowedStores.filter(s=>s!=='HQ').map(s=>`<option value="${s}" ${logStoreFilter===s?'selected':''}>${s}</option>`).join('')}
@@ -2730,11 +2730,11 @@ function _renderAttendanceContent(){
   if(btns){
     var b1=document.createElement('button'); b1.className='btn success';
     if(inTime) b1.disabled=true;
-    b1.textContent=(inTime?'✅ ':'🟢 ')+(ZH?'签到':'Check In');
+    b1.textContent=(inTime?'✅ ':'🟢 ')+(ZH?'签到':ZH?'签到':'Check In');
     b1.onclick=function(){confirmAttendance('check_in');};
     var b2=document.createElement('button'); b2.className='btn warn';
     if(!inTime||outTime) b2.disabled=true;
-    b2.textContent=(outTime?'🟡 ':'🔴 ')+(ZH?'签退':'Check Out');
+    b2.textContent=(outTime?'🟡 ':'🔴 ')+(ZH?'签退':ZH?'签退':'Check Out');
     b2.onclick=function(){confirmAttendance('check_out');};
     btns.appendChild(b1); btns.appendChild(b2);
   }
@@ -2742,7 +2742,7 @@ function _renderAttendanceContent(){
 
 function confirmAttendance(type){
   var ZH=lang==='zh';
-  var lbl=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
+  var lbl=type==='check_in'?(ZH?'签到':ZH?'签到':'Check In'):(ZH?'签退':ZH?'签退':'Check Out');
   var rem=(document.getElementById('att-remark')||{value:''}).value||'';
   var now2=new Date(); // device time — displayed in MYT via timeZone option
   var timeStr=now2.toLocaleTimeString('en-MY',{timeZone:'Asia/Kuala_Lumpur',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
@@ -2759,7 +2759,7 @@ function confirmAttendance(type){
     +'<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;margin:12px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">👤 '+(ZH?'姓名':'Name')+'</span>'
         +'<span class="stat-value">'+(currentUser.name||currentUser.username)+'</span></div>'
-      +'<div class="stat-row"><span class="stat-label">🏪 '+(ZH?'门店':'Store')+'</span>'
+      +'<div class="stat-row"><span class="stat-label">🏪 '+(ZH?'门店':ZH?'门店':'Store')+'</span>'
         +'<span class="stat-value">'+currentUser.store+'</span></div>'
       +'<div class="stat-row"><span class="stat-label">📅 '+(ZH?'日期':'Date')+'</span>'
         +'<span class="stat-value">'+dateStr+'</span></div>'
@@ -2783,7 +2783,7 @@ async function submitAttendance(type){
   }
   var remark=(document.getElementById('att-remark')||{value:''}).value||'';
   var ZH=lang==='zh';
-  var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
+  var label=type==='check_in'?(ZH?'签到':ZH?'签到':'Check In'):(ZH?'签退':ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
   // Use merged view for guard checks (session + stored)
   // Check server + session records for today
@@ -2944,24 +2944,24 @@ function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
   var curTime='';
   if(datetimeStr&&datetimeStr.endsWith('+08:00')) curTime=datetimeStr.slice(11,16);
   else if(datetimeStr) curTime=fmtTimeUTC8(datetimeStr);
-  var typeLabel=type==='check_in'?('Check In'):('Check Out');
+  var typeLabel=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='att-edit-modal';
   ov.innerHTML='<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:36px;margin-bottom:6px">✏️</div>'
-    +'<div class="modal-title" style="color:#1e3a8a">'+('Edit Attendance Time')+'</div>'
+    +'<div class="modal-title" style="color:#1e3a8a">'+(ZH?'编辑出勤时间':'Edit Attendance Time')+'</div>'
     +'<div style="background:#f8fafc;border-radius:12px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">👤</span><span class="stat-value">'+username+'</span></div>'
       +'<div class="stat-row"><span class="stat-label">📅</span><span class="stat-value">'+dateKey+'</span></div>'
       +'<div class="stat-row"><span class="stat-label">🕐</span><span class="stat-value">'+typeLabel+'</span></div>'
     +'</div>'
     +'<div style="margin:10px 0">'
-      +'<label class="field-label">'+('New Time (HH:MM)')+'</label>'
+      +'<label class="field-label">'+(ZH?'新时间 (时:分)':'New Time (HH:MM)')+'</label>'
       +'<input type="time" id="att-edit-time" value="'+curTime+'" style="width:100%;padding:12px;font-size:24px;font-weight:900;text-align:center;border:2px solid #1e3a8a;border-radius:10px;margin-top:6px">'
     +'</div>'
-    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'+('Change will sync to server and is logged.')+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'+(ZH?'更改将同步至服务器并记录。':'Change will sync to server and is logged.')+'</div>'
     +'<div style="display:flex;gap:10px">'
       +'<button class="btn secondary" style="flex:1" id="att-edit-cancel">'+('Cancel')+'</button>'
-      +'<button class="btn success" style="flex:2" id="att-edit-save">'+('Save New Time')+'</button>'
+      +'<button class="btn success" style="flex:2" id="att-edit-save">'+(ZH?'保存新时间':'Save New Time')+'</button>'
     +'</div></div>';
   document.body.appendChild(ov);
   document.getElementById('att-edit-cancel').onclick=function(){ov.remove();};
@@ -3032,8 +3032,8 @@ function renderOperationsDashboard(){
   const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
   const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
   const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">${ZH?'管理面板':'Manager Dashboard'}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+  return `<div class="card"><div class="card-title">${ZH?'管理面板':ZH?'管理面板':'Manager Dashboard'}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">Approval</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
     ${hasPerm('approve_sales')?`<div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ Pending Sales / Settlement Approvals</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">No pending sales approvals.</div>'}</div>`:''}
     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
@@ -3043,8 +3043,8 @@ function renderOperationsDashboard(){
 }
 function approvalRowHtml(r){
   var EN=lang==='en';
-  var typeLabel=r.type==='settlement'?('Settlement Confirm')
-    :r.type==='sales'?('Sales Update')
+  var typeLabel=r.type==='settlement'?(ZH?'确认结算':'Settlement Confirm')
+    :r.type==='sales'?(ZH?'销售更新':'Sales Update')
     :String(r.type||'').replace('_',' ');
   var amtStr=parseFloat(r.total||r.amount||0).toFixed(2);
   return '<div class="move-item">'
@@ -3056,9 +3056,9 @@ function approvalRowHtml(r){
     +'</div>'
     +'<div style="display:flex;gap:6px">'
       +'<button class="btn-sm approve" onclick="decideApproval(\''+r.id+'\',\'approve\')">'
-        +('Approve')+'</button>'
+        +(ZH?'批准':'Approve')+'</button>'
       +'<button class="btn-sm reject" onclick="decideApproval(\''+r.id+'\',\'reject\')">'
-        +('Reject')+'</button>'
+        +(ZH?'拒绝':'Reject')+'</button>'
     +'</div>'
   +'</div>';
 }
@@ -3158,7 +3158,7 @@ async function renderAdminTab() {
   const pendingHtml=pending.length>0?`
     <div class="pending-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div class="card-title" style="color:#92400e;margin:0">🆕 ${'Pending Registrations'} <span class="pending-badge">${pending.length}</span></div>
+        <div class="card-title" style="color:#92400e;margin:0">🆕 ${ZH?'待审核注册':'Pending Registrations'} <span class="pending-badge">${pending.length}</span></div>
         <button class="btn refresh-inline" onclick="renderAdminTab()">🔄</button>
       </div>
       ${pending.map(u=>`
@@ -3420,7 +3420,7 @@ function requestSettlementApproval(){
   ov.innerHTML=
     '<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:36px;margin-bottom:8px">📋</div>'
-    +'<div class="modal-title">'+('Request Settlement Approval')+'</div>'
+    +'<div class="modal-title">'+(ZH?'申请结算审批':'Request Settlement Approval')+'</div>'
     +'<div style="background:#f8fafc;border-radius:10px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">🏪 '+store+'</span><span class="stat-value">'+dateVal+'</span></div>'
       +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?'Total Sales':'Jumlah')+'</b></span>'
@@ -3493,7 +3493,7 @@ function openSettlementUploadFirst(){
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='upload-first-modal';
   ov.innerHTML=
     '<div class="modal-box" style="padding-bottom:24px">'
-    +'<div class="modal-title">📎 '+('Confirm Daily Sales')+'</div>'
+    +'<div class="modal-title">📎 '+(ZH?'确认每日销售':'Confirm Daily Sales')+'</div>'
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-size:12px;font-weight:700;color:#1e3a8a">🏪 '+store+' · 📅 '+dateKey+'</span>'
       +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</span>'
@@ -3506,9 +3506,9 @@ function openSettlementUploadFirst(){
     +'<label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;margin-bottom:12px">'
       +'<input type="file" id="uf-file" accept="image/*" capture="environment" style="display:none" onchange="ufPreview(this)">'
       +'<div style="font-size:40px;margin-bottom:8px">📷</div>'
-      +'<div style="font-weight:800;color:var(--primary);font-size:15px">'+(EN?'Take photo or select receipt':'Ambil foto atau pilih resit')+'</div>'
+      +'<div style="font-weight:800;color:var(--primary);font-size:15px">'+(EN?ZH?'拍照或选择收据':'Take photo or select receipt':'Ambil foto atau pilih resit')+'</div>'
     +'</label>'
-    +'<div class="input-wrap"><label class="field-label">'+(EN?'Note (optional)':'Nota (pilihan)')+'</label>'
+    +'<div class="input-wrap"><label class="field-label">'+(EN?ZH?'备注（选填）':'Note (optional)':'Nota (pilihan)')+'</label>'
       +'<input type="text" id="uf-note" placeholder="e.g. POS receipt..."></div>'
     +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">'
       +'<button id="uf-upload-btn" class="btn success" style="width:100%;font-size:18px;font-weight:800;padding:16px;border-radius:14px;background:linear-gradient(135deg,#059669,#10b981)">'
@@ -3532,7 +3532,7 @@ async function ufDoUpload(ov){
   var fi=document.getElementById('uf-file');
   if(!fi||!fi.files||!fi.files[0]){showToast(lang==='en'?'Please select a receipt photo':'Sila pilih foto resit','error');return;}
   var btn=document.getElementById('uf-upload-btn');
-  if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Uploading...':'Sedang muat naik...';}
+  if(btn){btn.disabled=true;btn.textContent=lang==='en'?ZH?'上传中...':'Uploading...':'Sedang muat naik...';}
   var reader=new FileReader();
   reader.onload=async function(e){
     try{
@@ -3583,9 +3583,9 @@ function openSettlementUpload() {
   document.getElementById('upload-label-text').textContent =
     lang==='zh' ? '点击拍摄 / 选择图片' : 'Tap to take photo or select image';
   document.getElementById('settlement-note-label').textContent =
-    lang==='zh' ? '备注（选填）' : 'Note (optional)';
+    lang==='zh' ? '备注（选填）' : ZH?'备注（选填）':'Note (optional)';
   document.getElementById('upload-progress-label').textContent =
-    lang==='zh' ? '正在上传...' : 'Uploading...';
+    lang==='zh' ? '正在上传...' : ZH?'上传中...':'Uploading...';
 
   // Reset state
   document.getElementById('settlement-file').value = '';
@@ -3641,7 +3641,7 @@ async function uploadSettlement() {
   const progressBar  = document.getElementById('upload-progress-bar');
   const progressLabel= document.getElementById('upload-progress-label');
 
-  if(btn) { btn.disabled=true; btn.textContent = lang==='zh'?'上传中...':'Uploading...'; }
+  if(btn) { btn.disabled=true; btn.textContent = lang==='zh'?'上传中...':ZH?'上传中...':'Uploading...'; }
   if(progressWrap) progressWrap.style.display = 'block';
 
   // Animate progress bar
@@ -3939,7 +3939,7 @@ function renderCashDrawerModal() {
 
       <!-- NOTE + SUBMIT -->
       <div class="cd-section">
-        <label class="field-label" style="color:#92400e">${lang==='zh'?'备注（选填）':'Note (optional)'}</label>
+        <label class="field-label" style="color:#92400e">${lang==='zh'?'备注（选填）':ZH?'备注（选填）':'Note (optional)'}</label>
         <input type="text" id="cd-final-note" placeholder="..."
           value="${(()=>{ const ex=getCashDrawer().find(r=>r.dateKey===_cdDate&&r.store===_cdStore); return ex?ex.note||'':''; })()}"
           style="border-color:#f59e0b;margin-top:4px">
@@ -4018,7 +4018,7 @@ function openAddMovement(type) {
         </button>
         <button class="btn" style="flex:2;background:${isOut?'#ef4444':'#10b981'}"
           onclick="saveCashMovementEntry('${type}')">
-          ${lang==='zh'?'保存':'Save'}
+          ${lang==='zh'?'保存':ZH?'保存':'Save'}
         </button>
       </div>
     </div>`;
