@@ -696,11 +696,11 @@ function showAttendanceResult(kind,title,message,details,attType){
       greetHtml='<div style="font-size:42px;margin-bottom:6px">☀️</div>'
         +'<div style="font-size:22px;font-weight:900;color:#1e3a8a;letter-spacing:.5px;margin-bottom:4px">'+greeting+'</div>'
         +'<div style="font-size:18px;font-weight:900;color:#1e3a8a;margin-bottom:6px">'+(currentUser.name||currentUser.username).toUpperCase()+'!</div>'
-        +'<div style="font-size:15px;color:#10b981;font-weight:700;margin-bottom:12px">'+(EN?'Have a nice day 😊':'Semoga hari anda menyenangkan 😊')+'</div>';
+        +'<div style="font-size:15px;color:#10b981;font-weight:700;margin-bottom:12px">'+('Have a nice day 😊')+'</div>';
     } else if(attType==='check_out'){
       greetHtml='<div style="font-size:42px;margin-bottom:6px">🌙</div>'
-        +'<div style="font-size:16px;font-weight:900;color:#f59e0b;margin-bottom:6px;line-height:1.5">'+(EN?'Thanks for all your hard work today!':'Terima kasih atas kerja keras anda hari ini!')+'</div>'
-        +'<div style="font-size:14px;color:#64748b;font-weight:600;margin-bottom:12px">'+(EN?'Have a great evening and rest up 🌟':'Semoga malam yang indah dan berehat yang cukup 🌟')+'</div>';
+        +'<div style="font-size:16px;font-weight:900;color:#f59e0b;margin-bottom:6px;line-height:1.5">'+('Thanks for all your hard work today!')+'</div>'
+        +'<div style="font-size:14px;color:#64748b;font-weight:600;margin-bottom:12px">'+('Have a great evening and rest up 🌟')+'</div>';
     }
   }
   var icon=kind==='rejected'?'❌':kind==='pending'?'⏳':(attType==='check_in'?'✅':'🟡');
@@ -940,7 +940,7 @@ function renderSettlementReports(){
     return r.store===currentUser.store;
   });
   visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
-  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(EN?'No settlement reports yet':'Tiada laporan penyelesaian lagi')+'</p></div>';
+  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+('No settlement reports yet')+'</p></div>';
   // Group by store
   var byStore={};
   visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
@@ -950,7 +950,7 @@ function renderSettlementReports(){
     html+='<div class="card" style="margin-bottom:12px">'
       +'<div class="card-title" style="display:flex;align-items:center;gap:8px">'
         +'<span>🏪</span><span>'+store+'</span>'
-        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+(EN?'report(s)':'laporan')+'</span>'
+        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
       +'</div>';
     rows.forEach(function(r){
       html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
@@ -963,7 +963,7 @@ function renderSettlementReports(){
           +'</div>'
           +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
         +'</div>'
-        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+(EN?'No link':'Tiada pautan')+'</span>')
+        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+('View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+('No link')+'</span>')
       +'</div>';
     });
     html+='</div>';
@@ -973,7 +973,7 @@ function renderSettlementReports(){
 
 async function syncAttendanceNow(){
   // Independent attendance sync — does not depend on getSales
-  showToast(lang==='en'?'Syncing attendance...':'Memuat kehadiran...','pending');
+  showToast('Syncing attendance...','pending');
   try{
     var r=await gasGet('getAttendance');
     var attArr=null;
@@ -994,7 +994,7 @@ async function syncAttendanceNow(){
       if(currentTab==='attendance') _renderAttendanceContent();
       if(currentTab==='admin') renderAdminTab();
     } else {
-      showToast(lang==='en'?'No attendance data from server':'Tiada data kehadiran dari server','error');
+      showToast('No attendance data from server','error');
     }
   }catch(e){
     showToast(lang==='en'?'Attendance sync failed: '+e.message.slice(0,40):'Gagal sync kehadiran: '+e.message.slice(0,40),'error');
@@ -1052,7 +1052,7 @@ function renderPermissionsPanel(){
   var html =
     '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?'Role Permissions':'Kebenaran Peranan')+'</div>'
     +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
-      +(EN?'Tick to allow a role to access that feature. Changes take effect immediately.':'Tandakan untuk membenarkan peranan mengakses fungsi tersebut. Perubahan berkuat kuasa serta-merta.')
+      +('Tick to allow a role to access that feature. Changes take effect immediately.')
     +'</div>'
     +'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
     +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">'
@@ -1086,7 +1086,7 @@ function renderPermissionsPanel(){
   html += '</tbody></table></div>'
     +'<div style="display:flex;gap:8px;margin-top:12px">'
       +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
-        +(EN?'💾 Save Permissions':'💾 Simpan Kebenaran')+'</button>'
+        +('💾 Save Permissions')+'</button>'
       +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
         +(EN?'↺ Reset':'↺ Reset')+'</button>'
     +'</div>'
@@ -1219,12 +1219,12 @@ function saveNotifSettings(s){ saveData('notif_settings', s); }
 
 async function requestNotifPermission(){
   if(!('Notification' in window)){
-    showToast(lang==='en'?'Browser does not support notifications':'Pelayar tidak menyokong notifikasi','error');
+    showToast('Browser does not support notifications','error');
     return false;
   }
   if(Notification.permission === 'granted') return true;
   if(Notification.permission === 'denied'){
-    showToast(lang==='en'?'Notifications blocked. Enable in browser settings.':'Notifikasi disekat. Hidupkan dalam tetapan pelayar.','error');
+    showToast('Notifications blocked. Enable in browser settings.','error');
     return false;
   }
   var perm = await Notification.requestPermission();
@@ -1270,8 +1270,8 @@ function checkAttendanceNotifications(){
       if(!done[key]){
         done[key] = true;
         sendNotif(
-          (lang==='en'?'Staff Not Checked In':'Pekerja Belum Daftar Masuk'),
-          (u.name||u.username) + ' · ' + u.store + ' — ' + (lang==='en'?'has not checked in yet':'belum daftar masuk'),
+          ('Staff Not Checked In'),
+          (u.name||u.username) + ' · ' + u.store + ' — ' + ('has not checked in yet'),
           'att-' + u.username
         );
       }
@@ -1290,8 +1290,8 @@ function checkAttendanceNotifications(){
       if(!myAtt.length && !sessCI.length){
         done[key2] = true;
         sendNotif(
-          lang==='en'?'Check In Reminder':'Peringatan Daftar Masuk',
-          lang==='en'?'You have not checked in today. Tap to open app.':'Anda belum daftar masuk hari ini.',
+          'Check In Reminder',
+          'You have not checked in today. Tap to open app.',
           'att-self'
         );
       }
@@ -1322,7 +1322,7 @@ function toggleNotifications(enabled){
         saveNotifSettings(s);
         startNotifScheduler();
   startInactivityWatcher();
-        showToast(lang==='en'?'Notifications enabled ✅':'Notifikasi diaktifkan ✅','success');
+        showToast('Notifications enabled ✅','success');
         renderNotifSettings();
       } else {
         s.enabled = false;
@@ -1334,7 +1334,7 @@ function toggleNotifications(enabled){
     s.enabled = false;
     saveNotifSettings(s);
     stopNotifScheduler();
-    showToast(lang==='en'?'Notifications disabled':'Notifikasi dimatikan','success');
+    showToast('Notifications disabled','success');
     renderNotifSettings();
   }
 }
@@ -1355,14 +1355,14 @@ function renderNotifSettings(){
   var EN = lang==='en';
   var supported = 'Notification' in window;
   var perm = supported ? Notification.permission : 'unsupported';
-  var permLabel = perm==='granted'?'✅ '+(EN?'Allowed':'Dibenarkan'):perm==='denied'?'❌ '+(EN?'Blocked':'Disekat'):'⏳ '+(EN?'Not set':'Belum ditetapkan');
+  var permLabel = perm==='granted'?'✅ '+(EN?'Allowed':'Dibenarkan'):perm==='denied'?'❌ '+(EN?'Blocked':'Disekat'):'⏳ '+('Not set');
   el.innerHTML =
     '<div class="card" style="margin-bottom:10px">'
-      +'<div class="card-title">🔔 '+(EN?'Check-In Notifications':'Notifikasi Daftar Masuk')+'</div>'
-      +(supported?'':' <div style="color:#ef4444;font-size:12px">'+(EN?'Not supported on this browser/device':'Tidak disokong pada pelayar/peranti ini')+'</div>')
+      +'<div class="card-title">🔔 '+('Check-In Notifications')+'</div>'
+      +(supported?'':' <div style="color:#ef4444;font-size:12px">'+('Not supported on this browser/device')+'</div>')
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">'
         +'<div>'
-          +'<div style="font-size:13px;font-weight:700">'+(EN?'Enable Notifications':'Hidupkan Notifikasi')+'</div>'
+          +'<div style="font-size:13px;font-weight:700">'+('Enable Notifications')+'</div>'
           +'<div style="font-size:11px;color:var(--text2)">'+permLabel+'</div>'
         +'</div>'
         +'<label style="position:relative;display:inline-block;width:44px;height:24px">'
@@ -1374,14 +1374,14 @@ function renderNotifSettings(){
           +'</span></label>'
       +'</div>'
       +'<div style="margin-top:8px">'
-        +'<label class="field-label">'+(EN?'Remind if not checked in by:':'Ingatkan jika belum daftar masuk pada:')+'</label>'
+        +'<label class="field-label">'+('Remind if not checked in by:')+'</label>'
         +'<div style="display:flex;align-items:center;gap:8px">'
           +'<input type="time" id="notif-time" value="'+s.reminderTime+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:15px">'
-          +'<button class="btn success" style="padding:8px 14px;font-size:13px" onclick="saveNotifTime(document.getElementById(\'notif-time\').value)">'+(EN?'Save':'Simpan')+'</button>'
+          +'<button class="btn success" style="padding:8px 14px;font-size:13px" onclick="saveNotifTime(document.getElementById(\'notif-time\').value)">'+('Save')+'</button>'
         +'</div>'
       +'</div>'
       +'<div style="font-size:11px;color:var(--text2);margin-top:6px">'
-        +(EN?'Checks every 5 minutes. Admin/Manager sees all staff not checked in.':'Semak setiap 5 minit. Admin/Pengurus boleh lihat semua pekerja yang belum daftar masuk.')
+        +('Checks every 5 minutes. Admin/Manager sees all staff not checked in.')
       +'</div>'
     +'</div>';
 }
@@ -1394,7 +1394,7 @@ async function sendMonthlyReport(month){
   var s=getReportSettings();
   var emails=document.getElementById('report-emails');
   if(emails) s.emails=emails.value;
-  if(!s.emails||!s.emails.trim()){ showToast(lang==='en'?'Please enter at least one email address':'Sila masukkan sekurang-kurangnya satu alamat e-mel','error'); return; }
+  if(!s.emails||!s.emails.trim()){ showToast('Please enter at least one email address','error'); return; }
   var btn=document.getElementById('report-send-btn');
   if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Sending...':'Menghantar...';}
   saveReportSettings(s);
@@ -1405,11 +1405,11 @@ async function sendMonthlyReport(month){
       body:JSON.stringify({action:'sendMonthlyReport',emails:s.emails,
         month:reportMonth,sentBy:currentUser.name,role:currentUser.role})});
     var firstEmail=(s.emails.split(/[,;\n]/)[0]||'').trim();
-    showToast((lang==='en'?'Report sent ✅ — check inbox: ':'Laporan dihantar ✅ — semak: ')+firstEmail,'success');
+    showToast(('Report sent ✅ — check inbox: ')+firstEmail,'success');
   }catch(e){
     showToast((lang==='en'?'Send failed: ':'Gagal: ')+e.message.slice(0,50),'error');
   }
-  if(btn){btn.disabled=false;btn.textContent=lang==='en'?'📧 Send Monthly Report':'📧 Hantar Laporan Bulanan';}
+  if(btn){btn.disabled=false;btn.textContent='📧 Send Monthly Report';}
 }
 
 function renderMonthlyReportPanel(){
@@ -1426,23 +1426,23 @@ function renderMonthlyReportPanel(){
   })();
   el.innerHTML=
     '<div class="card" style="margin-top:12px">'
-    +'<div class="card-title">📧 '+(EN?'Monthly Email Report':'Laporan E-mel Bulanan')+'</div>'
-    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':EN?'Sends attendance + sales summary for all stores to the specified email(s).':'Menghantar ringkasan kehadiran + jualan semua cawangan ke e-mel yang ditetapkan.')+'</div>'
+    +'<div class="card-title">📧 '+('Monthly Email Report')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':'Sends attendance + sales summary for all stores to the specified email(s).')+'</div>'
     +'<label class="field-label">'+(lang==='zh'?'收件人电邮':EN?'Recipient Email(s)':'E-mel Penerima')+'</label>'
     +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com\n60123456789  ← WhatsApp number">'+s.emails+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':EN?'Month:':'Bulan:')+'</label>'
+      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':'Month:')+'</label>'
       +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
       +'<button class="btn success" style="font-size:15px;padding:12px" onclick="downloadMonthlyExcel(document.getElementById(\'report-month\').value)">'
-        +(EN?'📊 Download Excel Report':'📊 Muat Turun Laporan Excel')+'</button>'
+        +('📊 Download Excel Report')+'</button>'
       +'<button class="btn" style="font-size:15px;padding:12px;background:#25d366" onclick="shareMonthlyWhatsApp(document.getElementById(\'report-month\').value)">'
         +(EN?'📱 Share via WhatsApp':'📱 Kongsi melalui WhatsApp')+'</button>'
       +'<button id="report-send-btn" class="btn secondary" style="font-size:13px;padding:10px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'
-        +(EN?'📧 Send Email (if GAS MailApp authorised)':'📧 Hantar E-mel (jika GAS MailApp dibenarkan)')+'</button>'
+        +('📧 Send Email (if GAS MailApp authorised)')+'</button>'
     +'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+(EN?'Tip: Schedule a monthly reminder to send this on the 1st of each month.':'Petua: Tetapkan peringatan bulanan untuk menghantar ini pada hari pertama setiap bulan.')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+('Tip: Schedule a monthly reminder to send this on the 1st of each month.')+'</div>'
   +'</div>';
 }
 
@@ -1478,8 +1478,8 @@ function downloadMonthlyExcel(month){
   var d=buildMonthlyData(month);
   var wb=XLSX.utils.book_new();
   // ── Sheet 1: Sales Summary ──────────────────────────────────────────
-  var salesRows=[[lang==='en'?'Store':'Kedai',lang==='en'?'Total Sales (RM)':'Jumlah Jualan',
-    'Cash','QR','Card','Bank Transfer',lang==='en'?'Sales Days':'Hari Jualan']];
+  var salesRows=[['Store','Total Sales (RM)',
+    'Cash','QR','Card','Bank Transfer','Sales Days']];
   var grandTotal=0;
   Object.keys(d.storeMap).sort().forEach(function(store){
     var s=d.storeMap[store];
@@ -1490,10 +1490,10 @@ function downloadMonthlyExcel(month){
   var ws1=XLSX.utils.aoa_to_sheet(salesRows);
   // Style header row
   ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws1,lang==='en'?'Sales Summary':'Ringkasan Jualan');
+  XLSX.utils.book_append_sheet(wb,ws1,'Sales Summary');
   // ── Sheet 2: Attendance Summary ────────────────────────────────────
-  var attRows=[[lang==='en'?'Store':'Kedai',lang==='en'?'Staff Name':'Nama Pekerja',
-    lang==='en'?'Days Present':'Hari Hadir',lang==='en'?'Late':'Lambat']];
+  var attRows=[['Store','Staff Name',
+    'Days Present',lang==='en'?'Late':'Lambat']];
   Object.keys(d.attMap).sort().forEach(function(store){
     Object.values(d.attMap[store]).forEach(function(u){
       attRows.push([store,u.name,u.days,u.late]);
@@ -1501,10 +1501,10 @@ function downloadMonthlyExcel(month){
   });
   var ws2=XLSX.utils.aoa_to_sheet(attRows);
   ws2['!cols']=[{wch:22},{wch:20},{wch:14},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws2,lang==='en'?'Attendance':'Kehadiran');
+  XLSX.utils.book_append_sheet(wb,ws2,'Attendance');
   // ── Sheet 3: Raw Sales Data ────────────────────────────────────────
   var rawSales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
-  var rawRows=[[lang==='en'?'Date':'Tarikh','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
+  var rawRows=[['Date','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
   rawSales.forEach(function(r){
     rawRows.push([r.dateKey||'',r.store||'',parseFloat(r.total||0).toFixed(2),
       parseFloat(r.cash||0).toFixed(2),parseFloat(r.qr||0).toFixed(2),
@@ -1513,7 +1513,7 @@ function downloadMonthlyExcel(month){
   });
   var ws3=XLSX.utils.aoa_to_sheet(rawRows);
   ws3['!cols']=[{wch:12},{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws3,lang==='en'?'Sales Detail':'Detail Jualan');
+  XLSX.utils.book_append_sheet(wb,ws3,'Sales Detail');
   // Download
   var filename='Monthly_Report_'+month+'.xlsx';
   XLSX.writeFile(wb,filename);
@@ -1524,7 +1524,7 @@ function shareMonthlyWhatsApp(month){
   var d=buildMonthlyData(month);
   var EN=lang==='en';
   var lines=[];
-  lines.push('📊 *'+(EN?'Monthly Sales Report':'Laporan Jualan Bulanan')+'*');
+  lines.push('📊 *'+('Monthly Sales Report')+'*');
   lines.push('📅 '+month);
   lines.push('─────────────────────');
   var grandTotal=0;
@@ -1540,7 +1540,7 @@ function shareMonthlyWhatsApp(month){
     // Attendance
     if(d.attMap[store]){
       var staffList=Object.values(d.attMap[store]);
-      lines.push('  👥 '+(EN?'Staff':'Pekerja')+': '+staffList.map(function(u){
+      lines.push('  👥 '+('Staff')+': '+staffList.map(function(u){
         return u.name+(u.late?' (⚠️'+u.late+(EN?' late':' lambat')+')'  :'');
       }).join(', '));
     }
@@ -1612,7 +1612,7 @@ async function triggerSyncRefresh() {
       // Server responded but no sales key — show what came back
       saveSales([]);
       renderCurrentTab();
-      showToast(lang==='en'?'No sales data on server yet':'Belum ada data jualan di server','success');
+      showToast('No sales data on server yet','success');
     } else {
       console.error('Unexpected sync response:', JSON.stringify(json).slice(0,200));
       showToast('Sync error — check GAS deployment (Anyone access)','error');
@@ -1658,15 +1658,15 @@ function showRegisterPopup(username){
   ov.innerHTML=
     '<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:52px;margin-bottom:8px">🔍</div>'
-    +'<div class="modal-title" style="color:#ef4444">'+(EN?'Username Not Found':'Nama Pengguna Tidak Dijumpai')+'</div>'
+    +'<div class="modal-title" style="color:#ef4444">'+('Username Not Found')+'</div>'
     +'<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin:12px 0">'
       +'<div style="font-size:14px;font-weight:700;color:#334155">"'+username+'"</div>'
     +'</div>'
-    +'<div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:8px">'+(EN?'Kindly register before log in':'Sila daftar sebelum log masuk')+'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:16px">'+(EN?'Your account does not exist. Please register first and wait for Admin approval.':'Akaun anda tiada. Sila daftar dahulu dan tunggu kelulusan Admin.')+'</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#1e3a8a;margin-bottom:8px">'+('Kindly register before log in')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:16px">'+('Your account does not exist. Please register first and wait for Admin approval.')+'</div>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
       +'<button class="btn success" style="font-size:15px;padding:12px" onclick="document.getElementById(\'reg-popup\').remove();document.querySelector(\'[onclick*=showRegister\')?.click()||showRegisterModal()">'
-        +(EN?'📝 Register Now':'📝 Daftar Sekarang')+'</button>'
+        +('📝 Register Now')+'</button>'
       +'<button class="btn secondary" style="font-size:14px;padding:10px" onclick="document.getElementById(\'reg-popup\').remove()">'+(EN?'Back / Kembali':'Kembali')+'</button>'
     +'</div></div>';
   document.body.appendChild(ov);
@@ -1680,9 +1680,9 @@ function showPendingPopup(username){
     +'<div class="modal-title" style="color:#f59e0b">'+(EN?'Account Pending Approval':'Akaun Menunggu Kelulusan')+'</div>'
     +'<div style="background:#fffbeb;border-radius:10px;padding:12px 14px;margin:12px 0">'
       +'<div style="font-size:13px;font-weight:700;color:#92400e">@'+username+'</div>'
-      +'<div style="font-size:12px;color:#92400e;margin-top:4px">'+(EN?'Your registration is being reviewed by Admin':'Pendaftaran anda sedang disemak oleh Admin')+'</div>'
+      +'<div style="font-size:12px;color:#92400e;margin-top:4px">'+('Your registration is being reviewed by Admin')+'</div>'
     +'</div>'
-    +'<div style="font-size:13px;color:#64748b;margin-bottom:14px">'+(EN?'Please wait for Admin to approve your account before logging in.':'Sila tunggu Admin meluluskan akaun anda sebelum log masuk.')+'</div>'
+    +'<div style="font-size:13px;color:#64748b;margin-bottom:14px">'+('Please wait for Admin to approve your account before logging in.')+'</div>'
     +'<button class="btn secondary" style="width:100%;font-size:14px;padding:12px" onclick="document.getElementById(\'pending-popup\').remove()">'+(EN?'OK':'OK')+'</button>'
   +'</div>';
   document.body.appendChild(ov);
@@ -1871,7 +1871,7 @@ function renderSubmitTab() {
       <input type="hidden" id="s-card" value="0">
       <input type="hidden" id="s-bank" value="0">
       <div class="input-wrap">
-        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${lang==='en'?'Total Sales (RM)':'Jumlah Jualan (RM)'}</label>
+        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${'Total Sales (RM)'}</label>
         <div class="amount-input-wrap" style="font-size:20px"><span class="amount-prefix" style="font-size:18px">RM</span>
           <input type="number" class="amount-input" id="s-total-main" placeholder="0.00" min="0" step="0.01"
             inputmode="decimal" style="font-size:22px;font-weight:900" oninput="updateTotalFromMain()">
@@ -1886,14 +1886,14 @@ function renderSubmitTab() {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
         ${hasPerm('submit_sales')?`<button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
           style="font-size:17px">
-          📝 ${lang==='en'?'Update Sales':'Kemaskini Jualan'}
+          📝 ${'Update Sales'}
         </button>`:''}
         ${hasPerm('confirm_daily')
           ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
-              📎 ${lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)'}
+              📎 ${'Confirm Daily Sales (Upload Receipt)'}
             </button>`
           :`<button class="btn" onclick="requestSettlementApproval()" style="font-size:14px;background:#94a3b8">
-              📋 ${lang==='en'?'Request Settlement Approval':'Mohon Kelulusan Penyelesaian'}
+              📋 ${'Request Settlement Approval'}
             </button>`}
       </div>
 
@@ -1988,10 +1988,10 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
 
   document.getElementById('modal-body').innerHTML=`
     ${editWarning}
-    <div class="stat-row"><span class="stat-label">🏪 ${lang==='en'?'Store':'Kedai'}</span><span class="stat-value">${store}</span></div>
-    <div class="stat-row"><span class="stat-label">📅 ${lang==='en'?'Date':'Tarikh'}</span><span class="stat-value">${targetDate}</span></div>
+    <div class="stat-row"><span class="stat-label">🏪 ${'Store'}</span><span class="stat-value">${store}</span></div>
+    <div class="stat-row"><span class="stat-label">📅 ${'Date'}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row" style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px">
-      <span class="stat-label"><b>🧾 ${lang==='en'?'Total Sales':'Jumlah Jualan'}</b></span>
+      <span class="stat-label"><b>🧾 ${'Total Sales'}</b></span>
       <span class="stat-value big" style="font-size:26px;color:var(--primary)">RM ${total.toFixed(2)}</span>
     </div>
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
@@ -2028,7 +2028,7 @@ function _staffSubmitForApproval(withUpload) {
 }
 
 function confirmSubmit(withUpload=false) {
-  if(currentUser.role==='boss'){ showToast(lang==='en'?'Boss role cannot submit sales':'Boss tidak boleh hantar jualan','error'); return; }
+  if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -2200,7 +2200,7 @@ function renderRecordsTab() {
     </div>`;
 
   var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
-    +'<h2 style="font-size:16px;font-weight:800">📎 '+(lang==='en'?'Settlement Reports':'Laporan Penyelesaian')+'</h2>'
+    +'<h2 style="font-size:16px;font-weight:800">📎 '+('Settlement Reports')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
   +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
@@ -2935,7 +2935,7 @@ function resetStaffAttendance(username,dateKey,recordId){
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'resetAttendance',recordId:recordId,username:username,dateKey:dateKey,
       resetBy:currentUser.name,resetRole:currentUser.role})}).catch(function(){});
-  showToast((lang==='en'?'Attendance reset for ':'Kehadiran direset untuk ')+username,'success');
+  showToast(('Attendance reset for ')+username,'success');
   fetchServerAttendance().then(function(){renderAttendanceTab();if(currentTab==='admin')renderAdminTab();});
 }
 function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
@@ -2944,30 +2944,30 @@ function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
   var curTime='';
   if(datetimeStr&&datetimeStr.endsWith('+08:00')) curTime=datetimeStr.slice(11,16);
   else if(datetimeStr) curTime=fmtTimeUTC8(datetimeStr);
-  var typeLabel=type==='check_in'?(EN?'Check In':'Daftar Masuk'):(EN?'Check Out':'Daftar Keluar');
+  var typeLabel=type==='check_in'?('Check In'):('Check Out');
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='att-edit-modal';
   ov.innerHTML='<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:36px;margin-bottom:6px">✏️</div>'
-    +'<div class="modal-title" style="color:#1e3a8a">'+(EN?'Edit Attendance Time':'Edit Masa Kehadiran')+'</div>'
+    +'<div class="modal-title" style="color:#1e3a8a">'+('Edit Attendance Time')+'</div>'
     +'<div style="background:#f8fafc;border-radius:12px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">👤</span><span class="stat-value">'+username+'</span></div>'
       +'<div class="stat-row"><span class="stat-label">📅</span><span class="stat-value">'+dateKey+'</span></div>'
       +'<div class="stat-row"><span class="stat-label">🕐</span><span class="stat-value">'+typeLabel+'</span></div>'
     +'</div>'
     +'<div style="margin:10px 0">'
-      +'<label class="field-label">'+(EN?'New Time (HH:MM)':'Masa Baru (HH:MM)')+'</label>'
+      +'<label class="field-label">'+('New Time (HH:MM)')+'</label>'
       +'<input type="time" id="att-edit-time" value="'+curTime+'" style="width:100%;padding:12px;font-size:24px;font-weight:900;text-align:center;border:2px solid #1e3a8a;border-radius:10px;margin-top:6px">'
     +'</div>'
-    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'+(EN?'Change will sync to server and is logged.':'Perubahan akan disegerakan dan direkodkan.')+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'+('Change will sync to server and is logged.')+'</div>'
     +'<div style="display:flex;gap:10px">'
-      +'<button class="btn secondary" style="flex:1" id="att-edit-cancel">'+(EN?'Cancel':'Batal')+'</button>'
-      +'<button class="btn success" style="flex:2" id="att-edit-save">'+(EN?'Save New Time':'Simpan Masa Baru')+'</button>'
+      +'<button class="btn secondary" style="flex:1" id="att-edit-cancel">'+('Cancel')+'</button>'
+      +'<button class="btn success" style="flex:2" id="att-edit-save">'+('Save New Time')+'</button>'
     +'</div></div>';
   document.body.appendChild(ov);
   document.getElementById('att-edit-cancel').onclick=function(){ov.remove();};
   document.getElementById('att-edit-save').onclick=function(){
     var t2=document.getElementById('att-edit-time').value;
-    if(!t2){showToast(EN?'Enter a valid time':'Masukkan masa yang sah','error');return;}
+    if(!t2){showToast('Enter a valid time','error');return;}
     ov.remove();doEditAttendance(recordId,username,dateKey,type,t2);
   };
 }
@@ -2984,7 +2984,7 @@ function doEditAttendance(recordId,username,dateKey,type,newTimeHHMM){
     body:JSON.stringify({action:'editAttendanceTime',recordId:recordId,username:username,
       dateKey:dateKey,type:type,newDatetime:newDatetime,
       editedBy:currentUser.name,editedRole:currentUser.role,editedAt:nowUTC8()})}).catch(function(){});
-  showToast((lang==='en'?'Time updated: ':'Masa dikemas kini: ')+username+' '+newTimeHHMM+' ✅','success');
+  showToast(('Time updated: ')+username+' '+newTimeHHMM+' ✅','success');
   renderAdminTab();
   if(currentTab==='attendance') renderAttendanceTab();
 }
@@ -3043,8 +3043,8 @@ function renderOperationsDashboard(){
 }
 function approvalRowHtml(r){
   var EN=lang==='en';
-  var typeLabel=r.type==='settlement'?(EN?'Settlement Confirm':'Sahkan Penyelesaian')
-    :r.type==='sales'?(EN?'Sales Update':'Kemaskini Jualan')
+  var typeLabel=r.type==='settlement'?('Settlement Confirm')
+    :r.type==='sales'?('Sales Update')
     :String(r.type||'').replace('_',' ');
   var amtStr=parseFloat(r.total||r.amount||0).toFixed(2);
   return '<div class="move-item">'
@@ -3056,9 +3056,9 @@ function approvalRowHtml(r){
     +'</div>'
     +'<div style="display:flex;gap:6px">'
       +'<button class="btn-sm approve" onclick="decideApproval(\''+r.id+'\',\'approve\')">'
-        +(EN?'Approve':'Lulus')+'</button>'
+        +('Approve')+'</button>'
       +'<button class="btn-sm reject" onclick="decideApproval(\''+r.id+'\',\'reject\')">'
-        +(EN?'Reject':'Tolak')+'</button>'
+        +('Reject')+'</button>'
     +'</div>'
   +'</div>';
 }
@@ -3158,7 +3158,7 @@ async function renderAdminTab() {
   const pendingHtml=pending.length>0?`
     <div class="pending-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div class="card-title" style="color:#92400e;margin:0">🆕 ${lang==='en'?'Pending Registrations':'Pendaftaran Menunggu'} <span class="pending-badge">${pending.length}</span></div>
+        <div class="card-title" style="color:#92400e;margin:0">🆕 ${'Pending Registrations'} <span class="pending-badge">${pending.length}</span></div>
         <button class="btn refresh-inline" onclick="renderAdminTab()">🔄</button>
       </div>
       ${pending.map(u=>`
@@ -3414,22 +3414,22 @@ function requestSettlementApproval(){
   var dateVal=document.getElementById('submit-date')?.value||dateKeyUTC8();
   var total=parseFloat(document.getElementById('s-total-main')?.value)||0;
   var remark=document.getElementById('s-remark')?.value||'';
-  if(!total){showToast(lang==='en'?'Enter total sales first':'Masukkan jumlah jualan dahulu','error');return;}
+  if(!total){showToast('Enter total sales first','error');return;}
   var EN=lang==='en';
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-appr-modal';
   ov.innerHTML=
     '<div class="modal-box" style="text-align:center">'
     +'<div style="font-size:36px;margin-bottom:8px">📋</div>'
-    +'<div class="modal-title">'+(EN?'Request Settlement Approval':'Mohon Kelulusan Penyelesaian')+'</div>'
+    +'<div class="modal-title">'+('Request Settlement Approval')+'</div>'
     +'<div style="background:#f8fafc;border-radius:10px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">🏪 '+store+'</span><span class="stat-value">'+dateVal+'</span></div>'
       +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?'Total Sales':'Jumlah')+'</b></span>'
         +'<span class="stat-value big" style="color:#1e3a8a">RM '+total.toFixed(2)+'</span></div>'
     +'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+(EN?'Your settlement requires approval from Supervisor / Manager / Admin.':'Penyelesaian anda memerlukan kelulusan daripada Penyelia / Pengurus / Admin.')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+('Your settlement requires approval from Supervisor / Manager / Admin.')+'</div>'
     +'<div style="display:flex;gap:10px">'
-      +'<button class="btn secondary" style="flex:1" id="sa-cancel">'+(EN?'Cancel':'Batal')+'</button>'
-      +'<button class="btn success" style="flex:2" id="sa-ok">'+(EN?'Submit for Approval':'Hantar untuk Kelulusan')+'</button>'
+      +'<button class="btn secondary" style="flex:1" id="sa-cancel">'+('Cancel')+'</button>'
+      +'<button class="btn success" style="flex:2" id="sa-ok">'+('Submit for Approval')+'</button>'
     +'</div></div>';
   document.body.appendChild(ov);
   document.getElementById('sa-cancel').onclick=function(){ov.remove();};
@@ -3453,15 +3453,15 @@ function openSettlementBreakdown(sd){
   var EN=lang==='en'; var total=parseFloat((sd&&sd.total)||0);
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
   ov.innerHTML='<div class="modal-box">'
-    +'<div class="modal-title">💰 '+(EN?'Daily Sales Settlement':'Penyelesaian Jualan Harian')+'</div>'
+    +'<div class="modal-title">💰 '+('Daily Sales Settlement')+'</div>'
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Enter payment breakdown:':'Masukkan pecahan pembayaran:')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+('Enter payment breakdown:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
-    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+(EN?'Enter amounts above':'Masukkan jumlah di atas')+'</div>'
-    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+(EN?'Confirm & Upload Receipt':'Sahkan & Muat Naik')+'</button></div></div>';
+    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+('Enter amounts above')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+('Confirm & Upload Receipt')+'</button></div></div>';
   document.body.appendChild(ov);
   window._bdTotal=total;window._bdStore=(sd&&sd.store)||'';window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
   document.getElementById('bd-skip').onclick=function(){ov.remove();openSettlementUpload();};
@@ -3493,7 +3493,7 @@ function openSettlementUploadFirst(){
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='upload-first-modal';
   ov.innerHTML=
     '<div class="modal-box" style="padding-bottom:24px">'
-    +'<div class="modal-title">📎 '+(EN?'Confirm Daily Sales':'Sahkan Jualan Harian')+'</div>'
+    +'<div class="modal-title">📎 '+('Confirm Daily Sales')+'</div>'
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-size:12px;font-weight:700;color:#1e3a8a">🏪 '+store+' · 📅 '+dateKey+'</span>'
       +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</span>'
@@ -3512,9 +3512,9 @@ function openSettlementUploadFirst(){
       +'<input type="text" id="uf-note" placeholder="e.g. POS receipt..."></div>'
     +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">'
       +'<button id="uf-upload-btn" class="btn success" style="width:100%;font-size:18px;font-weight:800;padding:16px;border-radius:14px;background:linear-gradient(135deg,#059669,#10b981)">'
-        +(EN?'📤 Upload & Confirm Daily Sales':'📤 Muat Naik & Sahkan Jualan Harian')+'</button>'
+        +('📤 Upload & Confirm Daily Sales')+'</button>'
       +'<button id="uf-cancel-btn" style="width:100%;font-size:15px;padding:14px;border-radius:14px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer">'
-        +(EN?'✕ Cancel':'✕ Batal')+'</button>'
+        +('✕ Cancel')+'</button>'
     +'</div></div>';
   document.body.appendChild(ov);
   document.getElementById('uf-cancel-btn').onclick=function(){ov.remove();};
@@ -3555,10 +3555,10 @@ async function ufDoUpload(ov){
       confirmSubmit(false);
       // Lock the day — settlement uploaded and confirmed
       confirmAndLockAfterUpload(sd.store,sd.targetDate);
-      showToast(lang==='en'?'✅ Daily Sales Confirmed':'✅ Jualan Harian Disahkan','success');
+      showToast('✅ Daily Sales Confirmed','success');
     }catch(err){
-      if(btn){btn.disabled=false;btn.textContent=lang==='en'?'📤 Upload & Confirm Daily Sales':'📤 Muat Naik & Sahkan';}
-      showToast(lang==='en'?'Upload failed, please try again':'Muat naik gagal, cuba lagi','error');
+      if(btn){btn.disabled=false;btn.textContent='📤 Upload & Confirm Daily Sales';}
+      showToast('Upload failed, please try again','error');
     }
   };reader.readAsDataURL(fi.files[0]);
 }
@@ -4133,7 +4133,7 @@ async function adminClearDeviceBind(username){
       body:JSON.stringify({action:'clearDeviceBinding',username:username,
         clearedBy:currentUser.name,clearedAt:nowUTC8()})});
     showToast((EN?'Device reset sent. ':' Peranti direset. ')+username
-      +(EN?' — staff will be unbound on next login.':' — akan ditanggalkan semasa log masuk seterusnya.'),'success');
+      +(' — staff will be unbound on next login.'),'success');
   }catch(e){
     showToast((EN?'Device reset locally only (server error): ':'Reset tempatan sahaja: ')+e.message.slice(0,40),'error');
   }
