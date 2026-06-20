@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.01</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.01</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -866,7 +866,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.1 ──
+    // ── Additional zh keys v4.7.01 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1020,32 +1020,19 @@ function renderSettlementReports(){
 }
 
 async function syncAttendanceNow(){
-  // Independent attendance sync — does not depend on getSales
-  showToast('Syncing attendance...','pending');
-  try{
-    var r=await gasGet('getAttendance');
-    var attArr=null;
-    if(r&&Array.isArray(r.attendance)) attArr=r.attendance;
-    else if(Array.isArray(r)) attArr=r;
-    if(attArr===null){
-      // Fallback: try getAppData
-      var r2=await gasGet('getAppData');
-      if(r2&&Array.isArray(r2.attendance)) attArr=r2.attendance;
-    }
-    if(attArr!==null){
-      // Merge with local (keep session records)
-      // Store in memory only — no localStorage
-      _serverAtt = attArr;
-      _serverAttLoaded = true;
-      saveData('attendance_records', []); // clear any stale phone data
-      showToast(t('syncDoneMsg'),'success');
-      if(currentTab==='attendance') _renderAttendanceContent();
-      if(currentTab==='admin') renderAdminTab();
-    } else {
-      showToast('No attendance data from server','error');
-    }
-  }catch(e){
-    showToast(lang==='en'?'Attendance sync failed: '+e.message.slice(0,40):'Gagal sync kehadiran: '+e.message.slice(0,40),'error');
+  showToast(t('syncingMsg')||'Syncing attendance...','pending');
+  if(currentTab==='admin'){
+    // Reuse the same race-proof full render path
+    await renderAdminTab();
+    showToast(t('syncDoneMsg'),'success');
+    return;
+  }
+  var ok=await fetchAttendanceForAdmin();
+  if(ok){
+    showToast(t('syncDoneMsg'),'success');
+    if(currentTab==='attendance') _renderAttendanceContent();
+  } else {
+    showToast('No attendance data from server','error');
   }
 }
 
@@ -1151,19 +1138,29 @@ function savePermissionsFromUI(){
     p[role][feat] = cb.checked ? 1 : 0;
   });
   savePerms(p);
+  // Sync to GAS so ALL devices (staff/supervisor/manager) receive the update
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'savePermissions',permissions:p,savedBy:currentUser.name})}).catch(function(){});
   // Apply immediately to nav
   applyPermissionsToNav();
+  renderCurrentTab();
   var msg = document.getElementById('perms-saved-msg');
   if(msg){ msg.style.display='block'; setTimeout(function(){msg.style.display='none';},2500); }
-  showToast(lang==='en'?'Permissions saved ✅':'Kebenaran disimpan ✅','success');
+  showToast(lang==='en'?'Permissions saved ✅ (syncing to server...)':'Kebenaran disimpan ✅','success');
 }
 
 function resetPermissionsToDefault(){
   if(!confirm(lang==='en'?'Reset all permissions to default?':'Reset semua kebenaran ke nilai asal?')) return;
-  savePerms(JSON.parse(JSON.stringify(DEFAULT_PERMS)));
+  var dp=JSON.parse(JSON.stringify(DEFAULT_PERMS));
+  savePerms(dp);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'savePermissions',permissions:dp,savedBy:currentUser.name})}).catch(function(){});
   applyPermissionsToNav();
   renderPermissionsPanel();
-  showToast(lang==='en'?'Permissions reset to default':'Kebenaran telah direset','success');
+  renderCurrentTab();
+  showToast(lang==='en'?'Permissions reset to default ✅':'Kebenaran telah direset ✅','success');
 }
 
 function applyPermissionsToNav(){
@@ -1597,7 +1594,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.1_');
+  lines.push('_Daily Sales Reporter v4.7.01_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1686,6 +1683,15 @@ async function fetchLiveUsers(forceRefresh) {
     const cached = loadData('cached_users', {});
     if(Object.keys(cached).length > 0) cachedUsers = cached;
   }
+  // Always pull latest role permissions from server (critical — staff devices
+  // must reflect admin-set permissions, not stale local defaults)
+  try {
+    const permResp = await gasGet('getPermissions');
+    if(permResp && permResp.permissions){
+      savePerms(permResp.permissions);
+      if(currentUser) applyPermissionsToNav();
+    }
+  } catch(e){ console.warn('permission sync failed:', e.message); }
   return cachedUsers;
 }
 
@@ -1828,7 +1834,7 @@ function switchTab(tab,btn) {
   renderCurrentTab();
   // Auto-sync from DB when switching to Records or Summary tabs
   if(tab==='records'||tab==='summary'||tab==='attendance') triggerSyncRefresh();
-  if(tab==='admin') syncAttendanceNow();
+  // Admin tab fetches its own data (users + attendance) inside renderAdminTab()
 }
 function renderCurrentTab() {
   if(currentTab==='submit')  renderSubmitTab();
@@ -2047,6 +2053,12 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
   window._submitWithUpload=withUpload;
   if(withUpload){
+    // Defense-in-depth: verify server-confirmed permission before allowing
+    // the instant-lock flow, even if the button somehow rendered incorrectly
+    if(!hasPerm('confirm_daily')){
+      requestSettlementApproval();
+      return;
+    }
     // Step 1→2→3: Breakdown → Upload → Confirm
     openSettlementBreakdown(window._pendingSubmit);
     return;
@@ -2066,7 +2078,7 @@ function _staffSubmitForApproval(withUpload) {
     payload:JSON.stringify({cash:p.cash,qr:p.qr,card:p.card,bank:p.bank,remark:p.remark})};
   const a=getApprovals(); a.push(req); saveApprovals(a);
   fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'createApprovalRequest',...req})}).catch(()=>{});
   closeModal();
   showToast(lang==='zh'?'已提交 — 等待主管审批 ⏳':'Submitted — Pending Supervisor Approval ⏳','success');
@@ -3074,7 +3086,9 @@ function renderOperationsDashboard(){
   let att=getAllAttendance();
   if(attendanceStoreFilter!=='all') att=att.filter(r=>r.store===attendanceStoreFilter);
   att=att.filter(r=>r.dateKey===attendanceDateFilter);
-  const pending=getApprovals().filter(r=>r.status==='pending');
+  const _seeAllStores=['admin','boss'].includes(currentUser.role);
+  const pending=getApprovals().filter(r=>r.status==='pending'
+    &&(_seeAllStores||r.store===currentUser.store));
   const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
   // Only staff & supervisor count for attendance (not manager/admin/boss)
   const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
@@ -3187,6 +3201,25 @@ async function createDatabaseBackup(){ await fetch(WEB_APP_URL,{method:'POST',mo
 // ============================================================
 // ADMIN TAB
 // ============================================================
+var _adminRenderSeq=0;
+async function fetchAttendanceForAdmin(){
+  // Independent attendance fetch — used by renderAdminTab and manual sync button
+  try{
+    var r=await gasGet('getAttendance');
+    var attArr=(r&&Array.isArray(r.attendance))?r.attendance:(Array.isArray(r)?r:null);
+    if(attArr===null){
+      var r2=await gasGet('getAppData');
+      if(r2&&Array.isArray(r2.attendance)) attArr=r2.attendance;
+    }
+    if(attArr!==null){
+      _serverAtt=attArr;
+      _serverAttLoaded=true;
+      saveData('attendance_records',[]);
+      return true;
+    }
+  }catch(e){ console.warn('attendance fetch failed:',e.message); }
+  return false;
+}
 async function renderAdminTab() {
   var ZH=lang==='zh'; var EN=lang==='en';
   const isAdmin=['admin','boss','manager'].includes(currentUser.role);
@@ -3194,9 +3227,13 @@ async function renderAdminTab() {
     document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
     return;
   }
+  // Guard against overlapping renders racing and clobbering each other's data
+  var _myRenderId=++_adminRenderSeq;
   document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
-  // Force fresh fetch — bypass any stale cache
-  await fetchLiveUsers(true);
+  // Fetch users + attendance together — whichever render started LAST wins
+  await Promise.all([fetchLiveUsers(true), fetchAttendanceForAdmin()]);
+  // If a newer render began while we were fetching, abandon this stale one
+  if(_myRenderId!==_adminRenderSeq) return;
   const allUsers=cachedUsers;
   const pending=[]; const active=[];
   Object.entries(allUsers).forEach(([uname,u])=>{
@@ -3490,7 +3527,7 @@ function requestSettlementApproval(){
       datetime:nowUTC8(),month:dateVal.slice(0,7)};
     var appr=getApprovals(); appr.push(rec); saveApprovals(appr);
     await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify(Object.assign({action:'submitApprovalRequest'},rec))}).catch(function(){});
     ov.remove();
     showToast(EN?'Settlement approval requested ✅':'Kelulusan penyelesaian diminta ✅','success');
