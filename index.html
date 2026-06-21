@@ -290,7 +290,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.01</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +341,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.01</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -634,7 +634,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKALVmKSGCaxdE3kLoGrJ3NUCsdjibaNxIaYDzWWm4Aj2Nss4hznpZD5WOBjKqp5Mh/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyYvBZQCgtLKIeHxW8mJ78pbPp6-C3Di9p_2J1rIjhrU4PsWD7Vo9AMWLLFJWRJc5g/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -866,7 +866,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.01 ──
+    // ── Additional zh keys v4.7.1 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1594,7 +1594,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.01_');
+  lines.push('_Daily Sales Reporter v4.7.1_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -3124,7 +3124,7 @@ function approvalRowHtml(r){
     +'</div>'
   +'</div>';
 }
-async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?'Approved.':'Rejected.','success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
+async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?(lang==='zh'?'已批准。':'Approved.'):(lang==='zh'?'已拒绝。':'Rejected.'),'success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAllAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
 function renderZoneScheduleTools(branches,users){
   var ZH=lang==='zh'; var EN=lang==='en';
@@ -3220,6 +3220,21 @@ async function fetchAttendanceForAdmin(){
   }catch(e){ console.warn('attendance fetch failed:',e.message); }
   return false;
 }
+async function fetchApprovalsForAdmin(){
+  // Pulls pending Sales/Settlement approval requests from the server.
+  // Without this, the Admin tab only shows whatever was last cached
+  // locally (e.g. from a previous visit to Records tab) — meaning a
+  // fresh staff request would never appear until something else happened
+  // to trigger a sync. Admin tab must always pull this fresh.
+  try{
+    var r=await gasGet('getAppData');
+    if(r&&Array.isArray(r.approvals)){
+      saveApprovals(r.approvals);
+      return true;
+    }
+  }catch(e){ console.warn('approvals fetch failed:',e.message); }
+  return false;
+}
 async function renderAdminTab() {
   var ZH=lang==='zh'; var EN=lang==='en';
   const isAdmin=['admin','boss','manager'].includes(currentUser.role);
@@ -3231,7 +3246,7 @@ async function renderAdminTab() {
   var _myRenderId=++_adminRenderSeq;
   document.getElementById('tab-admin').innerHTML=`<div class="spinner-wrap"><div class="spin"></div>Loading...</div>`;
   // Fetch users + attendance together — whichever render started LAST wins
-  await Promise.all([fetchLiveUsers(true), fetchAttendanceForAdmin()]);
+  await Promise.all([fetchLiveUsers(true), fetchAttendanceForAdmin(), fetchApprovalsForAdmin()]);
   // If a newer render began while we were fetching, abandon this stale one
   if(_myRenderId!==_adminRenderSeq) return;
   const allUsers=cachedUsers;
