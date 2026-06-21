@@ -1001,9 +1001,17 @@ function renderSettlementReports(){
         +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
       +'</div>';
     rows.forEach(function(r){
+      var stBadge='';
+      if(r.status==='pending_approval'){
+        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'⏳ 待审批':(lang==="en"?'⏳ Pending Approval':'⏳ Menunggu Kelulusan'))+'</span>';
+      } else if(r.status==='rejected'){
+        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'❌ 已拒绝':(lang==="en"?'❌ Rejected':'❌ Ditolak'))+'</span>';
+      } else if(r.status==='confirmed'){
+        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'✅ 已确认':(lang==="en"?'✅ Confirmed':'✅ Disahkan'))+'</span>';
+      }
       html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
         +'<div>'
-          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+'</div>'
+          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+stBadge+'</div>'
           +'<div style="font-size:11px;color:var(--text2)">'
             +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
             +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
@@ -1946,8 +1954,8 @@ function renderSubmitTab() {
           ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
               📎 ${'Confirm Daily Sales (Upload Receipt)'}
             </button>`
-          :`<button class="btn" onclick="requestSettlementApproval()" style="font-size:14px;background:#94a3b8">
-              📋 ${'Request Settlement Approval'}
+          :`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#7c3aed">
+              📎 ${ZH?'确认每日销售（需审批）':(lang==='en'?'Confirm Daily Sales (Needs Approval)':'Sahkan Jualan Harian (Perlu Kelulusan)')}
             </button>`}
       </div>
 
@@ -2053,13 +2061,12 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   window._pendingSubmit={store,targetDate,cash,qr,card,bank,total,remark};
   window._submitWithUpload=withUpload;
   if(withUpload){
-    // Defense-in-depth: verify server-confirmed permission before allowing
-    // the instant-lock flow, even if the button somehow rendered incorrectly
-    if(!hasPerm('confirm_daily')){
-      requestSettlementApproval();
-      return;
-    }
-    // Step 1→2→3: Breakdown → Upload → Confirm
+    // Staff and Supervisor+ now go through the IDENTICAL breakdown + receipt
+    // upload flow. Only the final step differs: confirm_daily roles lock
+    // the day immediately; everyone else's submission routes to their
+    // store's Supervisor/Manager/Admin for approval (also enforced
+    // server-side in handleUploadSettlement).
+    window._needsApproval=!hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
@@ -3237,9 +3244,12 @@ async function fetchApprovalsForAdmin(){
 }
 async function renderAdminTab() {
   var ZH=lang==='zh'; var EN=lang==='en';
-  const isAdmin=['admin','boss','manager'].includes(currentUser.role);
+  // Permission-driven, not a hardcoded role list — Supervisor has
+  // view_admin=1 by default and must be able to see/approve requests
+  // for their own store.
+  const isAdmin=hasPerm('view_admin');
   if(!isAdmin){
-    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">No access</div>`;
+    document.getElementById('tab-admin').innerHTML=`<div class="card" style="text-align:center;padding:40px">${ZH?'无权限':'No access'}</div>`;
     return;
   }
   // Guard against overlapping renders racing and clobbering each other's data
@@ -3572,9 +3582,10 @@ function openSettlementBreakdown(sd){
     var b=parseFloat(document.getElementById('bd-bank').value)||0;
     var sum=parseFloat((c+q+k+b).toFixed(2));
     if(sum!==window._bdTotal){showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+sum.toFixed(2)+(lang==='en'?' must equal RM':' mesti RM')+(window._bdTotal||0).toFixed(2),'error');return;}
+    window._bdCash=c;window._bdQr=q;window._bdCard=k;window._bdBank=b;
     var sales=getSales();var ri=sales.findIndex(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
     if(ri>=0){sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;saveSales(sales);
-      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});}
+      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});}
     ov.remove();openSettlementUploadFirst();
   };
 }
@@ -3588,17 +3599,27 @@ function checkBdTotal(){
 
 function openSettlementUploadFirst(){
   var sd=window._pendingSubmit||{};
-  var EN=lang==='en';
+  var EN=lang==='en'; var ZH=lang==='zh';
+  var needsApproval=!!window._needsApproval;
   var store=sd.store||'',dateKey=sd.targetDate||dateKeyUTC8(),total=parseFloat(sd.total||0);
+  var titleTxt=needsApproval?(ZH?'提交以供审批':(EN?'Submit for Approval':'Hantar untuk Kelulusan'))
+                            :(ZH?'确认每日销售':(EN?'Confirm Daily Sales':'Sahkan Jualan Harian'));
+  var descTxt=needsApproval?(ZH?'上传结算收据以提交给您门店的主管/经理/管理员审批：':
+                              (EN?'Upload your settlement receipt — this will be sent to your store\'s Supervisor/Manager/Admin for approval:'
+                                 :'Muat naik resit penyelesaian — ini akan dihantar untuk kelulusan:'))
+                          :(EN?'Upload your settlement receipt to confirm today\'s sales:':'Muat naik resit penyelesaian untuk mengesahkan jualan:');
+  var btnTxt=needsApproval?(ZH?'📤 上传并提交审批':(EN?'📤 Upload & Submit for Approval':'📤 Muat Naik & Hantar Kelulusan'))
+                          :'📤 Upload & Confirm Daily Sales';
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='upload-first-modal';
   ov.innerHTML=
     '<div class="modal-box" style="padding-bottom:24px">'
-    +'<div class="modal-title">📎 '+('Confirm Daily Sales')+'</div>'
+    +'<div class="modal-title">'+(needsApproval?'📋 ':'📎 ')+titleTxt+'</div>'
+    +(needsApproval?'<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#5b21b6;font-weight:700">'+(ZH?'⏳ 此提交需要您门店主管/经理/管理员的审批':'⏳ This submission requires approval from your store\'s Supervisor/Manager/Admin')+'</div>':'')
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-size:12px;font-weight:700;color:#1e3a8a">🏪 '+store+' · 📅 '+dateKey+'</span>'
       +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</span>'
     +'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:10px">'+(EN?'Upload your settlement receipt to confirm today\'s sales:':'Muat naik resit penyelesaian untuk mengesahkan jualan:')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:10px">'+descTxt+'</div>'
     +'<div id="uf-preview" style="display:none;margin-bottom:12px;text-align:center">'
       +'<img id="uf-img" style="max-width:100%;max-height:200px;border-radius:12px;border:2px solid var(--border);object-fit:cover">'
       +'<div id="uf-name" style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:600"></div>'
@@ -3611,8 +3632,8 @@ function openSettlementUploadFirst(){
     +'<div class="input-wrap"><label class="field-label">'+(EN?'Note (optional)':'Nota (pilihan)')+'</label>'
       +'<input type="text" id="uf-note" placeholder="e.g. POS receipt..."></div>'
     +'<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">'
-      +'<button id="uf-upload-btn" class="btn success" style="width:100%;font-size:18px;font-weight:800;padding:16px;border-radius:14px;background:linear-gradient(135deg,#059669,#10b981)">'
-        +('📤 Upload & Confirm Daily Sales')+'</button>'
+      +'<button id="uf-upload-btn" class="btn success" style="width:100%;font-size:18px;font-weight:800;padding:16px;border-radius:14px;background:linear-gradient(135deg,'+(needsApproval?'#7c3aed,#a78bfa':'#059669,#10b981')+')">'
+        +btnTxt+'</button>'
       +'<button id="uf-cancel-btn" style="width:100%;font-size:15px;padding:14px;border-radius:14px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-weight:700;cursor:pointer">'
         +('✕ Cancel')+'</button>'
     +'</div></div>';
@@ -3632,30 +3653,58 @@ async function ufDoUpload(ov){
   var fi=document.getElementById('uf-file');
   if(!fi||!fi.files||!fi.files[0]){showToast(lang==='en'?'Please select a receipt photo':'Sila pilih foto resit','error');return;}
   var btn=document.getElementById('uf-upload-btn');
-  if(btn){btn.disabled=true;btn.textContent=lang==='en'?'Uploading...':'Sedang muat naik...';}
+  var EN3=lang==='en'; var ZH3=lang==='zh';
+  var needsApproval=!!window._needsApproval;
+  if(btn){btn.disabled=true;btn.textContent=ZH3?'上传中...':(EN3?'Uploading...':'Sedang muat naik...');}
   var reader=new FileReader();
   reader.onload=async function(e){
     try{
       var b64=e.target.result.split(',')[1];
       var sd=window._pendingSubmit||{};
       var note=document.getElementById('uf-note');
-      // Step 1: Upload receipt
+      var noteVal=note?note.value:'';
+      // Step 1: Upload receipt — server always saves the file; it only
+      // auto-locks the day if this role has confirm_daily permission.
+      // (Fire-and-forget via no-cors — same pattern used everywhere else
+      // in this app since GAS doesn't support CORS preflight on POST.)
       await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'text/plain'},
         body:JSON.stringify({action:'uploadSettlement',store:sd.store,dateKey:sd.targetDate,
-          fileData:b64,fileName:fi.files[0].name,note:note?note.value:'',
-          uploadedBy:currentUser.name,role:currentUser.role})});
+          fileData:b64,fileName:fi.files[0].name,note:noteVal,
+          submitter:currentUser.name,uploadedBy:currentUser.name,role:currentUser.role})});
       ov.remove();
-      // Save settlement record locally for viewer
+      // Save settlement record locally for the Settlement Reports viewer
       var settRec={id:String(Date.now()),store:sd.store,dateKey:sd.targetDate,
         total:sd.total,uploadedBy:currentUser.name,role:currentUser.role,
-        datetime:nowUTC8(),note:note?note.value:'',fileName:fi.files[0].name,fileUrl:''};
+        datetime:nowUTC8(),note:noteVal,fileName:fi.files[0].name,fileUrl:'',
+        status:needsApproval?'pending_approval':'confirmed'};
       var settArr=getSettlementsData();settArr.push(settRec);saveSettlementsData(settArr);
-      // Save sales to GAS with breakdown already captured
-      confirmSubmit(false);
-      // Lock the day — settlement uploaded and confirmed
-      confirmAndLockAfterUpload(sd.store,sd.targetDate);
-      showToast('✅ Daily Sales Confirmed','success');
+      if(needsApproval){
+        // Create the pending approval request — uses the ACTUAL breakdown
+        // amounts captured when the breakdown form was confirmed, not the
+        // placeholder values on _pendingSubmit.
+        var rec={id:String(Date.now()),type:'settlement',status:'pending',
+          store:sd.store,dateKey:sd.targetDate,total:sd.total,
+          cash:window._bdCash||0,qr:window._bdQr||0,card:window._bdCard||0,bank:window._bdBank||0,
+          remark:noteVal,
+          submitter:currentUser.username,name:currentUser.name,role:currentUser.role,
+          datetime:nowUTC8(),month:sd.targetDate.slice(0,7)};
+        var appr=getApprovals(); appr.push(rec); saveApprovals(appr);
+        await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+          headers:{'Content-Type':'text/plain'},
+          body:JSON.stringify(Object.assign({action:'submitApprovalRequest'},rec))}).catch(function(){});
+        showToast(ZH3?'✅ 收据已上传 — 已提交主管/经理/管理员审批':
+          (EN3?'✅ Receipt uploaded — submitted for Supervisor/Manager/Admin approval':
+               '✅ Resit dimuat naik — dihantar untuk kelulusan'),'success');
+        renderSubmitTab();
+        if(currentTab==='records') renderRecordsTab();
+      } else {
+        // Save sales to GAS with breakdown already captured
+        confirmSubmit(false);
+        // Lock the day — settlement uploaded and confirmed
+        confirmAndLockAfterUpload(sd.store,sd.targetDate);
+        showToast('✅ Daily Sales Confirmed','success');
+      }
     }catch(err){
       if(btn){btn.disabled=false;btn.textContent='📤 Upload & Confirm Daily Sales';}
       showToast('Upload failed, please try again','error');
