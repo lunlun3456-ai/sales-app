@@ -1933,13 +1933,13 @@ function renderSubmitTab() {
       <input type="hidden" id="s-card" value="0">
       <input type="hidden" id="s-bank" value="0">
       <div class="input-wrap">
-        <label class="field-label" style="font-size:15px;font-weight:800">🧾 ${t('totalSalesLabel')+' (RM)'}</label>
+        <label class="field-label" style="font-size:15px;font-weight:800">🧾 Total Sales (RM)</label>
         <div class="amount-input-wrap" style="font-size:20px"><span class="amount-prefix" style="font-size:18px">RM</span>
           <input type="number" class="amount-input" id="s-total-main" placeholder="0.00" min="0" step="0.01"
             inputmode="decimal" style="font-size:22px;font-weight:900" oninput="updateTotalFromMain()">
         </div>
       </div>
-      <div style="margin-top:10px;padding:14px;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#bfdbfe;letter-spacing:.5px;margin-bottom:4px">${lang==='en'?t('totalSalesLabel'):'JUMLAH JUALAN'}</div><div id="live-total" style="font-size:32px;font-weight:900;color:white;letter-spacing:1px">RM 0.00</div></div>
+      <div style="margin-top:10px;padding:14px;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#bfdbfe;letter-spacing:.5px;margin-bottom:4px">${lang==='en'?'TOTAL SALES':'JUMLAH JUALAN'}</div><div id="live-total" style="font-size:32px;font-weight:900;color:white;letter-spacing:1px">RM 0.00</div></div>
       <div class="input-wrap" style="margin-top:12px">
         <label class="field-label">📝 ${t('remark')}</label>
         <input type="text" id="s-remark" placeholder="...">
