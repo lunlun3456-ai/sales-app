@@ -206,6 +206,26 @@
   .attendance-result-box.pending { background:#fffbeb;border-top:8px solid #f59e0b; }
   .attendance-result-box.success { background:#f0fdf4;border-top:8px solid #10b981; }
   @media (min-width: 500px) { body { max-width: 480px; margin: 0 auto; } }
+  /* ── Attendance card states ── */
+  .att-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .att-card { border-radius:14px; padding:14px 12px; text-align:center; border:2px solid; }
+  .att-card.ci-done     { background:#f0fdf4; border-color:#10b981; }
+  .att-card.ci-wait     { background:#f8fafc; border-color:#e2e8f0; }
+  .att-card.ci-rejected { background:#fff1f2; border-color:#ef4444; }
+  .att-card.co-done     { background:#fffbeb; border-color:#f59e0b; }
+  .att-card.co-wait     { background:#f8fafc; border-color:#e2e8f0; }
+  .att-card.co-rejected { background:#fff1f2; border-color:#ef4444; }
+  .ac-lbl { font-size:10px; font-weight:800; color:var(--text2); letter-spacing:1px; margin-bottom:4px; }
+  .ac-time { font-size:26px; font-weight:900; color:#1e3a8a; line-height:1; }
+  .ac-sub  { font-size:11px; color:var(--text2); margin-top:4px; font-weight:600; line-height:1.4; }
+  .att-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .att-src-badge { font-size:10px; font-weight:700; color:#64748b; margin-top:3px; }
+  /* ── Approval row checkbox ── */
+  .appr-row { display:flex; align-items:flex-start; gap:8px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .appr-row:last-child { border-bottom:none; }
+  .appr-cb-wrap { padding-top:2px; flex-shrink:0; }
+  .appr-bulk-bar { display:none; gap:8px; margin-bottom:8px; }
+  .appr-bulk-bar.visible { display:flex; }
 </style>
 </head>
 <body>
@@ -290,7 +310,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -341,7 +361,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -1602,7 +1622,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.1_');
+  lines.push('_Daily Sales Reporter v4.7.2_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2682,6 +2702,22 @@ function renderAttendanceTab(){
     }catch(e){}
   })();
 }
+// Helper: GPS source label for display
+function _attSrcLabel(r){
+  var s=r.gpsSource||r.source||'';
+  var acc=r.accuracy&&r.accuracy<9000?'±'+r.accuracy+'m':'';
+  if(s==='gps')     return '📡 GPS'+' '+acc;
+  if(s==='network') return '📶 Network'+' '+acc;
+  if(s==='ip'||s==='ip2') return '🌐 IP (~5km)';
+  if(s==='location_error'||!s||r.accuracy>=9000) return '⚠️ No GPS';
+  return acc?'📍 '+acc:'';
+}
+// Helper: retry attendance after rejection
+function retryAttendance(type){
+  var ZH=lang==='zh';
+  showToast(ZH?'重新尝试打卡...':'Retrying check '+(type==='check_in'?'in':'out')+'...','pending');
+  submitAttendance(type);
+}
 function _renderAttendanceContent(){
   if(currentUser.store==='HQ'||currentUser.store==='hq'){
     document.getElementById('tab-attendance').innerHTML=
@@ -2694,29 +2730,52 @@ function _renderAttendanceContent(){
   }
   var today=dateKeyUTC8();
   var ZH=lang==='zh';
-  // Session is truth for today; stored supplements history
-  // Always use server data (merged with session)
+  // ALL today records — rejected stay visible
   var todayAll=getAllAttendance().filter(function(r){
     return r.username===currentUser.username&&r.dateKey===today;
   }).sort(function(a,b){ return String(a.datetime).localeCompare(String(b.datetime)); });
-  // Successful records only for main cards
+  // Non-rejected only for status cards
   var success=todayAll.filter(function(r){return r.status!=='rejected'&&r.status!=='voided';});
   var lastIn=null,lastOut=null;
   success.forEach(function(r){if(r.type==='check_in'&&!lastIn)lastIn=r;if(r.type==='check_out'&&!lastOut)lastOut=r;});
   var inTime=lastIn?fmtTimeUTC8(lastIn.datetime):null;
   var outTime=lastOut?fmtTimeUTC8(lastOut.datetime):null;
-  var inSub=lastIn?(lastIn.status==='late'?'⚠️ '+(ZH?'迟到':'Late'):'✅ '+(ZH?'准时':'On time')):(ZH?'未打卡':'Not yet');
-  var outSub=lastOut?(lastOut.status==='early_leave'?'⚠️ '+(ZH?'早退':'Early leave'):'✅ '+(ZH?'正常':'Done')):(ZH?'未打卡':'Not yet');
-  // Time cards
-  var inCard='<div class="att-card '+(inTime?'ci-done':'ci-wait')+'">'
+  // Detect latest rejected attempt (no successful record yet)
+  var allIn=todayAll.filter(function(r){return r.type==='check_in';});
+  var allOut=todayAll.filter(function(r){return r.type==='check_out';});
+  var latestIn=allIn.length?allIn[allIn.length-1]:null;
+  var latestOut=allOut.length?allOut[allOut.length-1]:null;
+  var inRejected=!lastIn&&latestIn&&(latestIn.status==='rejected'||latestIn.status==='voided');
+  var outRejected=lastIn&&!lastOut&&latestOut&&(latestOut.status==='rejected'||latestOut.status==='voided');
+  // Status subtitle with GPS source
+  var inSrc=lastIn?_attSrcLabel(lastIn):'';
+  var outSrc=lastOut?_attSrcLabel(lastOut):'';
+  var inSub=lastIn
+    ?(lastIn.status==='late'?'⚠️ '+(ZH?'迟到':'Late'):'✅ '+(ZH?'准时':'On time'))+(inSrc?' · '+inSrc:'')
+    :inRejected?'❌ '+(ZH?'被拒绝':'Rejected')+(latestIn?(' · '+_attSrcLabel(latestIn)):'')
+    :(ZH?'未打卡':'Not yet');
+  var outSub=lastOut
+    ?(lastOut.status==='early_leave'?'⚠️ '+(ZH?'早退':'Early leave'):'✅ '+(ZH?'正常':'Done'))+(outSrc?' · '+outSrc:'')
+    :outRejected?'❌ '+(ZH?'被拒绝':'Rejected')+(latestOut?(' · '+_attSrcLabel(latestOut)):'')
+    :(ZH?'未打卡':'Not yet');
+  // Status cards — show rejected state + retry button
+  var inCardClass=inTime?'ci-done':inRejected?'ci-rejected':'ci-wait';
+  var outCardClass=outTime?'co-done':outRejected?'co-rejected':'co-wait';
+  var inRetryBtn=inRejected
+    ?('<button class="btn danger" style="margin-top:8px;font-size:12px;padding:6px 12px;border-radius:8px;width:100%" onclick="retryAttendance(\'check_in\')">'
+      +(ZH?'🔄 重新签到':'🔄 Retry Check In')+'</button>'):'';
+  var outRetryBtn=outRejected
+    ?('<button class="btn warn" style="margin-top:8px;font-size:12px;padding:6px 12px;border-radius:8px;width:100%" onclick="retryAttendance(\'check_out\')">'
+      +(ZH?'🔄 重新签退':'🔄 Retry Check Out')+'</button>'):'';
+  var inCard='<div class="att-card '+inCardClass+'">'
     +'<div class="ac-lbl">'+(ZH?'签到':'CHECK IN')+'</div>'
     +'<div class="ac-time">'+(inTime||'--:--')+'</div>'
-    +'<div class="ac-sub">'+inSub+'</div></div>';
-  var outCard='<div class="att-card '+(outTime?'co-done':'co-wait')+'">'
+    +'<div class="ac-sub">'+inSub+'</div>'+inRetryBtn+'</div>';
+  var outCard='<div class="att-card '+outCardClass+'">'
     +'<div class="ac-lbl">'+(ZH?'签退':'CHECK OUT')+'</div>'
     +'<div class="ac-time">'+(outTime||'--:--')+'</div>'
-    +'<div class="ac-sub">'+outSub+'</div></div>';
-  // Today activity list (all statuses)
+    +'<div class="ac-sub">'+outSub+'</div>'+outRetryBtn+'</div>';
+  // Today activity — ALL records including rejected (full transparency)
   var canReset=['admin','manager'].includes(currentUser.role);
   var todayRows=todayAll.map(function(r){
     var ci=r.type==='check_in';
@@ -2724,26 +2783,33 @@ function _renderAttendanceContent(){
     var col=isRej?'#ef4444':ci?'#10b981':'#f59e0b';
     var bg=isRej?'#fff1f2':ci?'#f0fdf4':'#fff7ed';
     var lbl=ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT');
-    var statusLbl=isRej?('❌ '+(r.status||'rejected')):'✅ '+(r.status||'present');
-    // Reset button — staff for own, admin/manager for any
-    var showReset=(canReset||r.username===currentUser.username)&&!isRej;
+    var statusLbl=isRej?('❌ '+(r.status==='voided'?'Voided':'Rejected')):'✅ '+(r.status||'present');
+    var srcLabel=_attSrcLabel(r);
+    // Reset button for admin/manager
+    var showReset=canReset&&!isRej;
     var resetBtn=showReset
-      ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px"'
+      ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:4px"'
         +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
         +' data-type="'+r.type+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'">'
-        +(ZH?'🗑 重置':'🗑 Reset')+'</button>')
-      :'';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
-      +'<div style="display:flex;align-items:center;gap:6px">'
-        +'<span style="background:'+bg+';color:'+col+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">'+lbl+'</span>'
-        +'<div><div style="font-size:12px;font-weight:700;color:'+(isRej?'#94a3b8':'var(--text)')+'">'+statusLbl+'</div>'
+        +(ZH?'🗑':'🗑')+'</button>'):'';
+    // Retry button for own rejected records
+    var canRetryThis=isRej&&r.username===currentUser.username
+      &&((r.type==='check_in'&&!lastIn)||(r.type==='check_out'&&lastIn&&!lastOut));
+    var retryBtn=canRetryThis
+      ?('<button style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:8px;'
+        +'padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" '
+        +'onclick="retryAttendance(\''+r.type+'\')">'
+        +(ZH?'↻ 重试':'↻ Retry')+'</button>'):'';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:.5px solid var(--border);'+(isRej?'opacity:.8':'') + '">'
+      +'<div style="display:flex;align-items:flex-start;gap:6px">'
+        +'<span style="background:'+bg+';color:'+col+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;margin-top:1px">'+lbl+'</span>'
+        +'<div>'
+          +'<div style="font-size:12px;font-weight:700;color:'+(isRej?'#94a3b8':'var(--text)')+'">'+statusLbl+resetBtn+retryBtn+'</div>'
+          +(srcLabel?'<div style="font-size:10px;color:var(--text2);margin-top:1px">'+srcLabel+'</div>':'')
           +(r.remark?'<div style="font-size:10px;color:var(--text2)">'+r.remark+'</div>':'')
         +'</div>'
       +'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="font-size:16px;font-weight:900;color:'+(isRej?'#94a3b8':col)+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
-        +resetBtn
-      +'</div>'
+      +'<span style="font-size:16px;font-weight:900;color:'+(isRej?'#94a3b8':col)+';flex-shrink:0">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
     +'</div>';
   }).join('');
   // Recent history (previous days — all statuses)
@@ -2755,17 +2821,16 @@ function _renderAttendanceContent(){
     var ci=r.type==='check_in';
     var isRej=r.status==='rejected'||r.status==='voided';
     var col=isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
-    // Show delete button for admin/manager OR for own records
     var showDel=!isRej&&(_canResetHist||r.username===currentUser.username);
     var delBtn=showDel
       ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
         +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
         +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'"'
-        +'>🗑</button>')
-      :'';
+        +'>🗑</button>'):'';
+    var srcIco=r.gpsSource==='gps'||r.source==='gps'?' 📡':r.gpsSource==='network'||r.source==='network'?' 📶':r.accuracy>=9000?' ⚠️':'';
     var _dk=r.dateKey?String(r.dateKey).slice(0,10):'';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':'')+'">'
-      +'<div><div style="font-size:12px;font-weight:700">'+_dk
+      +'<div><div style="font-size:12px;font-weight:700">'+_dk+srcIco
         +' <span style="font-size:10px;background:'+(isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed')
         +';color:'+(isRej?'#94a3b8':ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 6px">'
         +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+(isRej?' ❌':'')+'</span></div>'
@@ -2789,19 +2854,19 @@ function _renderAttendanceContent(){
         +'<input type="text" id="att-remark" placeholder="'+(ZH?'如：看医生':'e.g. Doctor visit')+'">'
       +'</div>'
       +'<div class="att-btn-row" id="att-btns"></div>'
-      +(!inTime&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+(ZH?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
+      +(!inTime&&!inRejected&&!outTime?'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px">'+(ZH?'点击签到开始今日工作':'Tap Check In to start your day')+'</div>':'')
     +'</div>'
-    +(todayAll.length?'<div class="card" style="margin-bottom:10px"><div class="card-title">📋 '+(ZH?'今日记录':'Today\'s Activity')+'</div>'+todayRows+'</div>':'')
+    +(todayAll.length?'<div class="card" style="margin-bottom:10px"><div class="card-title" style="display:flex;align-items:center;gap:6px">📋 '+(ZH?'今日记录':'Today\'s Activity')+'<span style="font-size:10px;background:#f1f5f9;color:#64748b;border-radius:20px;padding:1px 8px;font-weight:700">'+todayAll.length+'</span></div>'+todayRows+'</div>':'')
     +(recent.length?'<div class="card"><div class="card-title">'+(ZH?'近期记录':'Recent History')+'</div>'+recRows+'</div>':'');
   var btns=document.getElementById('att-btns');
   if(btns){
     var b1=document.createElement('button'); b1.className='btn success';
     if(inTime) b1.disabled=true;
-    b1.textContent=(inTime?'✅ ':'🟢 ')+(ZH?'签到':'Check In');
+    b1.textContent=(inTime?'✅ ':inRejected?'🔄 ':'🟢 ')+(ZH?'签到':'Check In');
     b1.onclick=function(){confirmAttendance('check_in');};
     var b2=document.createElement('button'); b2.className='btn warn';
     if(!inTime||outTime) b2.disabled=true;
-    b2.textContent=(outTime?'🟡 ':'🔴 ')+(ZH?'签退':'Check Out');
+    b2.textContent=(outTime?'🟡 ':outRejected?'🔄 ':'🔴 ')+(ZH?'签退':'Check Out');
     b2.onclick=function(){confirmAttendance('check_out');};
     btns.appendChild(b1); btns.appendChild(b2);
   }
@@ -2888,11 +2953,12 @@ async function submitAttendance(type){
     if(zoneRejected){
       record.status='rejected';
       var EN3=lang==='en';
-      var accNote3=loc.accuracy>50?' (GPS ±'+loc.accuracy+'m)':'';
+      var _srcInfo3=_attSrcLabel(record);
       showAttendanceResult('rejected',EN3?label+' Rejected':label+' Ditolak',
         (EN3?'Outside allowed zone. ':'Di luar zon yang dibenarkan. ')
-        +zone.distanceMeters+'m '+(EN3?'away (max ':'jauh (max ')+zone.radiusMeters+'m)'+accNote3+'. '
-        +(EN3?'Try moving to open area and check in again.':'Cuba pindah ke kawasan terbuka dan daftar semula.'),'');
+        +zone.distanceMeters+'m '+(EN3?'away (max ':'jauh (max ')+zone.radiusMeters+'m). '
+        +(EN3?'Move to open area & retry.':'Cuba kawasan terbuka & cuba semula.'),
+        _srcInfo3);
     } else {
       var bound=_getDeviceBound(record.deviceId);
       if(bound&&bound!==currentUser.username.toLowerCase()){
@@ -2907,8 +2973,9 @@ async function submitAttendance(type){
       }
       _bindDevice(record.deviceId,currentUser.username);
       record.status='present';
+      var _srcDetail=_attSrcLabel(record);
       showAttendanceResult('success',label+' Saved',
-        (ZH?'考勤已记录：':'Attendance recorded for ')+currentUser.name+'.',record.deviceName,type);
+        (ZH?'考勤已记录：':'Attendance recorded for ')+currentUser.name+'.', _srcDetail?_srcDetail:record.deviceName,type);
     }
     // Save to session memory FIRST (survives sync overwrites)
     _attSession.push(record);
@@ -3103,33 +3170,124 @@ function renderOperationsDashboard(){
   const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
   return `<div class="card"><div class="card-title">${ZH?'管理面板':t('mgrDash')}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
     <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'审批':'Approval'}</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
-    ${hasPerm('approve_sales')?`<div style="margin-top:12px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">${ZH?'✅ 待审批销售/结算':'✅ Pending Sales / Settlement Approvals'}</div>${pending.length?pending.map(approvalRowHtml).join(''):'<div style="font-size:13px;color:var(--text2)">'+(ZH?'暂无待审批销售':'No pending sales approvals.')+'</div>'}</div>`:''}
-     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
+    ${hasPerm('approve_sales')?`<div style="margin-top:12px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">${ZH?'✅ 待审批销售/结算':'✅ Pending Sales / Settlement Approvals'}</div>
+      ${pending.length?`
+        <!-- Select-all header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:7px 10px;margin-bottom:6px;border:1.5px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;color:#1e3a8a">
+            <input type="checkbox" id="appr-select-all" style="width:17px;height:17px;accent-color:#1e3a8a;cursor:pointer" onchange="toggleAllApprovals(this.checked)">
+            ${ZH?'全选 ('+pending.length+')':'Select All ('+pending.length+')'}
+          </label>
+          <span id="appr-bulk-count" style="font-size:11px;color:var(--text2)"></span>
+        </div>
+        <!-- Bulk action bar (hidden until selection) -->
+        <div id="appr-bulk-bar" class="appr-bulk-bar" style="margin-bottom:8px">
+          <button class="btn success" style="flex:1;font-size:13px;padding:8px" onclick="bulkDecideApprovals('approve')">${ZH?'✅ 批准所选':'✅ Approve Selected'}</button>
+          <button class="btn danger"  style="flex:1;font-size:13px;padding:8px" onclick="bulkDecideApprovals('reject')">${ZH?'❌ 拒绝所选':'❌ Reject Selected'}</button>
+        </div>
+        ${pending.map(approvalRowHtml).join('')}
+      `:`<div style="font-size:13px;color:var(--text2)">${ZH?'暂无待审批销售':'No pending sales approvals.'}</div>`}
+    </div>`:''}
+     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 ${ZH?'出勤记录':'Attendance Records'}</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 ${ZH?'加载员工':'Load Staff'}</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">'+(ZH?'该日期/门店暂无出勤记录。点击🔄同步加载。':'No attendance records for this date/store. Tap 🔄 Sync to load from server.')+'</div>'}</div>
     ${renderZoneScheduleTools(branches,users)}
     ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
     <div id="perms-panel" style="margin-top:12px"></div>
   </div>`;
 }
 function approvalRowHtml(r){
-  var EN=lang==='en';
-  var typeLabel=r.type==='settlement'?('Settlement Confirm')
-    :r.type==='sales'?('Sales Update')
-    :String(r.type||'').replace('_',' ');
+  var ZH=lang==='zh';
+  var typeLabel=r.type==='settlement'?(ZH?'结算确认':'Settlement Confirm')
+    :r.type==='sales'?(ZH?'销售更新':'Sales Update')
+    :r.type==='sales_submission'?(ZH?'销售提交':'Sales Submission')
+    :r.type==='cash_out'?(ZH?'现金出款':'Cash Out')
+    :r.type==='attendance_device'?(ZH?'设备绑定':'Device Bind')
+    :String(r.type||'').replace(/_/g,' ');
   var amtStr=parseFloat(r.total||r.amount||0).toFixed(2);
-  return '<div class="move-item">'
-    +'<div style="flex:1">'
-      +'<div style="font-size:13px;font-weight:800">'+typeLabel+' — '+(r.store||'')+'</div>'
-      +'<div style="font-size:11px;color:var(--text2)">'+(r.name||r.submitter||'')
-        +' · '+cleanDateKey(r.dateKey||r.datetime)+' · RM '+amtStr+'</div>'
-      +(r.remark?'<div style="font-size:10px;color:var(--accent)">'+r.remark+'</div>':'')
+  // Requester: use name, requester, submitter fields; fall back to username
+  var reqName=r.name||r.requester||r.submitter||r.username||'—';
+  var reqRole=r.requesterRole||r.role||'';
+  var roleColors={boss:'#b91c1c',admin:'#6d28d9',manager:'#1d4ed8',supervisor:'#065f46',staff:'#374151'};
+  var roleColor=roleColors[reqRole]||'#475569';
+  var storeName=r.store||'';
+  return '<div class="appr-row" id="appr-row-'+r.id+'">'
+    // Checkbox
+    +'<div class="appr-cb-wrap">'
+      +'<input type="checkbox" class="appr-cb" data-id="'+r.id+'" '
+        +'style="width:18px;height:18px;accent-color:#1e3a8a;cursor:pointer" '
+        +'onchange="updateApprovalBulkBar()">'
     +'</div>'
-    +'<div style="display:flex;gap:6px">'
-      +'<button class="btn-sm approve" onclick="decideApproval(\''+r.id+'\',\'approve\')">'
-        +('Approve')+'</button>'
-      +'<button class="btn-sm reject" onclick="decideApproval(\''+r.id+'\',\'reject\')">'
-        +('Reject')+'</button>'
+    // Content
+    +'<div style="flex:1;min-width:0">'
+      // Line 1: type + store badge
+      +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:3px">'
+        +'<span style="font-size:12px;font-weight:800;color:#1e3a8a">'+typeLabel+'</span>'
+        +(storeName?'<span style="background:#dbeafe;color:#1e40af;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700">🏪 '+storeName+'</span>':'')
+      +'</div>'
+      // Line 2: requester name + role
+      +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">'
+        +'<span style="font-size:12px;font-weight:700;color:#334155">👤 '+reqName+'</span>'
+        +(reqRole?'<span style="font-size:10px;font-weight:800;background:#f1f5f9;color:'+roleColor+';border-radius:20px;padding:1px 7px">'+reqRole+'</span>':'')
+      +'</div>'
+      // Line 3: amount + date + remark
+      +'<div style="font-size:11px;color:var(--text2)">'
+        +'💰 RM '+amtStr+' · 📅 '+cleanDateKey(r.dateKey||r.datetime||'')
+        +(r.remark?' · 📝 '+r.remark:'')
+      +'</div>'
+    +'</div>'
+    // Per-row action buttons
+    +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
+      +'<button class="btn-sm approve" style="font-size:11px;padding:4px 10px" onclick="decideApproval(\''+r.id+'\',\'approve\')">'
+        +(ZH?'✓ 批准':'✓ OK')+'</button>'
+      +'<button class="btn-sm reject" style="font-size:11px;padding:4px 10px" onclick="decideApproval(\''+r.id+'\',\'reject\')">'
+        +(ZH?'✗ 拒绝':'✗ No')+'</button>'
     +'</div>'
   +'</div>';
+}
+// Bulk approval helpers
+function updateApprovalBulkBar(){
+  var checked=document.querySelectorAll('.appr-cb:checked');
+  var bar=document.getElementById('appr-bulk-bar');
+  if(!bar) return;
+  if(checked.length>0){ bar.classList.add('visible'); }
+  else { bar.classList.remove('visible'); }
+  // Sync select-all tri-state
+  var all=document.querySelectorAll('.appr-cb');
+  var selAll=document.getElementById('appr-select-all');
+  if(selAll){
+    selAll.indeterminate=(checked.length>0&&checked.length<all.length);
+    selAll.checked=(all.length>0&&checked.length===all.length);
+  }
+  var lbl=document.getElementById('appr-bulk-count');
+  if(lbl) lbl.textContent=checked.length+' '+(lang==='zh'?'已选':'selected');
+}
+function toggleAllApprovals(checked){
+  document.querySelectorAll('.appr-cb').forEach(function(cb){cb.checked=checked;});
+  updateApprovalBulkBar();
+}
+async function bulkDecideApprovals(decision){
+  var cbs=Array.from(document.querySelectorAll('.appr-cb:checked'));
+  if(!cbs.length){showToast(lang==='zh'?'请先选择记录':'Select records first','error');return;}
+  var ids=cbs.map(function(cb){return cb.dataset.id;});
+  var ZH=lang==='zh';
+  var word=decision==='approve'?(ZH?'批准':'approve'):(ZH?'拒绝':'reject');
+  if(!confirm(ZH?'确定要'+word+' '+ids.length+' 条记录？':'Confirm '+word+' '+ids.length+' item(s)?')) return;
+  showToast(ZH?'处理中...':'Processing...','pending');
+  var updated=getApprovals();
+  for(var i=0;i<ids.length;i++){
+    var id=ids[i];
+    try{
+      await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',
+          id:id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})});
+      updated=updated.map(function(r){return r.id===id?Object.assign({},r,{status:decision==='approve'?'approved':'rejected'}):r;});
+    }catch(e){console.warn('bulk decision error',id,e);}
+  }
+  saveApprovals(updated);
+  showToast((ZH?(decision==='approve'?'已批准 ':'已拒绝 '):(decision==='approve'?'Approved ':'Rejected '))+ids.length+(ZH?' 条':''),'success');
+  renderAdminTab();
+  setTimeout(function(){triggerSyncRefresh();},1500);
 }
 async function decideApproval(id,decision){ await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:decision==='approve'?'approveApprovalRequest':'rejectApprovalRequest',id,approver:currentUser.name,approverRole:currentUser.role,approverStore:currentUser.store})}); showToast(decision==='approve'?(lang==='zh'?'已批准。':'Approved.'):(lang==='zh'?'已拒绝。':'Rejected.'),'success'); saveApprovals(getApprovals().map(r=>r.id===id?{...r,status:decision==='approve'?'approved':'rejected'}:r)); renderAdminTab(); setTimeout(()=>triggerSyncRefresh(),1500); }
 function renderAttendanceReport(users){ const days=attendanceReportMode==='weekly'?7:31; const start=new Date(attendanceDateFilter); start.setDate(start.getDate()-days+1); const rows=users.filter(u=>attendanceStoreFilter==='all'||u.store===attendanceStoreFilter).map(u=>{ const rec=getAllAttendance().filter(r=>r.username===u.username&&new Date(r.dateKey)>=start&&new Date(r.dateKey)<=new Date(attendanceDateFilter)); return {name:u.name||u.username,present:new Set(rec.filter(r=>r.type==='check_in'&&r.status!=='rejected').map(r=>r.dateKey)).size,late:rec.filter(r=>r.status==='late').length,early:rec.filter(r=>r.status==='early_leave').length}; }); return `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800">${attendanceReportMode==='weekly'?'Weekly':'Monthly'} Attendance Summary</div><select onchange="attendanceReportMode=this.value;renderAdminTab()" style="width:auto;padding:6px 10px"><option value="weekly" ${attendanceReportMode==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${attendanceReportMode==='monthly'?'selected':''}>Monthly</option></select></div>${rows.map(r=>`<div class="stat-row"><span class="stat-label">${r.name}</span><span class="stat-value" style="font-size:13px">P ${r.present} - L ${r.late} - E ${r.early}</span></div>`).join('')}`; }
