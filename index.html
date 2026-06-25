@@ -25,7 +25,11 @@
     --text2: #64748b; --border: #e2e8f0; --shadow: 0 4px 24px rgba(37,99,235,0.10); --radius: 18px; --font: 'Nunito', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; overflow-x: hidden; }
+  /* ── Screenshot / screen-capture deterrents ── */
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 17px; overflow-x: hidden;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+  input, textarea, select { -webkit-user-select: text; user-select: text; }
+  @media print { body { display: none !important; } }
   .screen { display: none; min-height: 100vh; flex-direction: column; animation: fadeIn .25s; }
   .screen.active { display: flex; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -224,6 +228,60 @@
   .appr-bulk-bar.vis { display:flex; }
 </style>
 </head>
+<script>
+// ── Screenshot / screen-record prevention ──────────────────────────────────
+(function(){
+  // Block PrintScreen key and common screenshot shortcuts
+  document.addEventListener('keydown',function(e){
+    // PrintScreen
+    if(e.key==='PrintScreen'||e.code==='PrintScreen'){
+      e.preventDefault();
+      _showScreenshotWarning();
+      return false;
+    }
+    // Windows Snipping Tool: Win+Shift+S, Win+PrtSc
+    if(e.key==='s'&&e.shiftKey&&e.metaKey){ e.preventDefault(); _showScreenshotWarning(); return false; }
+    // Mac screenshot: Cmd+Shift+3, Cmd+Shift+4, Cmd+Shift+5
+    if(e.metaKey&&e.shiftKey&&['3','4','5','6'].includes(e.key)){ e.preventDefault(); _showScreenshotWarning(); return false; }
+  },true);
+
+  // Blur app content when user switches away (screen record / screenshot via notification bar)
+  document.addEventListener('visibilitychange',function(){
+    var overlay=document.getElementById('_sc_overlay');
+    if(document.hidden){
+      if(!overlay){
+        overlay=document.createElement('div');
+        overlay.id='_sc_overlay';
+        overlay.style.cssText='position:fixed;inset:0;background:#0f172a;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px';
+        overlay.innerHTML='<div style="font-size:48px">🔒</div>'
+          +'<div style="color:#fff;font-size:18px;font-weight:800;text-align:center;padding:0 32px">'
+          +'Confidential — App locked while in background</div>';
+        document.body.appendChild(overlay);
+      }
+      overlay.style.display='flex';
+    } else {
+      if(overlay) overlay.style.display='none';
+    }
+  });
+
+  // Right-click / long-press context menu block
+  document.addEventListener('contextmenu',function(e){ e.preventDefault(); },true);
+
+  function _showScreenshotWarning(){
+    var w=document.getElementById('_sc_warn');
+    if(w){ clearTimeout(w._t); w.style.opacity='1'; w._t=setTimeout(function(){w.style.opacity='0';},2500); return; }
+    w=document.createElement('div'); w.id='_sc_warn';
+    w.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);'
+      +'background:#1e3a8a;color:#fff;padding:18px 28px;border-radius:16px;font-size:15px;font-weight:800;'
+      +'z-index:99999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4);transition:opacity .4s;';
+    w.innerHTML='🚫 Screenshots are not allowed<br><span style="font-size:12px;font-weight:400;opacity:.8">This app contains confidential business data</span>';
+    document.body.appendChild(w);
+    w._t=setTimeout(function(){w.style.opacity='0';setTimeout(function(){w.remove();},500);},2500);
+  }
+  // Expose for use after DOM ready
+  window._showScreenshotWarning=_showScreenshotWarning;
+})();
+</script>
 <body>
 
 <div id="toast"></div>
@@ -306,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -357,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -882,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2 ──
+    // ── Additional zh keys v4.7.2.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1618,7 +1676,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2_');
+  lines.push('_Daily Sales Reporter v4.7.2.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1799,6 +1857,50 @@ async function doLogin() {
   }
   if(_s === 'inactive' || _s === 'disabled'){
     showToast('Account disabled — contact Admin','error'); return;
+  }
+
+  // ✅ Credentials OK — zone-restrict staff & supervisor
+  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
+  if(_roleRestricted && userMatch.store && userMatch.store !== 'HQ'){
+    // Ensure work zones are loaded
+    if(!cachedWorkZones.length){
+      var _wz=loadData('work_zones',[]);
+      if(_wz.length) cachedWorkZones=_wz;
+    }
+    const _storeZones=(cachedWorkZones).filter(function(z){
+      return z.store===userMatch.store && String(z.status||'active')==='active';
+    });
+    if(_storeZones.length>0){
+      // Zone defined — must be inside it to log in
+      showToast(lang==='zh'?'正在验证位置...':'Checking your location...','pending');
+      if(loginBtn){loginBtn.disabled=true;loginBtn.textContent=lang==='zh'?'定位中...':'Locating...';}
+      try{
+        var _loc=await getBestLocation();
+        var _nearest=_storeZones.map(function(z){
+          return {radiusMeters:parseFloat(z.radiusMeters)||500,
+                  distanceMeters:distanceMeters(_loc.lat,_loc.lng,parseFloat(z.latitude),parseFloat(z.longitude))};
+        }).sort(function(a,b){return a.distanceMeters-b.distanceMeters;})[0];
+        var _gpsBuffer=Math.max(0,(_loc.accuracy||0)-20);
+        if(_nearest.distanceMeters > _nearest.radiusMeters + _gpsBuffer){
+          // Outside zone — block login
+          if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
+          var _src=_loc.source==='gps'?'📡 GPS ±'+_loc.accuracy+'m'
+            :_loc.source==='network'?'📶 Network ±'+_loc.accuracy+'m'
+            :_loc.source==='ip'||_loc.source==='ip2'?'🌐 IP (~5km)':'⚠️ No GPS';
+          showToast(
+            (lang==='zh'
+              ?'🚫 登录被拒绝：您不在工作区域内（距离 '+_nearest.distanceMeters+'m，限制 '+_nearest.radiusMeters+'m）'
+              :'🚫 Login blocked: outside work zone ('+_nearest.distanceMeters+'m away, max '+_nearest.radiusMeters+'m) · '+_src),
+            'error');
+          return; // ← BLOCK LOGIN
+        }
+      }catch(_e){
+        // Location fetch failed — allow login but warn (avoids locking out users with GPS issues)
+        console.warn('Zone login check: location error',_e);
+      }
+      if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
+    }
+    // No zones defined for this store → no restriction
   }
 
   // ✅ Login success
