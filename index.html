@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2.0 ──
+    // ── Additional zh keys v4.7.2 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1690,7 +1690,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2.0_');
+  lines.push('_Daily Sales Reporter v4.7.2_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -3279,19 +3279,112 @@ function attendanceRowHtml(r){
 function renderOperationsDashboard(){
   var ZH=lang==='zh'; var EN=lang==='en';
   const users=Object.entries(cachedUsers).filter(([,u])=>u.status==='active').map(([username,u])=>({username,...u}));
+
+  // ── Role-based store access ───────────────────────────────────
+  const isSupervisor=currentUser.role==='supervisor';
+  const isManager   =currentUser.role==='manager';
+  const isAdmin     =['admin','boss'].includes(currentUser.role);
+
+  // Supervisor is always locked to own store
+  if(isSupervisor) attendanceStoreFilter=currentUser.store;
+
   let att=getAllAttendance();
   if(attendanceStoreFilter!=='all') att=att.filter(r=>r.store===attendanceStoreFilter);
   att=att.filter(r=>r.dateKey===attendanceDateFilter);
-  const _seeAllStores=['admin','boss'].includes(currentUser.role);
+
+  const _seeAllStores=isAdmin||isManager;
   const pending=getApprovals().filter(r=>r.status==='pending'
     &&(_seeAllStores||r.store===currentUser.store));
-  const branches=(currentUser.role==='admin'?STORES:STORES.filter(s=>s!=='HQ'));
-  // Only staff & supervisor count for attendance (not manager/admin/boss)
+
+  const allBranches=STORES.filter(s=>s!=='HQ');
+  const branches=isAdmin?STORES:allBranches;
+
+  // Only staff & supervisor count for attendance headcount
   const attUsers=users.filter(u=>['staff','supervisor'].includes(u.role)&&u.store!=='HQ');
-  const presentUsers=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
-  const absent=attUsers.filter(u=>(attendanceStoreFilter==='all'||u.store===attendanceStoreFilter)&&!presentUsers.has(u.username));
-  return `<div class="card"><div class="card-title">${ZH?'管理面板':t('mgrDash')}</div><div class="ops-grid" style="margin-top:10px"><div><label class="field-label">Date</label><input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div><div><label class="field-label">Store</label><select onchange="attendanceStoreFilter=this.value;renderAdminTab()"><option value="all">All Stores</option>${branches.filter(s=>s!=='HQ').map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
-    <div class="ops-grid-3" style="margin-top:10px"><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'上班':'Present'}</div><div class="stat-value green">${presentUsers.size}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'缺席':'Absent'}</div><div class="stat-value" style="color:#ef4444">${absent.length}</div></div><div class="card" style="margin:0;text-align:center;padding:10px"><div class="stat-label">${ZH?'审批':'Approval'}</div><div class="stat-value" style="color:#f59e0b">${pending.length}</div></div></div>
+  const storeAttUsers=attendanceStoreFilter==='all'
+    ? attUsers
+    : attUsers.filter(u=>u.store===attendanceStoreFilter);
+
+  const presentSet=new Set(att.filter(r=>r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided').map(r=>r.username));
+  const presentList=storeAttUsers.filter(u=>presentSet.has(u.username));
+  const absentList =storeAttUsers.filter(u=>!presentSet.has(u.username));
+
+  // Store filter — supervisor sees locked label, manager/admin sees dropdown
+  const storeFilterHtml=isSupervisor
+    ?`<div><label class="field-label">${ZH?'门店':'Store'}</label>
+        <div style="padding:10px 12px;border:2px solid var(--border);border-radius:12px;font-weight:700;font-size:14px;background:#f8fafc">🏪 ${currentUser.store}</div></div>`
+    :`<div><label class="field-label">${ZH?'门店':'Store'}</label>
+        <select onchange="attendanceStoreFilter=this.value;renderAdminTab()">
+          <option value="all">${ZH?'所有门店':'All Stores'}</option>
+          ${allBranches.map(s=>`<option ${attendanceStoreFilter===s?'selected':''}>${s}</option>`).join('')}
+        </select></div>`;
+
+  // ── Present/Absent expandable name lists ─────────────────────
+  if(typeof window._mgr_expand==='undefined') window._mgr_expand={present:false,absent:false};
+  const presentExpanded=window._mgr_expand.present;
+  const absentExpanded =window._mgr_expand.absent;
+
+  const presentNamesHtml=presentExpanded
+    ?(presentList.length
+      ?presentList.map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:.5px solid var(--border)">
+          <div style="width:28px;height:28px;border-radius:50%;background:#d1fae5;color:#065f46;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+          <div><div style="font-size:13px;font-weight:700">${u.name||u.username}</div><div style="font-size:10px;color:var(--text2)">${u.store} · ${u.role}</div></div>
+        </div>`).join('')
+      :`<div style="font-size:12px;color:var(--text2);padding:8px 10px">${ZH?'暂无出勤记录':'No one checked in yet'}</div>`)
+    :'';
+
+  const absentNamesHtml=absentExpanded
+    ?(absentList.length
+      ?absentList.map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:.5px solid var(--border)">
+          <div style="width:28px;height:28px;border-radius:50%;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">${(u.name||u.username||'?')[0].toUpperCase()}</div>
+          <div><div style="font-size:13px;font-weight:700">${u.name||u.username}</div><div style="font-size:10px;color:var(--text2)">${u.store} · ${u.role}</div></div>
+        </div>`).join('')
+      :`<div style="font-size:12px;color:var(--text2);padding:8px 10px">${ZH?'全员已到':'Everyone is present!'}</div>`)
+    :'';
+
+  return `<div class="card"><div class="card-title">${ZH?'管理面板':t('mgrDash')}</div>
+
+    <!-- Date + Store filter -->
+    <div class="ops-grid" style="margin-top:10px">
+      <div><label class="field-label">${ZH?'日期':'Date'}</label>
+        <input type="date" value="${attendanceDateFilter}" onchange="attendanceDateFilter=this.value;renderAdminTab()"></div>
+      ${storeFilterHtml}
+    </div>
+
+    <!-- Present / Absent / Approval stat cards — Present & Absent are tappable -->
+    <div class="ops-grid-3" style="margin-top:10px">
+
+      <!-- PRESENT card -->
+      <div>
+        <div class="card" onclick="window._mgr_expand.present=!window._mgr_expand.present;renderAdminTab()"
+          style="margin:0;text-align:center;padding:10px;cursor:pointer;border:2px solid ${presentExpanded?'#10b981':'var(--border)'};transition:border-color .2s">
+          <div class="stat-label" style="font-size:11px">${ZH?'✅ 上班':'✅ Present'}</div>
+          <div class="stat-value green" style="font-size:22px">${presentList.length}</div>
+          <div style="font-size:9px;color:#64748b;margin-top:2px">${presentExpanded?(ZH?'收起':'collapse'):(ZH?'查看':'tap to view')}</div>
+        </div>
+        ${presentExpanded?`<div style="border:1.5px solid #d1fae5;border-top:none;border-radius:0 0 12px 12px;overflow:hidden;background:#fff">${presentNamesHtml}</div>`:''}
+      </div>
+
+      <!-- ABSENT card -->
+      <div>
+        <div class="card" onclick="window._mgr_expand.absent=!window._mgr_expand.absent;renderAdminTab()"
+          style="margin:0;text-align:center;padding:10px;cursor:pointer;border:2px solid ${absentExpanded?'#ef4444':'var(--border)'};transition:border-color .2s">
+          <div class="stat-label" style="font-size:11px">${ZH?'⏳ 缺席':'⏳ Absent'}</div>
+          <div class="stat-value" style="color:#ef4444;font-size:22px">${absentList.length}</div>
+          <div style="font-size:9px;color:#64748b;margin-top:2px">${absentExpanded?(ZH?'收起':'collapse'):(ZH?'查看':'tap to view')}</div>
+        </div>
+        ${absentExpanded?`<div style="border:1.5px solid #fecaca;border-top:none;border-radius:0 0 12px 12px;overflow:hidden;background:#fff">${absentNamesHtml}</div>`:''}
+      </div>
+
+      <!-- APPROVAL card -->
+      <div class="card" style="margin:0;text-align:center;padding:10px;border:2px solid var(--border)">
+        <div class="stat-label" style="font-size:11px">${ZH?'🕐 审批':'🕐 Approval'}</div>
+        <div class="stat-value" style="color:#f59e0b;font-size:22px">${pending.length}</div>
+        <div style="font-size:9px;color:#64748b;margin-top:2px">&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- Pending approvals -->
     ${hasPerm('approve_sales')?`<div style="margin-top:12px">
       <div style="font-size:13px;font-weight:800;margin-bottom:6px">${ZH?'✅ 待审批销售/结算':'✅ Pending Approvals'}</div>
       ${pending.length?`
@@ -3309,9 +3402,22 @@ function renderOperationsDashboard(){
         ${pending.map(approvalRowHtml).join('')}
       `:`<div style="font-size:13px;color:var(--text2)">${ZH?'暂无待审批销售':'No pending approvals.'}</div>`}
     </div>`:''}
-     <div style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:800">📍 Attendance Records</div><button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 Load Staff</button></div>${att.length?att.map(attendanceRowHtml).join(''):'<div style="font-size:13px;color:var(--text2);padding:10px 0">No attendance records for this date/store. Tap 🔄 Sync to load from server.</div>'}</div>
+
+    <!-- Attendance records — scoped to selected store only -->
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800">📍 ${ZH?'出勤记录':'Attendance Records'}
+          ${attendanceStoreFilter!=='all'?`<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af;border-radius:20px;padding:2px 8px;margin-left:6px">🏪 ${attendanceStoreFilter}</span>`:''}
+        </div>
+        <button class="btn refresh-inline" style="background:#1e3a8a;color:white;font-weight:700" onclick="syncAttendanceNow()">🔄 ${ZH?'同步':'Sync'}</button>
+      </div>
+      ${att.length
+        ? att.map(attendanceRowHtml).join('')
+        : `<div style="font-size:13px;color:var(--text2);padding:10px 0">${ZH?'该日期/门店暂无出勤记录。点击🔄同步加载。':'No attendance records for this date/store. Tap 🔄 Sync to load.'}</div>`}
+    </div>
+
     ${renderZoneScheduleTools(branches,users)}
-    ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">Create Database Backup</button>`:''}
+    ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">${ZH?'创建数据库备份':'Create Database Backup'}</button>`:''}
     <div id="perms-panel" style="margin-top:12px"></div>
   </div>`;
 }
