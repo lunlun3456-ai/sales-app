@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -708,7 +708,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHX-AzwAkM7oxCBhTSn03bUD6JPYOybeA9MRncKQbm-RXoNE4rA1oPLlq5hyJt1JCatg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwLq-duaYdoD5izVi_Ha7caXuEhReSph-_t_8pp9qnBdMA1e1iAvrM0k_E_ip16TWUzVQ/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2 ──
+    // ── Additional zh keys v4.7.2.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1846,7 +1846,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2_');
+  lines.push('_Daily Sales Reporter v4.7.2.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1903,7 +1903,14 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
-          if(appJson.storePermissions&&typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
+          // Store-level and role-level permissions — sync to all devices
+          if(appJson.storePermissions && typeof appJson.storePermissions==='object'){
+            saveStorePerms(appJson.storePermissions);
+          }
+          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object'){
+            savePerms(appJson.rolePermissions);
+          }
+          applyPermissionsToNav();
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
     } else if(json && !json.sales) {
@@ -1942,8 +1949,13 @@ async function fetchLiveUsers(forceRefresh) {
     const permResp = await gasGet('getPermissions');
     if(permResp && permResp.permissions){
       savePerms(permResp.permissions);
-      if(currentUser) applyPermissionsToNav();
     }
+    // Also fetch store-level permission overrides
+    const storePermResp = await gasGet('getStorePermissions');
+    if(storePermResp && storePermResp.storePermissions){
+      saveStorePerms(storePermResp.storePermissions);
+    }
+    if(currentUser) applyPermissionsToNav();
   } catch(e){ console.warn('permission sync failed:', e.message); }
   return cachedUsers;
 }
