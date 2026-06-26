@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2 ──
+    // ── Additional zh keys v4.7.2.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1409,6 +1409,8 @@ function applyPermissionsToNav(){
     'admin':      'view_admin',
     'attendance': 'attendance',
   };
+  // If staff cannot submit sales, they also cannot view submitted sales or summary
+  var canSubmit = hasPerm('submit_sales');
   Object.keys(navMap).forEach(function(tab){
     var el = document.getElementById('nav-'+tab);
     if(el){
@@ -1416,6 +1418,8 @@ function applyPermissionsToNav(){
       // Keep boss-specific overrides
       if(tab==='submit' && role==='boss') allowed = false;
       if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
+      // If submit_sales is blocked, block records and summary too
+      if(!canSubmit && (tab==='records' || tab==='summary')) allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
   });
@@ -1845,7 +1849,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2_');
+  lines.push('_Daily Sales Reporter v4.7.2.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2429,7 +2433,15 @@ function confirmSubmit(withUpload=false) {
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
-  // Auto-sync from GAS each time Records tab is opened
+  // Block access if submit_sales is denied (no submit = no view)
+  if(!hasPerm('submit_sales') || !hasPerm('view_records')){
+    document.getElementById('tab-records').innerHTML=`
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div style="font-size:52px">🔒</div>
+        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
+        <p style="color:var(--text2)">${t('accessMsg')}</p>
+      </div>`; return;
+  }
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
   const todayKey=dateKeyUTC8();
@@ -2579,7 +2591,8 @@ function renderRecordsTab() {
 // ============================================================
 function renderSummaryTab() {
   const isExec=['boss','admin','manager'].includes(currentUser.role);
-  if(!isExec){
+  // Block if submit_sales denied (no submit = no view of submitted data)
+  if(!hasPerm('submit_sales') || !hasPerm('view_summary')){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
