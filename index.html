@@ -1150,9 +1150,22 @@ const DEFAULT_PERMS = {
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
 function savePerms(p){ saveData('role_permissions', p); }
 
+// Store-level permission overrides: { "Bonia Sabindo": { staff: { view_records:0 }, supervisor: { ... } } }
+// Only keys that DIFFER from the role default need to be stored.
+// null/undefined key = fall through to role perm.
+function getStorePerms(){ return loadData('store_permissions', {}); }
+function saveStorePerms(sp){ saveData('store_permissions', sp); }
+
 function hasPerm(feature){
   if(!currentUser) return false;
-  var role = currentUser.role;
+  var role  = currentUser.role;
+  var store = currentUser.store;
+  // 1. Check store-level override first
+  var sp = getStorePerms();
+  if(sp[store] && sp[store][role] && sp[store][role][feature] !== undefined){
+    return !!(sp[store][role][feature]);
+  }
+  // 2. Fall back to role-level permission
   var p = getPerms();
   if(!p[role]) return !!(DEFAULT_PERMS[role]&&DEFAULT_PERMS[role][feature]);
   return !!(p[role][feature]);
@@ -1163,50 +1176,192 @@ function renderPermissionsPanel(){
   var el = document.getElementById('perms-panel');
   if(!el) return;
   var EN = lang==='en';
-  var p = getPerms();
-  var roles = ['staff','supervisor','manager','admin','boss'];
+  var p  = getPerms();
+  var sp = getStorePerms();
+  var roles      = ['staff','supervisor','manager','admin','boss'];
   var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
   var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
-  // Which role tab is selected (stored on window to persist across re-renders)
-  if(!window._permTab||!roles.includes(window._permTab)) window._permTab='staff';
-  var selRole=window._permTab;
+
+  // Two-level selection state
+  if(!window._permTab   ||!roles.includes(window._permTab))    window._permTab='staff';
+  if(!window._permStore) window._permStore='__global__';
+  var selRole  = window._permTab;
+  var selStore = window._permStore;
+
+  // Build effective perms for the selected store+role:
+  // If store is global → use role perms; if specific store → show override with diff indicator
+  var globalPerms = p[selRole] || DEFAULT_PERMS[selRole] || {};
+  var storeOverride = (selStore!=='__global__' && sp[selStore] && sp[selStore][selRole]) || null;
+
+  // Store selector tabs: "Global" + each branch
+  var storeOptions = ['__global__', ...BRANCHES];
+  var storeLabels  = { '__global__': EN?'🌐 Global (All Stores)':'🌐 Semua Cawangan' };
+  BRANCHES.forEach(function(b){ storeLabels[b]=b; });
+
   var html =
-    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?t('rolePerm'):'Kebenaran Peranan')+'</div>'
-    // Role selector tabs
+    '<div class="card-title" style="margin-bottom:8px">🔐 '+(EN?'Role & Store Permissions':'Kebenaran Peranan & Cawangan')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
+      +(EN?'Global sets defaults for all stores. Select a specific store to override individual permissions.'
+          :'Global menetapkan lalai untuk semua cawangan. Pilih cawangan untuk tetapkan kebenaran berbeza.')
+    +'</div>'
+
+    // ── Store selector ───────────────────────────────────────────
+    +'<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:6px">'
+      +(EN?'STORE':'CAWANGAN')
+    +'</div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px">'
+    +storeOptions.map(function(s){
+      var active=s===selStore;
+      var hasOverride=(s!=='__global__')&&sp[s]&&sp[s][selRole]&&Object.keys(sp[s][selRole]).length>0;
+      return '<button onclick="window._permStore=\''+s.replace(/'/g,"\\'")
+        +'\';renderPermissionsPanel()" style="'
+        +'padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;'
+        +'border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
+        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
+        +(s==='__global__'?(EN?'🌐 Global':'🌐 Global'):s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.'))
+        +(hasOverride?'<span style="margin-left:3px;background:#f59e0b;color:#fff;border-radius:20px;padding:0 5px;font-size:9px">✏</span>':'')
+      +'</button>';
+    }).join('')
+    +'</div>'
+
+    // ── Role selector ────────────────────────────────────────────
+    +'<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:6px">'
+      +(EN?'ROLE':'PERANAN')
+    +'</div>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
     +roles.map(function(r){
       var active=r===selRole;
+      var hasStoreOvr=selStore!=='__global__'&&sp[selStore]&&sp[selStore][r]&&Object.keys(sp[selStore][r]).length>0;
       return '<button onclick="window._permTab=\''+r+'\';renderPermissionsPanel()" style="'
-        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
-        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]+'</button>';
+        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;'
+        +'border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
+        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]
+        +(hasStoreOvr?'<span style="margin-left:2px;font-size:9px">✏</span>':'')
+      +'</button>';
     }).join('')
     +'</div>'
-    // Feature list for selected role
+
+    // ── Info strip for store mode ────────────────────────────────
+    +(selStore!=='__global__'
+      ?'<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#92400e">'
+        +'⚠️ '+(EN?'Store overrides only apply to <b>'+selStore+'</b>. Leave a feature at "Same as Global" to inherit the global default.'
+               :'Lebihan cawangan hanya untuk <b>'+selStore+'</b>. Biarkan "Sama Global" untuk warisi nilai lalai.')
+      +'</div>'
+      :'')
+
+    // ── Feature list ─────────────────────────────────────────────
     +'<div style="display:flex;flex-direction:column;gap:2px">';
 
   PERM_FEATURES.forEach(function(f, i){
-    var checked = p[selRole]&&p[selRole][f.key] ? true : false;
+    var globalVal = globalPerms[f.key]!==undefined ? !!(globalPerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
     var bg=i%2===0?'#f8fafc':'#fff';
-    html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
-      +'<div>'
-        +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-        +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-      +'</div>'
-      +'<input type="checkbox" class="perm-cb" '+(checked?'checked':'')
-        +' data-role="'+selRole+'" data-feature="'+f.key+'"'
-        +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
-    +'</label>';
+
+    if(selStore==='__global__'){
+      // Global mode — simple checkbox
+      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
+        +'<input type="checkbox" class="perm-cb" data-scope="global" '+(globalVal?'checked':'')
+          +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+          +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+      +'</label>';
+    } else {
+      // Store override mode — three-state: inherit/on/off
+      var hasOvr = storeOverride && storeOverride[f.key]!==undefined;
+      var ovrVal = hasOvr ? !!(storeOverride[f.key]) : null;
+      // encode current state as data attr: 'inherit','on','off'
+      var state  = !hasOvr ? 'inherit' : (ovrVal ? 'on' : 'off');
+      var stateColors= {inherit:'#64748b', on:'#10b981', off:'#ef4444'};
+      var stateLabels= {
+        inherit: EN?('↩ Same as Global ('+( globalVal?'✅ ON':'❌ OFF')+')') : ('↩ Sama Global ('+(globalVal?'✅ ON':'❌ OFF')+')'),
+        on:      EN?'✅ Override ON' :'✅ Paksa ON',
+        off:     EN?'❌ Override OFF':'❌ Paksa OFF'
+      };
+      html += '<div style="padding:10px 12px;background:'+bg+';border-radius:10px;'
+        +(hasOvr?'border-left:3px solid '+(ovrVal?'#10b981':'#ef4444')+';':'')+'">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
+          +'<div style="display:flex;gap:4px;flex-shrink:0">'
+            +['inherit','on','off'].map(function(st){
+              var active=state===st;
+              return '<button class="perm-store-btn" data-store="'+selStore.replace(/"/g,'&quot;')+'"'
+                +' data-role="'+selRole+'" data-feature="'+f.key+'" data-state="'+st+'"'
+                +' onclick="setStorePermState(this)" style="padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;'
+                +'border:2px solid '+(active?stateColors[st]:'var(--border)')+';'
+                +'background:'+(active?stateColors[st]:'#f8fafc')+';color:'+(active?'#fff':stateColors[st])+'">'
+                +(st==='inherit'?'↩':(st==='on'?'ON':'OFF'))
+              +'</button>';
+            }).join('')
+          +'</div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:'+stateColors[state]+';font-weight:700;margin-top:4px">'+stateLabels[state]+'</div>'
+      +'</div>';
+    }
   });
 
   html += '</div>'
     +'<div style="display:flex;gap:8px;margin-top:12px">'
       +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
-        +'💾 '+(EN?'Save':'Simpan')+'</button>'
+        +'💾 '+(EN?'Save Global':'Simpan Global')+'</button>'
       +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
         +'↺ Reset</button>'
     +'</div>'
+    +(selStore!=='__global__'
+      ?'<button class="btn secondary" style="width:100%;margin-top:6px;font-size:13px" onclick="clearStorePermOverrides(\''+selStore.replace(/'/g,"\\'")+'\',\''+selRole+'\')">'
+        +(EN?'🗑 Clear all overrides for '+selStore+' / '+roleLabels[selRole]
+            :'🗑 Padam semua lebihan untuk '+selStore+' / '+roleLabels[selRole])+'</button>'
+      :'')
     +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
   el.innerHTML = html;
+}
+
+// Set a store-level perm state from the tri-state button (inherit/on/off)
+function setStorePermState(btn){
+  var store   = btn.dataset.store;
+  var role    = btn.dataset.role;
+  var feature = btn.dataset.feature;
+  var state   = btn.dataset.state; // 'inherit','on','off'
+  var sp = getStorePerms();
+  if(!sp[store])          sp[store]={};
+  if(!sp[store][role])    sp[store][role]={};
+  if(state==='inherit'){
+    delete sp[store][role][feature];
+    if(!Object.keys(sp[store][role]).length)   delete sp[store][role];
+    if(!Object.keys(sp[store]).length)          delete sp[store];
+  } else {
+    sp[store][role][feature] = state==='on' ? 1 : 0;
+  }
+  saveStorePerms(sp);
+  // Sync store perms to GAS
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
+  applyPermissionsToNav();
+  renderPermissionsPanel();
+  showToast(lang==='en'?'Store override saved ✅':'Lebihan cawangan disimpan ✅','success');
+}
+
+// Clear all overrides for a specific store + role combination
+function clearStorePermOverrides(store, role){
+  var EN=lang==='en';
+  if(!confirm(EN?'Clear all overrides for '+store+' / '+role+'?':'Padam semua lebihan untuk '+store+' / '+role+'?')) return;
+  var sp=getStorePerms();
+  if(sp[store]&&sp[store][role]){
+    delete sp[store][role];
+    if(!Object.keys(sp[store]).length) delete sp[store];
+  }
+  saveStorePerms(sp);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
+  applyPermissionsToNav();
+  renderPermissionsPanel();
+  showToast(EN?'Overrides cleared':'Lebihan dipadam','success');
 }
 
 function savePermissionsFromUI(){
@@ -1747,6 +1902,7 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
+          if(appJson.storePermissions&&typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
     } else if(json && !json.sales) {
