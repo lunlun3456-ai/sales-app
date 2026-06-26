@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -588,7 +588,7 @@
       <div id="preview-name" style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:600"></div>
     </div>
     <label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;margin-bottom:14px" id="upload-label">
-      <input type="file" id="settlement-file" accept="image/*" capture="environment" style="display:none" onchange="previewSettlement(this)">
+      <input type="file" id="settlement-file" accept="image/*" style="display:none" onchange="previewSettlement(this)">
       <div style="font-size:40px;margin-bottom:8px">📷</div>
       <div style="font-weight:800;color:var(--primary);font-size:15px" id="upload-label-text">Tap to take photo or select image</div>
       <div style="font-size:12px;color:var(--text2);margin-top:4px">JPG, PNG — receipt / settlement slip</div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2.0 ──
+    // ── Additional zh keys v4.7.2 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1676,7 +1676,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2.0_');
+  lines.push('_Daily Sales Reporter v4.7.2_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2184,7 +2184,8 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     // the day immediately; everyone else's submission routes to their
     // store's Supervisor/Manager/Admin for approval (also enforced
     // server-side in handleUploadSettlement).
-    window._needsApproval=!hasPerm('confirm_daily');
+    // Staff and supervisor require approval for settlement; manager/admin/boss can self-approve
+    window._needsApproval=['staff','supervisor'].includes(currentUser.role)||!hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
@@ -2214,6 +2215,12 @@ function _staffSubmitForApproval(withUpload) {
 
 function confirmSubmit(withUpload=false) {
   if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
+  // Staff must go through supervisor/admin/manager approval for settlement
+  if(currentUser.role==='staff'&&withUpload){
+    window._needsApproval=true;
+    _staffSubmitForApproval(true);
+    return;
+  }
   const s=window._pendingSubmit;
   const now=new Date();
   const existingRecord=getSales().find(item=>item.dateKey===s.targetDate&&item.store===s.store);
@@ -3856,9 +3863,9 @@ function openSettlementUploadFirst(){
       +'<div id="uf-name" style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:600"></div>'
     +'</div>'
     +'<label style="display:block;background:#eff6ff;border:2px dashed var(--primary);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;margin-bottom:12px">'
-      +'<input type="file" id="uf-file" accept="image/*" capture="environment" style="display:none" onchange="ufPreview(this)">'
+      +'<input type="file" id="uf-file" accept="image/*"'+(['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')?'':' capture="environment"')+' style="display:none" onchange="ufPreview(this)">'
       +'<div style="font-size:40px;margin-bottom:8px">📷</div>'
-      +'<div style="font-weight:800;color:var(--primary);font-size:15px">'+(EN?'Take photo or select receipt':'Ambil foto atau pilih resit')+'</div>'
+      +'<div style="font-weight:800;color:var(--primary);font-size:15px">'+(['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')?(EN?'Take photo or choose from gallery':'Ambil foto atau pilih dari galeri'):(EN?'📷 Camera only — snap the receipt':'📷 Kamera sahaja — snap resit'))+'</div>'
     +'</label>'
     +'<div class="input-wrap"><label class="field-label">'+(EN?'Note (optional)':'Nota (pilihan)')+'</label>'
       +'<input type="text" id="uf-note" placeholder="e.g. POS receipt..."></div>'
@@ -3969,6 +3976,17 @@ function openSettlementUpload() {
 
   // Reset state
   document.getElementById('settlement-file').value = '';
+  // Camera-only for staff & supervisor; gallery allowed for admin/manager/boss
+  var _sf=document.getElementById('settlement-file');
+  if(['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')){
+    _sf.removeAttribute('capture');
+    document.getElementById('upload-label-text').textContent=
+      lang==='zh'?'拍摄 / 从相册选择':'Take photo or choose from gallery';
+  } else {
+    _sf.setAttribute('capture','environment');
+    document.getElementById('upload-label-text').textContent=
+      lang==='zh'?'📷 仅限拍照 — 拍下收据':'📷 Camera only — snap the receipt';
+  }
   document.getElementById('settlement-note').value = '';
   document.getElementById('upload-preview').style.display = 'none';
   document.getElementById('upload-progress').style.display = 'none';
