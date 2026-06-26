@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2 ──
+    // ── Additional zh keys v4.7.2.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1166,46 +1166,44 @@ function renderPermissionsPanel(){
   var p = getPerms();
   var roles = ['staff','supervisor','manager','admin','boss'];
   var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
+  var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
+  // Which role tab is selected (stored on window to persist across re-renders)
+  if(!window._permTab||!roles.includes(window._permTab)) window._permTab='staff';
+  var selRole=window._permTab;
   var html =
     '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?t('rolePerm'):'Kebenaran Peranan')+'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
-      +(t('permDesc'))
+    // Role selector tabs
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
+    +roles.map(function(r){
+      var active=r===selRole;
+      return '<button onclick="window._permTab=\''+r+'\';renderPermissionsPanel()" style="'
+        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
+        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]+'</button>';
+    }).join('')
     +'</div>'
-    +'<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">'
-    // Header row
-    +'<thead><tr style="background:#1e3a8a">'
-      +'<th style="padding:8px 6px;text-align:left;color:white;font-weight:800;min-width:130px">'+(EN?t('permFeature'):'Fungsi')+'</th>'
-      +roles.map(function(r){
-        return '<th style="padding:8px 4px;text-align:center;color:white;font-weight:800;min-width:60px">'+roleLabels[r]+'</th>';
-      }).join('')
-    +'</tr></thead>'
-    +'<tbody>';
+    // Feature list for selected role
+    +'<div style="display:flex;flex-direction:column;gap:2px">';
 
   PERM_FEATURES.forEach(function(f, i){
-    var bg = i%2===0 ? '#f8fafc' : 'white';
-    html += '<tr style="background:'+bg+'">'
-      +'<td style="padding:7px 6px;font-weight:600;color:var(--text)">'
-        +'<div>'+f.label+'</div>'
-        +'<div style="font-size:10px;color:var(--text2)">'+f.bm+'</div>'
-      +'</td>'
-      +roles.map(function(r){
-        var checked = p[r]&&p[r][f.key] ? 'checked' : '';
-        return '<td style="text-align:center;padding:7px 4px">'
-          +'<input type="checkbox" class="perm-cb" '+checked
-          +' data-role="'+r+'" data-feature="'+f.key+'"'
-          +' style="width:18px;height:18px;accent-color:#1e3a8a;cursor:pointer">'
-          +'</td>';
-      }).join('')
-    +'</tr>';
+    var checked = p[selRole]&&p[selRole][f.key] ? true : false;
+    var bg=i%2===0?'#f8fafc':'#fff';
+    html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+      +'<div>'
+        +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+        +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+      +'</div>'
+      +'<input type="checkbox" class="perm-cb" '+(checked?'checked':'')
+        +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+        +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+    +'</label>';
   });
 
-  html += '</tbody></table></div>'
+  html += '</div>'
     +'<div style="display:flex;gap:8px;margin-top:12px">'
       +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
-        +('💾 Save Permissions')+'</button>'
+        +'💾 '+(EN?'Save':'Simpan')+'</button>'
       +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
-        +(EN?'↺ Reset':'↺ Reset')+'</button>'
+        +'↺ Reset</button>'
     +'</div>'
     +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
   el.innerHTML = html;
@@ -1542,6 +1540,8 @@ async function sendMonthlyReport(month){
 function renderMonthlyReportPanel(){
   var el=document.getElementById('monthly-report-panel');
   if(!el) return;
+  // Only admin and manager see monthly report panel
+  if(!['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')) return;
   var ZH=lang==='zh'; var EN=lang==='en';
   var s=getReportSettings();
   var thisMonth=dateKeyUTC8().slice(0,7);
@@ -1551,25 +1551,39 @@ function renderMonthlyReportPanel(){
     var _ps=_p.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
     return _ps.slice(0,7);
   })();
+  // Store selector for report scope
+  if(!window._rptStore) window._rptStore='all';
+  var rptStoreOptions=['all',...BRANCHES];
   el.innerHTML=
     '<div class="card" style="margin-top:12px">'
     +'<div class="card-title">📧 '+(t('monthlyEmailRpt'))+'</div>'
-    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(lang==='zh'?'向指定邮箱发送所有门店的出勤及销售摘要。':t('emailReportDesc'))+'</div>'
-    +'<label class="field-label">'+(lang==='zh'?'收件人电邮':EN?t('recipientEmail'):'E-mel Penerima')+'</label>'
+    +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px">'+(ZH?'向指定邮箱发送所有门店的出勤及销售摘要。':t('emailReportDesc'))+'</div>'
+    // Store scope selector
+    +'<label class="field-label">'+(ZH?'门店范围':'Report Scope')+'</label>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    +rptStoreOptions.map(function(b){
+      var active=window._rptStore===b;
+      return '<button onclick="window._rptStore=\''+b+'\';renderMonthlyReportPanel()" style="'
+        +'padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
+        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
+        +(b==='all'?(ZH?'全部门店':'All Stores'):b)+'</button>';
+    }).join('')
+    +'</div>'
+    +'<label class="field-label">'+(ZH?'收件人电邮':EN?t('recipientEmail'):'E-mel Penerima')+'</label>'
     +'<textarea id="report-emails" rows="3" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;font-family:var(--font)" placeholder="boss@example.com\n60123456789  ← WhatsApp number">'+s.emails+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(lang==='zh'?'月份:':'Month:')+'</label>'
+      +'<label class="field-label" style="margin:0;white-space:nowrap">'+(ZH?'月份:':'Month:')+'</label>'
       +'<input type="month" id="report-month" value="'+thisMonth+'" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">'
     +'</div>'
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">'
       +'<button class="btn success" style="font-size:15px;padding:12px" onclick="downloadMonthlyExcel(document.getElementById(\'report-month\').value)">'
-        +('📊 Download Excel Report')+'</button>'
+        +'📊 '+(ZH?'下载 Excel 报告':'Download Excel Report')+'</button>'
       +'<button class="btn" style="font-size:15px;padding:12px;background:#25d366" onclick="shareMonthlyWhatsApp(document.getElementById(\'report-month\').value)">'
         +(EN?'📱 Share via WhatsApp':'📱 Kongsi melalui WhatsApp')+'</button>'
       +'<button id="report-send-btn" class="btn secondary" style="font-size:13px;padding:10px" onclick="sendMonthlyReport(document.getElementById(\'report-month\').value)">'
-        +('📧 Send Email (if GAS MailApp authorised)')+'</button>'
+        +'📧 '+(ZH?'发送邮件 (需 GAS MailApp 授权)':'Send Email (if GAS MailApp authorised)')+'</button>'
     +'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+('Tip: Schedule a monthly reminder to send this on the 1st of each month.')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:8px">'+(ZH?'提示：在每月1日发送上月报告。':'Tip: Schedule a monthly reminder to send this on the 1st of each month.')+'</div>'
   +'</div>';
 }
 
@@ -1676,7 +1690,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2_');
+  lines.push('_Daily Sales Reporter v4.7.2.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2459,6 +2473,7 @@ function renderSummaryTab() {
 
   // ── Today submission status ──────────────────────────────────
   const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
+  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
@@ -2520,10 +2535,20 @@ function renderSummaryTab() {
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
         📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <!-- Row 1: Sales submitted -->
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${branches.map(b=>{
           const ok=todaySubmitted.has(b);
           return `<span style="background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#b91c1c'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800">${ok?'✅':'⏳'} ${b}</span>`;
+        }).join('')}
+      </div>
+      <!-- Row 2: Daily settlement done -->
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${branches.map(b=>{
+          const done=todaySettled.has(b);
+          return `<span style="background:${done?'#eff6ff':'#fef3c7'};color:${done?'#1e40af':'#92400e'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;border:1.5px solid ${done?'#bfdbfe':'#fcd34d'}">${done?'🏦 Done':'💰 Pending'} ${b}</span>`;
         }).join('')}
       </div>
     </div>
