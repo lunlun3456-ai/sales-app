@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.2.0</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.2.0</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -708,7 +708,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwLq-duaYdoD5izVi_Ha7caXuEhReSph-_t_8pp9qnBdMA1e1iAvrM0k_E_ip16TWUzVQ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfXNe1_ZYY0zvEgLBl01OQNTpnr_8rn5A4zNKL0fh2Ehwz_BqSLtdm8y04-VRf47UTgw/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.2.0 ──
+    // ── Additional zh keys v4.7.3 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1123,20 +1123,20 @@ async function syncAttendanceNow(){
 // PERMISSIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
-  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
-  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
-  { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
-  { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
-  { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
-  { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
-  { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
-  { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
-  { key:'work_schedule',    label:t('workSchedule2'),          bm:'Jadual Kerja' },
-  { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
-  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
-  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
-  { key:'db_backup',        label:t('dbBackup'),        bm:'Sandaran Data' },
-  { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
+  { key:'submit_sales',     label:'Update Sales',              bm:'Kemaskini Jualan' },
+  { key:'confirm_daily',    label:'Daily Settlement (Lock Day)',bm:'Kunci Penyelesaian Harian' },
+  { key:'view_records',     label:'View Records',              bm:'Lihat Rekod' },
+  { key:'view_summary',     label:'View Summary',              bm:'Lihat Ringkasan' },
+  { key:'view_admin',       label:'Admin / Mgr Dashboard',     bm:'Panel Admin' },
+  { key:'attendance',       label:'Attendance Check In/Out',   bm:'Daftar Masuk/Keluar' },
+  { key:'cash_drawer',      label:'Cash Drawer',               bm:'Laci Tunai' },
+  { key:'approve_sales',    label:'Approve Submissions',       bm:'Luluskan Penghantaran' },
+  { key:'work_schedule',    label:'Work Schedule',             bm:'Jadual Kerja' },
+  { key:'work_zone',        label:'Work Zone',                 bm:'Zon Kerja' },
+  { key:'settlement_report',label:'View Settlement Reports',   bm:'Laporan Penyelesaian' },
+  { key:'user_mgmt',        label:'User Management',           bm:'Pengurusan Pengguna' },
+  { key:'db_backup',        label:'Database Backup',           bm:'Sandaran Data' },
+  { key:'notifications',    label:'Notifications',             bm:'Notifikasi' },
 ];
 
 const DEFAULT_PERMS = {
@@ -1150,22 +1150,9 @@ const DEFAULT_PERMS = {
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
 function savePerms(p){ saveData('role_permissions', p); }
 
-// Store-level permission overrides: { "Bonia Sabindo": { staff: { view_records:0 }, supervisor: { ... } } }
-// Only keys that DIFFER from the role default need to be stored.
-// null/undefined key = fall through to role perm.
-function getStorePerms(){ return loadData('store_permissions', {}); }
-function saveStorePerms(sp){ saveData('store_permissions', sp); }
-
 function hasPerm(feature){
   if(!currentUser) return false;
-  var role  = currentUser.role;
-  var store = currentUser.store;
-  // 1. Check store-level override first
-  var sp = getStorePerms();
-  if(sp[store] && sp[store][role] && sp[store][role][feature] !== undefined){
-    return !!(sp[store][role][feature]);
-  }
-  // 2. Fall back to role-level permission
+  var role = currentUser.role;
   var p = getPerms();
   if(!p[role]) return !!(DEFAULT_PERMS[role]&&DEFAULT_PERMS[role][feature]);
   return !!(p[role][feature]);
@@ -1176,192 +1163,50 @@ function renderPermissionsPanel(){
   var el = document.getElementById('perms-panel');
   if(!el) return;
   var EN = lang==='en';
-  var p  = getPerms();
-  var sp = getStorePerms();
-  var roles      = ['staff','supervisor','manager','admin','boss'];
+  var p = getPerms();
+  var roles = ['staff','supervisor','manager','admin','boss'];
   var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
   var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
-
-  // Two-level selection state
-  if(!window._permTab   ||!roles.includes(window._permTab))    window._permTab='staff';
-  if(!window._permStore) window._permStore='__global__';
-  var selRole  = window._permTab;
-  var selStore = window._permStore;
-
-  // Build effective perms for the selected store+role:
-  // If store is global → use role perms; if specific store → show override with diff indicator
-  var globalPerms = p[selRole] || DEFAULT_PERMS[selRole] || {};
-  var storeOverride = (selStore!=='__global__' && sp[selStore] && sp[selStore][selRole]) || null;
-
-  // Store selector tabs: "Global" + each branch
-  var storeOptions = ['__global__', ...BRANCHES];
-  var storeLabels  = { '__global__': EN?'🌐 Global (All Stores)':'🌐 Semua Cawangan' };
-  BRANCHES.forEach(function(b){ storeLabels[b]=b; });
-
+  // Which role tab is selected (stored on window to persist across re-renders)
+  if(!window._permTab||!roles.includes(window._permTab)) window._permTab='staff';
+  var selRole=window._permTab;
   var html =
-    '<div class="card-title" style="margin-bottom:8px">🔐 '+(EN?'Role & Store Permissions':'Kebenaran Peranan & Cawangan')+'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
-      +(EN?'Global sets defaults for all stores. Select a specific store to override individual permissions.'
-          :'Global menetapkan lalai untuk semua cawangan. Pilih cawangan untuk tetapkan kebenaran berbeza.')
-    +'</div>'
-
-    // ── Store selector ───────────────────────────────────────────
-    +'<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:6px">'
-      +(EN?'STORE':'CAWANGAN')
-    +'</div>'
-    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px">'
-    +storeOptions.map(function(s){
-      var active=s===selStore;
-      var hasOverride=(s!=='__global__')&&sp[s]&&sp[s][selRole]&&Object.keys(sp[s][selRole]).length>0;
-      return '<button onclick="window._permStore=\''+s.replace(/'/g,"\\'")
-        +'\';renderPermissionsPanel()" style="'
-        +'padding:6px 10px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;'
-        +'border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
-        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
-        +(s==='__global__'?(EN?'🌐 Global':'🌐 Global'):s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.'))
-        +(hasOverride?'<span style="margin-left:3px;background:#f59e0b;color:#fff;border-radius:20px;padding:0 5px;font-size:9px">✏</span>':'')
-      +'</button>';
-    }).join('')
-    +'</div>'
-
-    // ── Role selector ────────────────────────────────────────────
-    +'<div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:6px">'
-      +(EN?'ROLE':'PERANAN')
-    +'</div>'
+    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?t('rolePerm'):'Kebenaran Peranan')+'</div>'
+    // Role selector tabs
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
     +roles.map(function(r){
       var active=r===selRole;
-      var hasStoreOvr=selStore!=='__global__'&&sp[selStore]&&sp[selStore][r]&&Object.keys(sp[selStore][r]).length>0;
       return '<button onclick="window._permTab=\''+r+'\';renderPermissionsPanel()" style="'
-        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;'
-        +'border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
-        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]
-        +(hasStoreOvr?'<span style="margin-left:2px;font-size:9px">✏</span>':'')
-      +'</button>';
+        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
+        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]+'</button>';
     }).join('')
     +'</div>'
-
-    // ── Info strip for store mode ────────────────────────────────
-    +(selStore!=='__global__'
-      ?'<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#92400e">'
-        +'⚠️ '+(EN?'Store overrides only apply to <b>'+selStore+'</b>. Leave a feature at "Same as Global" to inherit the global default.'
-               :'Lebihan cawangan hanya untuk <b>'+selStore+'</b>. Biarkan "Sama Global" untuk warisi nilai lalai.')
-      +'</div>'
-      :'')
-
-    // ── Feature list ─────────────────────────────────────────────
+    // Feature list for selected role
     +'<div style="display:flex;flex-direction:column;gap:2px">';
 
   PERM_FEATURES.forEach(function(f, i){
-    var globalVal = globalPerms[f.key]!==undefined ? !!(globalPerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+    var checked = p[selRole]&&p[selRole][f.key] ? true : false;
     var bg=i%2===0?'#f8fafc':'#fff';
-
-    if(selStore==='__global__'){
-      // Global mode — simple checkbox
-      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
-        +'<div>'
-          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-        +'</div>'
-        +'<input type="checkbox" class="perm-cb" data-scope="global" '+(globalVal?'checked':'')
-          +' data-role="'+selRole+'" data-feature="'+f.key+'"'
-          +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
-      +'</label>';
-    } else {
-      // Store override mode — three-state: inherit/on/off
-      var hasOvr = storeOverride && storeOverride[f.key]!==undefined;
-      var ovrVal = hasOvr ? !!(storeOverride[f.key]) : null;
-      // encode current state as data attr: 'inherit','on','off'
-      var state  = !hasOvr ? 'inherit' : (ovrVal ? 'on' : 'off');
-      var stateColors= {inherit:'#64748b', on:'#10b981', off:'#ef4444'};
-      var stateLabels= {
-        inherit: EN?('↩ Same as Global ('+( globalVal?'✅ ON':'❌ OFF')+')') : ('↩ Sama Global ('+(globalVal?'✅ ON':'❌ OFF')+')'),
-        on:      EN?'✅ Override ON' :'✅ Paksa ON',
-        off:     EN?'❌ Override OFF':'❌ Paksa OFF'
-      };
-      html += '<div style="padding:10px 12px;background:'+bg+';border-radius:10px;'
-        +(hasOvr?'border-left:3px solid '+(ovrVal?'#10b981':'#ef4444')+';':'')+'">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
-          +'<div>'
-            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-          +'</div>'
-          +'<div style="display:flex;gap:4px;flex-shrink:0">'
-            +['inherit','on','off'].map(function(st){
-              var active=state===st;
-              return '<button class="perm-store-btn" data-store="'+selStore.replace(/"/g,'&quot;')+'"'
-                +' data-role="'+selRole+'" data-feature="'+f.key+'" data-state="'+st+'"'
-                +' onclick="setStorePermState(this)" style="padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;'
-                +'border:2px solid '+(active?stateColors[st]:'var(--border)')+';'
-                +'background:'+(active?stateColors[st]:'#f8fafc')+';color:'+(active?'#fff':stateColors[st])+'">'
-                +(st==='inherit'?'↩':(st==='on'?'ON':'OFF'))
-              +'</button>';
-            }).join('')
-          +'</div>'
-        +'</div>'
-        +'<div style="font-size:10px;color:'+stateColors[state]+';font-weight:700;margin-top:4px">'+stateLabels[state]+'</div>'
-      +'</div>';
-    }
+    html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+      +'<div>'
+        +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+        +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+      +'</div>'
+      +'<input type="checkbox" class="perm-cb" '+(checked?'checked':'')
+        +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+        +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+    +'</label>';
   });
 
   html += '</div>'
     +'<div style="display:flex;gap:8px;margin-top:12px">'
       +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
-        +'💾 '+(EN?'Save Global':'Simpan Global')+'</button>'
+        +'💾 '+(EN?'Save':'Simpan')+'</button>'
       +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
         +'↺ Reset</button>'
     +'</div>'
-    +(selStore!=='__global__'
-      ?'<button class="btn secondary" style="width:100%;margin-top:6px;font-size:13px" onclick="clearStorePermOverrides(\''+selStore.replace(/'/g,"\\'")+'\',\''+selRole+'\')">'
-        +(EN?'🗑 Clear all overrides for '+selStore+' / '+roleLabels[selRole]
-            :'🗑 Padam semua lebihan untuk '+selStore+' / '+roleLabels[selRole])+'</button>'
-      :'')
     +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
   el.innerHTML = html;
-}
-
-// Set a store-level perm state from the tri-state button (inherit/on/off)
-function setStorePermState(btn){
-  var store   = btn.dataset.store;
-  var role    = btn.dataset.role;
-  var feature = btn.dataset.feature;
-  var state   = btn.dataset.state; // 'inherit','on','off'
-  var sp = getStorePerms();
-  if(!sp[store])          sp[store]={};
-  if(!sp[store][role])    sp[store][role]={};
-  if(state==='inherit'){
-    delete sp[store][role][feature];
-    if(!Object.keys(sp[store][role]).length)   delete sp[store][role];
-    if(!Object.keys(sp[store]).length)          delete sp[store];
-  } else {
-    sp[store][role][feature] = state==='on' ? 1 : 0;
-  }
-  saveStorePerms(sp);
-  // Sync store perms to GAS
-  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
-  applyPermissionsToNav();
-  renderPermissionsPanel();
-  showToast(lang==='en'?'Store override saved ✅':'Lebihan cawangan disimpan ✅','success');
-}
-
-// Clear all overrides for a specific store + role combination
-function clearStorePermOverrides(store, role){
-  var EN=lang==='en';
-  if(!confirm(EN?'Clear all overrides for '+store+' / '+role+'?':'Padam semua lebihan untuk '+store+' / '+role+'?')) return;
-  var sp=getStorePerms();
-  if(sp[store]&&sp[store][role]){
-    delete sp[store][role];
-    if(!Object.keys(sp[store]).length) delete sp[store];
-  }
-  saveStorePerms(sp);
-  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
-  applyPermissionsToNav();
-  renderPermissionsPanel();
-  showToast(EN?'Overrides cleared':'Lebihan dipadam','success');
 }
 
 function savePermissionsFromUI(){
@@ -1401,7 +1246,7 @@ function resetPermissionsToDefault(){
 function applyPermissionsToNav(){
   if(!currentUser) return;
   var role = currentUser.role;
-  var canSubmit = hasPerm('submit_sales');
+  // Nav tab visibility based on permissions
   var navMap = {
     'submit':     'submit_sales',
     'records':    'view_records',
@@ -1413,10 +1258,9 @@ function applyPermissionsToNav(){
     var el = document.getElementById('nav-'+tab);
     if(el){
       var allowed = hasPerm(navMap[tab]);
-      if(tab==='submit'     && role==='boss')              allowed = false;
-      if(tab==='attendance' && currentUser.store==='HQ')   allowed = false;
-      // No submit access = no view of submitted sales records or summary
-      if(!canSubmit && (tab==='records' || tab==='summary')) allowed = false;
+      // Keep boss-specific overrides
+      if(tab==='submit' && role==='boss') allowed = false;
+      if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
   });
@@ -1846,7 +1690,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.2.0_');
+  lines.push('_Daily Sales Reporter v4.7.3_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1903,12 +1747,12 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
-          // Store-level and role-level permissions — sync to all devices
-          if(appJson.storePermissions && typeof appJson.storePermissions==='object'){
-            saveStorePerms(appJson.storePermissions);
-          }
+          // Permissions sync — role and store overrides delivered to all devices
           if(appJson.rolePermissions && typeof appJson.rolePermissions==='object'){
             savePerms(appJson.rolePermissions);
+          }
+          if(appJson.storePermissions && typeof appJson.storePermissions==='object'){
+            saveStorePerms(appJson.storePermissions);
           }
           applyPermissionsToNav();
         }
@@ -1949,13 +1793,8 @@ async function fetchLiveUsers(forceRefresh) {
     const permResp = await gasGet('getPermissions');
     if(permResp && permResp.permissions){
       savePerms(permResp.permissions);
+      if(currentUser) applyPermissionsToNav();
     }
-    // Also fetch store-level permission overrides
-    const storePermResp = await gasGet('getStorePermissions');
-    if(storePermResp && storePermResp.storePermissions){
-      saveStorePerms(storePermResp.storePermissions);
-    }
-    if(currentUser) applyPermissionsToNav();
   } catch(e){ console.warn('permission sync failed:', e.message); }
   return cachedUsers;
 }
@@ -2367,8 +2206,9 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     // the day immediately; everyone else's submission routes to their
     // store's Supervisor/Manager/Admin for approval (also enforced
     // server-side in handleUploadSettlement).
-    // Staff and supervisor require approval for settlement; manager/admin/boss can self-approve
-    window._needsApproval=['staff','supervisor'].includes(currentUser.role)||!hasPerm('confirm_daily');
+    // Only staff requires approval for settlement.
+    // Supervisor has confirm_daily permission and self-approves directly.
+    window._needsApproval = !hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
@@ -2398,8 +2238,8 @@ function _staffSubmitForApproval(withUpload) {
 
 function confirmSubmit(withUpload=false) {
   if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
-  // Staff must go through supervisor/admin/manager approval for settlement
-  if(currentUser.role==='staff'&&withUpload){
+  // Staff (no confirm_daily) goes through approval queue
+  if(!hasPerm('confirm_daily') && withUpload){
     window._needsApproval=true;
     _staffSubmitForApproval(true);
     return;
@@ -2442,16 +2282,6 @@ function confirmSubmit(withUpload=false) {
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
-  // Permission gate — no submit access = no view of records
-  if(!hasPerm('submit_sales') || !hasPerm('view_records')){
-    document.getElementById('tab-records').innerHTML=
-      '<div class="card" style="text-align:center;padding:40px 20px">'
-      +'<div style="font-size:52px">🔒</div>'
-      +'<h3 style="margin:12px 0 8px">'+t('accessDenied')+'</h3>'
-      +'<p style="color:var(--text2)">'+t('accessMsg')+'</p>'
-      +'</div>';
-    return;
-  }
   // Auto-sync from GAS each time Records tab is opened
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
@@ -2602,8 +2432,7 @@ function renderRecordsTab() {
 // ============================================================
 function renderSummaryTab() {
   const isExec=['boss','admin','manager'].includes(currentUser.role);
-  // Permission gate — no submit access = no view of summary
-  if(!hasPerm('submit_sales') || !hasPerm('view_summary')){
+  if(!isExec){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
@@ -2653,7 +2482,7 @@ function renderSummaryTab() {
 
   // ── Today submission status ──────────────────────────────────
   const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
-  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
+  const todaySettled=new Set(getSettlementLocks().filter(r=>String(r.dateKey).slice(0,10)===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
