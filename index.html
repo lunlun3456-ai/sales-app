@@ -545,6 +545,7 @@
         <option value="manager">Manager</option>
         <option value="boss">Boss</option>
         <option value="admin">Admin</option>
+        <option value="tester">🧪 Tester (Dev)</option>
       </select>
     </div>
     <div class="input-wrap">
@@ -708,11 +709,50 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfXNe1_ZYY0zvEgLBl01OQNTpnr_8rn5A4zNKL0fh2Ehwz_BqSLtdm8y04-VRf47UTgw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUb45VI-XUJCwM5ruqfCoe48lHGuR_H53zLtxFpZGzrLK8nlVYySJqqQU6otyBRwGpgg/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
 let currentUser = null;
+
+// ── Force sign-out & refresh mechanism ───────────────────────────────────────
+// Admin writes force_signout_ts to GAS ScriptProperties.
+// On every sync, the app compares the server timestamp against the one it last
+// accepted. If newer → log out and hard-reload so the new HTML is fetched.
+// Same-tab/same-browser peers are also caught via the storage event.
+var _lastForceSignoutTs = loadData('last_force_signout_ts', 0);
+
+window.addEventListener('storage', function(e){
+  // Another tab on the same browser fired a force-signout
+  if(e.key === 'force_signout_trigger'){
+    var ts = parseInt(e.newValue||'0',10);
+    if(ts > _lastForceSignoutTs){
+      _lastForceSignoutTs = ts;
+      saveData('last_force_signout_ts', ts);
+      if(currentUser){ _forceSignoutAndReload('Admin pushed a sign-out & refresh.'); }
+    }
+  }
+});
+
+function _forceSignoutAndReload(reason){
+  showToast('🔄 '+(reason||'Forced sign-out by Admin. Reloading...'),'pending');
+  setTimeout(function(){
+    doLogout();
+    setTimeout(function(){ location.reload(true); }, 800);
+  }, 1200);
+}
+
+function _checkForceSignout(serverTs){
+  if(!serverTs) return;
+  var ts = parseInt(serverTs, 10);
+  if(ts > _lastForceSignoutTs){
+    _lastForceSignoutTs = ts;
+    saveData('last_force_signout_ts', ts);
+    // Broadcast to other tabs on this browser
+    saveData('force_signout_trigger', ts);
+    if(currentUser){ _forceSignoutAndReload('Admin pushed a sign-out & refresh. Please log in again.'); }
+  }
+}
 let currentTab = 'submit';
 let cachedUsers = {};
 let cachedLog = [];
@@ -848,7 +888,7 @@ const T = {
     adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
     submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
     confirmTitle:'Confirm Submission', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
+    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin', tester:'Tester',
     filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
     selectMonthLabel:'Month Filter',
     pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
@@ -876,8 +916,7 @@ const T = {
     newEntry:'NEW SUBMISSION', editEntry:'EDITED',
     beforeLabel:'Before', afterLabel:'After',
     noLog:'No log entries found', logFilter:'Filter Log',
-    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.'
-,
+    logAccessDenied:'Only Boss, Admin & Manager can view the audit log.',
     submitUploadBtn:'Submit + Upload Receipt (Confirms Daily Sales)',
     submittedPending:'Submitted — Pending Supervisor Approval ⏳',
     salesLockedMsg:'Settlement uploaded — Sales locked. Manager approval required.',
@@ -887,7 +926,39 @@ const T = {
     staffNoDrawer:'Cash drawer: Supervisor/Manager only',
     selectStoreFrst:'Please select a store first',
     latLngRequired:'Enter latitude and longitude',
-    zoneSaved:'Zone saved.'  },
+    zoneSaved:'Zone saved.',
+    totalSalesLabel:'Total Sales',storeLabel:'Store',dateLabel2:'Date',
+    updateSalesBtn:'📝 Update Sales',confirmDailyBtn:'📎 Confirm Daily (Upload Receipt)',
+    requestApprovalBtn:'📋 Request Settlement Approval',
+    settlementRpt:'Settlement Reports',noSettlementRpt:'No settlement reports',viewBtn:'View',noLink:'No link',
+    mgrDash:'Mgr Dashboard',presentLabel:'Present',absentLabel:'Absent',
+    attRec:'Attendance Records',loadStaffBtn:'Load Staff',pendingSalesAppr:'Pending Approvals',
+    noPendingAppr:'No pending approvals',noAttRec:'No records for this date/store. Tap 🔄 Sync.',
+    dbBackup:'Database Backup',createBackup:'Create Database Backup',noAccess:'No Access',
+    pendingReg:'Pending Registration',noPendingReg:'No pending registrations',noActiveUsers:'No active users',
+    workSchedule2:'Work Schedule',workZone2:'Work Zone (Geofence)',
+    saveZone:'Save Zone',saveSchedule:'Save Schedule',
+    rolePerm:'Role & Store Permissions',permFeature:'Feature',savePerms:'Save Permissions',resetPerms:'Reset',
+    permsSaved:'✅ Permissions saved!',
+    permDesc:'Tick to allow this role to access the feature. Changes apply immediately.',
+    monthlyEmailRpt:'Monthly Email Report',recipientEmail:'Recipient Email',monthLabel:'Month',
+    sendMonthlyRpt:'📧 Send Monthly Report',sendLastMonth:'Last Month',
+    sendEmailBtn:'📧 Send Email (requires GAS MailApp auth)',
+    emailReportDesc:'Send attendance and sales summary to the specified email addresses.',
+    notifTitle:'Sign-in Notifications',enableNotif:'Enable Notifications',
+    notifAllowed:'✅ Allowed',notifBlocked:'❌ Blocked',notifNotSet:'⏳ Not Set',
+    notifNotSupported:'Notifications not supported on this browser/device',
+    notifRemindTime:'Remind if not signed in by:',notifSaveBtn:'Save',
+    notifDesc:'Checks every 5 min. Admin/Manager sees all unsigned-in staff.',
+    editAttTitle:'Edit Attendance Time',newTimeLabel:'New Time (HH:MM)',
+    saveNewTime:'Save New Time',editAttDesc:'Changes will sync to server and be recorded.',
+    checkInSettl:'Confirm Daily Sales',confirmSettle:'Confirm Settlement',salesUpdate:'Sales Update',
+    goodMorning:'Good morning',goodAfternoon:'Good afternoon',goodEvening:'Good evening',
+    niceDay:'Have a great day 😊',hardWork:'Thank you for your hard work today!',
+    greatEvening:'Have a great evening, get some rest 🌟',
+    usernameNotFound:'Username not found',kindlyRegister:'Please register before logging in',
+    registerNow:'Register Now',accountPending:'Account pending review',
+    syncingMsg:'🔄 Syncing...',syncDoneMsg:'✅ Sync complete'  },
   zh: {
     appTitle:'日销报告', submit:'提交', records:'记录', summary:'汇总',
     log:'日志', admin:'管理', me:'我的',
@@ -901,7 +972,7 @@ const T = {
     adminTab:'管理后台', logout:'安全退出', refresh:'同步',
     submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
     confirmTitle:'确认提交', allStores:'所有门店',
-    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
+    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员', tester:'测试员',
     filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期',
     selectMonthLabel:'月份筛选',
     pendingApprovals:'待审批申请', noRequests:'暂无待审批申请',
@@ -1145,6 +1216,7 @@ const DEFAULT_PERMS = {
   manager:    { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:0, notifications:1 },
   admin:      { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
   boss:       { submit_sales:0, confirm_daily:0, view_records:1, view_summary:1, view_admin:1, attendance:0, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  tester:     { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
 };
 
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
@@ -1160,9 +1232,11 @@ function hasPerm(feature){
   if(!currentUser) return false;
   var role  = currentUser.role;
   var store = currentUser.store;
+  // TESTER role — invincible, bypasses every permission check
+  if(role==='tester') return true;
   // Boss hardcoded overrides — these never change regardless of perm panel
   if(role==='boss' && BOSS_LOCKED_OFF.indexOf(feature)>=0) return false;
-  // 1. Store-level override — only applies to non-boss
+  // 1. Store-level override — only applies to non-boss, non-tester
   var sp = getStorePerms();
   if(sp[store] && sp[store][role] && sp[store][role][feature] !== undefined){
     return !!(sp[store][role][feature]);
@@ -1180,9 +1254,9 @@ function renderPermissionsPanel(){
   var EN = lang==='en';
   var p   = getPerms();
   var sp  = getStorePerms();
-  var roles      = ['staff','supervisor','manager','admin','boss'];
-  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
-  var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
+  var roles      = ['staff','supervisor','manager','admin','boss','tester'];
+  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss', tester:'🧪 Tester' };
+  var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c', tester:'#0369a1' };
 
   if(!window._permTab   ||!roles.includes(window._permTab))    window._permTab='staff';
   if(!window._permStore) window._permStore='__global__';
@@ -1232,6 +1306,13 @@ function renderPermissionsPanel(){
     }).join('')
     +'</div>';
 
+  // Tester notice
+  if(selRole==='tester'){
+    html += '<div style="background:#e0f2fe;border:1.5px solid #7dd3fc;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#0369a1;font-weight:700">'
+      +'🧪 Tester is an <b>invincible dev role</b>. All features are permanently ON regardless of store overrides. No restrictions apply — use only for testing.'
+    +'</div>';
+  }
+
   // Boss notice
   if(isBoss){
     html += '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#b91c1c;font-weight:700">'
@@ -1254,7 +1335,16 @@ function renderPermissionsPanel(){
     var bossLocked = isBoss && BOSS_LOCKED_OFF.indexOf(f.key)>=0;
     var bossFixed  = isBoss && !bossLocked; // features boss CAN have (view_records, view_summary, etc.)
 
-    if(isBoss){
+    if(selRole==='tester'){
+      // Tester — all features permanently ON, shown as locked
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
+        +'<span style="font-size:10px;font-weight:700;color:#0369a1;background:#e0f2fe;border-radius:20px;padding:3px 8px;flex-shrink:0">🧪 Always ON</span>'
+      +'</div>';
+    } else if(isBoss){
       var bossIsLocked = BOSS_LOCKED_OFF.indexOf(f.key)>=0;
       if(bossIsLocked){
         // Action feature — permanently OFF, show locked label
@@ -1419,7 +1509,8 @@ function applyPermissionsToNav(){
   if(!currentUser) return;
   var role      = currentUser.role;
   var isBoss    = role==='boss';
-  var canSubmit = hasPerm('submit_sales'); // false for boss (hardcoded) + any store override
+  var isTester  = role==='tester';
+  var canSubmit = hasPerm('submit_sales');
   var navMap = {
     'submit':     'submit_sales',
     'records':    'view_records',
@@ -1430,12 +1521,12 @@ function applyPermissionsToNav(){
   Object.keys(navMap).forEach(function(tab){
     var el = document.getElementById('nav-'+tab);
     if(el){
-      var allowed = hasPerm(navMap[tab]);
-      // Staff/supervisor with submit blocked: also hide records and summary
-      // BUT boss is a viewer role — always allow records and summary even though submit=0
-      if(!canSubmit && !isBoss && (tab==='records'||tab==='summary')) allowed = false;
-      // HQ accounts have no store attendance
-      if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
+      var allowed = isTester ? true : hasPerm(navMap[tab]);
+      // Staff with submit blocked: also hide records and summary
+      // Boss and Tester are exempt — always see records and summary
+      if(!canSubmit && !isBoss && !isTester && (tab==='records'||tab==='summary')) allowed = false;
+      // HQ accounts have no store attendance (tester can still see it)
+      if(tab==='attendance' && currentUser.store==='HQ' && !isTester) allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
   });
@@ -1925,6 +2016,8 @@ async function triggerSyncRefresh() {
           if(appJson.rolePermissions && typeof appJson.rolePermissions==='object') savePerms(appJson.rolePermissions);
           if(appJson.storePermissions && typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
           applyPermissionsToNav();
+          // Force sign-out check — if admin pushed a reload, this device acts on it
+          if(appJson.forceSignoutTs) _checkForceSignout(appJson.forceSignoutTs);
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
     } else if(json && !json.sales) {
@@ -2051,8 +2144,9 @@ async function doLogin() {
     showToast('Account disabled — contact Admin','error'); return;
   }
 
-  // ✅ Credentials OK — zone-restrict staff & supervisor
-  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
+  // ✅ Credentials OK — zone-restrict staff & supervisor (tester bypasses)
+  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase())
+                          && userMatch.role !== 'tester';
   if(_roleRestricted && userMatch.store && userMatch.store !== 'HQ'){
     // Ensure work zones are loaded
     if(!cachedWorkZones.length){
@@ -2112,9 +2206,10 @@ async function doLogin() {
   recordLoginDevice();
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  const isBoss  = currentUser.role === 'boss';
-  const isAdmin = ['admin','boss'].includes(currentUser.role);
-  const isExec  = ['admin','boss','manager'].includes(currentUser.role);
+  const isBoss   = currentUser.role === 'boss';
+  const isTester = currentUser.role === 'tester';
+  const isAdmin  = ['admin','boss','tester'].includes(currentUser.role);
+  const isExec   = ['admin','boss','manager','tester'].includes(currentUser.role);
   // Permissions-based nav visibility
   applyPermissionsToNav();
   document.getElementById('nav-log').style.display = (isExec&&!isBoss) ? 'flex' : 'none';
@@ -2330,7 +2425,7 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
   const todayStr=dateKeyUTC8();
-  if(isRestricted&&targetDate!==todayStr){
+  if(isRestricted && currentUser.role!=='tester' && targetDate!==todayStr){
     showToast(t('onlyTodayAllowed'),'error'); return;
   }
 
@@ -2527,10 +2622,14 @@ function renderRecordsTab() {
               💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
             </div>
             ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
+            <div style="font-size:10px;color:#94a3b8;margin-top:3px">
+              📅 ${cleanDateKey(r.dateKey)}
+              ${r.dateTime?` &nbsp;🕐 ${String(r.dateTime).slice(11,16)}`:(r.createdAt?` &nbsp;🕐 ${String(r.createdAt).slice(11,16)}`:'')}
+              ${isUpdate&&r.updatedAt?` &nbsp;✏️ ${String(r.updatedAt).slice(0,16).replace('T',' ')}`:''}
+            </div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
-            <div class="record-sub">${cleanDateKey(r.dateKey)}</div>
           </div>
         </div>`;
     }).join('');
@@ -3844,6 +3943,22 @@ async function renderAdminTab() {
     ${canManageUsers()?pendingHtml:''}
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}
     ${currentUser.role==='admin'?'<div id="perms-panel" style="margin-top:8px"></div>':''}
+    ${['admin','tester'].includes(currentUser.role)?`
+    <div class="card" style="margin-top:12px;border:2px solid #fecaca">
+      <div class="card-title" style="color:#b91c1c">⚡ Force Sign-Out All Users</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+        Force all logged-in devices to sign out and reload the app immediately.
+        Use after pushing a new version of the HTML file.
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn danger" style="flex:1;font-size:14px;padding:12px" onclick="adminForceSignoutAll()">
+          🔄 Force All Users to Sign Out & Reload
+        </button>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:8px">
+        ⚠️ This affects every phone on the next sync (within ~60 sec). You will also be signed out.
+      </div>
+    </div>`:''}
     <div id="monthly-report-panel"></div>`;
   if(currentUser.role==='admin') renderPermissionsPanel();
   renderMonthlyReportPanel();
@@ -3994,6 +4109,27 @@ function doLogout() {
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
+}
+
+async function adminForceSignoutAll(){
+  if(!confirm('Force ALL users on ALL devices to sign out and reload?\n\nThis will happen within ~60 seconds on their next sync.\nYou will also be signed out.')) return;
+  var ts = Date.now();
+  showToast('📡 Pushing force sign-out to all devices...','pending');
+  // Write timestamp to GAS ScriptProperties so every device gets it on next sync
+  try {
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'setForceSignout',ts:ts,by:currentUser.name})});
+  } catch(e){ console.warn('GAS push failed, using local broadcast only'); }
+  // Also broadcast to all tabs on this browser immediately via localStorage event
+  saveData('force_signout_trigger', ts);
+  // Sign out self after short delay so the toast is visible
+  setTimeout(function(){
+    _lastForceSignoutTs = ts;
+    saveData('last_force_signout_ts', ts);
+    doLogout();
+    setTimeout(function(){ location.reload(true); }, 800);
+  }, 1500);
 }
 
 function showToast(msg,type='') {
