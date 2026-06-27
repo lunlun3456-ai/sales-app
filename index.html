@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.0</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.0</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3.0 ──
+    // ── Additional zh keys v4.7.3 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1152,7 +1152,8 @@ function savePerms(p){ saveData('role_permissions', p); }
 function getStorePerms(){ return loadData('store_permissions', {}); }
 function saveStorePerms(sp){ saveData('store_permissions', sp); }
 
-// Boss-role features that are HARDCODED off regardless of checkbox
+// Boss-role ACTION features hardcoded OFF — boss is a viewer, cannot do any of these
+// View features (view_records, view_summary, view_admin, settlement_report, notifications) remain editable
 const BOSS_LOCKED_OFF = ['submit_sales','confirm_daily','attendance','cash_drawer','approve_sales','work_schedule','work_zone','user_mgmt','db_backup'];
 
 function hasPerm(feature){
@@ -1234,7 +1235,7 @@ function renderPermissionsPanel(){
   // Boss notice
   if(isBoss){
     html += '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#b91c1c;font-weight:700">'
-      +'🔒 Boss is a view-only role. The checked items below are <u>fixed by code</u> and cannot be changed. Boss can never submit sales, approve, manage users, or check attendance.'
+      +'🔒 Boss is a <b>viewer-only</b> role. Action features (marked Fixed OFF) are permanently disabled. View features can be toggled.'
     +'</div>';
   }
 
@@ -1254,21 +1255,29 @@ function renderPermissionsPanel(){
     var bossFixed  = isBoss && !bossLocked; // features boss CAN have (view_records, view_summary, etc.)
 
     if(isBoss){
-      // Show read-only indicator for boss
-      var bossHas = !!(DEFAULT_PERMS.boss[f.key]);
       var bossIsLocked = BOSS_LOCKED_OFF.indexOf(f.key)>=0;
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px;opacity:'+(bossIsLocked?'0.5':'1')+'">'
-        +'<div>'
-          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-        +'</div>'
-        +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-          +(bossIsLocked
-            ?'<span style="font-size:10px;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:20px;padding:3px 8px">🔒 Fixed OFF</span>'
-            :'<span style="font-size:10px;font-weight:700;color:#065f46;background:#d1fae5;border-radius:20px;padding:3px 8px">✅ Fixed ON</span>'
-          )
-        +'</div>'
-      +'</div>';
+      if(bossIsLocked){
+        // Action feature — permanently OFF, show locked label
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px;opacity:0.45">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
+          +'<span style="font-size:10px;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:20px;padding:3px 8px;flex-shrink:0">🔒 Fixed OFF</span>'
+        +'</div>';
+      } else {
+        // View feature — editable checkbox
+        var checked = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+        html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
+          +'<input type="checkbox" class="perm-cb" data-scope="global" '+(checked?'checked':'')
+            +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+            +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+        +'</label>';
+      }
     } else if(isGlobal){
       // Global mode — standard checkbox
       var checked = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
@@ -1317,14 +1326,15 @@ function renderPermissionsPanel(){
   });
   html += '</div>';
 
-  // Action buttons
-  if(!isBoss){
+  // Action buttons — boss gets Save (for view features), not Reset
+  if(isGlobal){
     html += '<div style="display:flex;gap:8px;margin-top:12px">'
-      +(isGlobal
-        ?'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">💾 '+(EN?'Save Global':'Simpan Global')+'</button>'
-          +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">↺ Reset</button>'
-        :'<button class="btn secondary" style="flex:1;font-size:13px" onclick="clearStorePermOverrides(\''+selStore.replace(/'/g,"\\'")+'\',\''+selRole+'\')">🗑 Clear overrides for '+selStore+'</button>'
-      )
+      +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">💾 '+(EN?'Save Global':'Simpan Global')+'</button>'
+      +(isBoss?'':('<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">↺ Reset</button>'))
+    +'</div>';
+  } else if(!isBoss){
+    html += '<div style="display:flex;gap:8px;margin-top:12px">'
+      +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="clearStorePermOverrides(\''+selStore.replace(/'/g,"\\'")+'\',\''+selRole+'\')">🗑 Clear overrides for '+selStore+'</button>'
     +'</div>';
   }
   html += '<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
@@ -1407,6 +1417,8 @@ function resetPermissionsToDefault(){
 
 function applyPermissionsToNav(){
   if(!currentUser) return;
+  var role      = currentUser.role;
+  var isBoss    = role==='boss';
   var canSubmit = hasPerm('submit_sales'); // false for boss (hardcoded) + any store override
   var navMap = {
     'submit':     'submit_sales',
@@ -1419,9 +1431,10 @@ function applyPermissionsToNav(){
     var el = document.getElementById('nav-'+tab);
     if(el){
       var allowed = hasPerm(navMap[tab]);
-      // If submit is blocked, also hide records and summary (no submit = no view)
-      if(!canSubmit && (tab==='records'||tab==='summary')) allowed = false;
-      // HQ staff have no store attendance
+      // Staff/supervisor with submit blocked: also hide records and summary
+      // BUT boss is a viewer role — always allow records and summary even though submit=0
+      if(!canSubmit && !isBoss && (tab==='records'||tab==='summary')) allowed = false;
+      // HQ accounts have no store attendance
       if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
@@ -1852,7 +1865,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3.0_');
+  lines.push('_Daily Sales Reporter v4.7.3_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2438,8 +2451,9 @@ function confirmSubmit(withUpload=false) {
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
-  // Permission gate — no submit = no view of records
-  if(!hasPerm('submit_sales')||!hasPerm('view_records')){
+  // Permission gate — no submit = no view of records (but boss is exempt: viewer role)
+  var isBoss = currentUser.role==='boss';
+  if(!isBoss && (!hasPerm('submit_sales')||!hasPerm('view_records'))){
     document.getElementById('tab-records').innerHTML=
       '<div class="card" style="text-align:center;padding:40px 20px">'
       +'<div style="font-size:52px">🔒</div>'
@@ -2598,8 +2612,17 @@ function renderRecordsTab() {
 // ============================================================
 function renderSummaryTab() {
   const isExec=['boss','admin','manager'].includes(currentUser.role);
-  // Permission gate — no submit = no view of summary; also respects store overrides
-  if(!hasPerm('submit_sales')||!hasPerm('view_summary')){
+  const isBoss = currentUser.role==='boss';
+  // Permission gate — boss is always a viewer role; only block non-boss/non-exec without submit perm
+  if(!isBoss && (!hasPerm('submit_sales')||!hasPerm('view_summary'))){
+    document.getElementById('tab-summary').innerHTML=`
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div style="font-size:52px;">🔒</div>
+        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
+        <p style="color:var(--text2)">${t('accessMsg')}</p>
+      </div>`; return;
+  }
+  if(!isExec){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
