@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -940,7 +940,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3 ──
+    // ── Additional zh keys v4.7.3.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1123,20 +1123,20 @@ async function syncAttendanceNow(){
 // PERMISSIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
-  { key:'submit_sales',     label:'Update Sales',              bm:'Kemaskini Jualan' },
-  { key:'confirm_daily',    label:'Daily Settlement (Lock Day)',bm:'Kunci Penyelesaian Harian' },
-  { key:'view_records',     label:'View Records',              bm:'Lihat Rekod' },
-  { key:'view_summary',     label:'View Summary',              bm:'Lihat Ringkasan' },
-  { key:'view_admin',       label:'Admin / Mgr Dashboard',     bm:'Panel Admin' },
-  { key:'attendance',       label:'Attendance Check In/Out',   bm:'Daftar Masuk/Keluar' },
-  { key:'cash_drawer',      label:'Cash Drawer',               bm:'Laci Tunai' },
-  { key:'approve_sales',    label:'Approve Submissions',       bm:'Luluskan Penghantaran' },
-  { key:'work_schedule',    label:'Work Schedule',             bm:'Jadual Kerja' },
-  { key:'work_zone',        label:'Work Zone',                 bm:'Zon Kerja' },
-  { key:'settlement_report',label:'View Settlement Reports',   bm:'Laporan Penyelesaian' },
-  { key:'user_mgmt',        label:'User Management',           bm:'Pengurusan Pengguna' },
-  { key:'db_backup',        label:'Database Backup',           bm:'Sandaran Data' },
-  { key:'notifications',    label:'Notifications',             bm:'Notifikasi' },
+  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
+  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
+  { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
+  { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
+  { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
+  { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
+  { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
+  { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
+  { key:'work_schedule',    label:t('workSchedule2'),          bm:'Jadual Kerja' },
+  { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
+  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
+  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
+  { key:'db_backup',        label:t('dbBackup'),        bm:'Sandaran Data' },
+  { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
 ];
 
 const DEFAULT_PERMS = {
@@ -1149,10 +1149,24 @@ const DEFAULT_PERMS = {
 
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
 function savePerms(p){ saveData('role_permissions', p); }
+function getStorePerms(){ return loadData('store_permissions', {}); }
+function saveStorePerms(sp){ saveData('store_permissions', sp); }
+
+// Boss-role features that are HARDCODED off regardless of checkbox
+const BOSS_LOCKED_OFF = ['submit_sales','confirm_daily','attendance','cash_drawer','approve_sales','work_schedule','work_zone','user_mgmt','db_backup'];
 
 function hasPerm(feature){
   if(!currentUser) return false;
-  var role = currentUser.role;
+  var role  = currentUser.role;
+  var store = currentUser.store;
+  // Boss hardcoded overrides — these never change regardless of perm panel
+  if(role==='boss' && BOSS_LOCKED_OFF.indexOf(feature)>=0) return false;
+  // 1. Store-level override — only applies to non-boss
+  var sp = getStorePerms();
+  if(sp[store] && sp[store][role] && sp[store][role][feature] !== undefined){
+    return !!(sp[store][role][feature]);
+  }
+  // 2. Role-level permission
   var p = getPerms();
   if(!p[role]) return !!(DEFAULT_PERMS[role]&&DEFAULT_PERMS[role][feature]);
   return !!(p[role][feature]);
@@ -1163,50 +1177,198 @@ function renderPermissionsPanel(){
   var el = document.getElementById('perms-panel');
   if(!el) return;
   var EN = lang==='en';
-  var p = getPerms();
-  var roles = ['staff','supervisor','manager','admin','boss'];
+  var p   = getPerms();
+  var sp  = getStorePerms();
+  var roles      = ['staff','supervisor','manager','admin','boss'];
   var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
   var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
-  // Which role tab is selected (stored on window to persist across re-renders)
-  if(!window._permTab||!roles.includes(window._permTab)) window._permTab='staff';
-  var selRole=window._permTab;
+
+  if(!window._permTab   ||!roles.includes(window._permTab))    window._permTab='staff';
+  if(!window._permStore) window._permStore='__global__';
+  var selRole  = window._permTab;
+  var selStore = window._permStore;
+  var isBoss   = selRole==='boss';
+  var isGlobal = selStore==='__global__';
+
+  var globalRolePerms = p[selRole] || DEFAULT_PERMS[selRole] || {};
+  var storeOverride   = (!isGlobal && sp[selStore] && sp[selStore][selRole]) ? sp[selStore][selRole] : null;
+
+  // Store selector
+  var storeOptions = ['__global__'].concat(BRANCHES);
   var html =
-    '<div class="card-title" style="margin-bottom:10px">🔐 '+(EN?t('rolePerm'):'Kebenaran Peranan')+'</div>'
-    // Role selector tabs
-    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
-    +roles.map(function(r){
-      var active=r===selRole;
-      return '<button onclick="window._permTab=\''+r+'\';renderPermissionsPanel()" style="'
-        +'flex:1;min-width:60px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
-        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]+'</button>';
+    '<div class="card-title" style="margin-bottom:8px">🔐 '+(EN?'Role & Store Permissions':'Kebenaran Peranan & Cawangan')+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
+      +(EN?'Global sets defaults. Select a store to override permissions for that branch only.'
+          :'Global menetapkan lalai. Pilih cawangan untuk tetapkan kebenaran berbeza.')
+    +'</div>'
+    // ── Store selector ──────────────────────────────────────────
+    +'<div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:5px">STORE / CAWANGAN</div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px">'
+    +storeOptions.map(function(s){
+      var active=s===selStore;
+      var hasOvr=s!=='__global__'&&sp[s]&&sp[s][selRole]&&Object.keys(sp[s][selRole]).length>0;
+      var lbl=s==='__global__'?'🌐 Global':s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.');
+      return '<button onclick="window._permStore=\''+s.replace(/'/g,"\\'")
+        +'\';renderPermissionsPanel()" style="padding:6px 9px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;'
+        +'border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
+        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
+        +lbl+(hasOvr?'<span style="margin-left:3px;font-size:9px;background:#f59e0b;color:#fff;border-radius:20px;padding:0 4px">✏</span>':'')
+      +'</button>';
     }).join('')
     +'</div>'
-    // Feature list for selected role
-    +'<div style="display:flex;flex-direction:column;gap:2px">';
+    // ── Role selector ────────────────────────────────────────────
+    +'<div style="font-size:10px;font-weight:800;color:#64748b;letter-spacing:.5px;margin-bottom:5px">ROLE / PERANAN</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    +roles.map(function(r){
+      var active=r===selRole;
+      var hasOvr=selStore!=='__global__'&&sp[selStore]&&sp[selStore][r]&&Object.keys(sp[selStore][r]).length>0;
+      return '<button onclick="window._permTab=\''+r+'\';renderPermissionsPanel()" style="'
+        +'flex:1;min-width:56px;padding:7px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;'
+        +'border:2px solid '+(active?roleColors[r]:'var(--border)')+';'
+        +'background:'+(active?roleColors[r]:'#f8fafc')+';color:'+(active?'#fff':roleColors[r])+'">'+roleLabels[r]
+        +(hasOvr?'<span style="font-size:9px;margin-left:2px">✏</span>':'')
+      +'</button>';
+    }).join('')
+    +'</div>';
 
+  // Boss notice
+  if(isBoss){
+    html += '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#b91c1c;font-weight:700">'
+      +'🔒 Boss is a view-only role. The checked items below are <u>fixed by code</u> and cannot be changed. Boss can never submit sales, approve, manage users, or check attendance.'
+    +'</div>';
+  }
+
+  // Store override notice
+  if(!isGlobal){
+    html += '<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#92400e">'
+      +'⚠️ '+(EN?'Overrides for <b>'+selStore+'</b> only. Features without override inherit global defaults.':'Hanya untuk <b>'+selStore+'</b>. Tiada lebihan = warisi lalai global.')
+    +'</div>';
+  }
+
+  // Feature rows
+  html += '<div style="display:flex;flex-direction:column;gap:2px">';
   PERM_FEATURES.forEach(function(f, i){
-    var checked = p[selRole]&&p[selRole][f.key] ? true : false;
-    var bg=i%2===0?'#f8fafc':'#fff';
-    html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
-      +'<div>'
-        +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-        +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-      +'</div>'
-      +'<input type="checkbox" class="perm-cb" '+(checked?'checked':'')
-        +' data-role="'+selRole+'" data-feature="'+f.key+'"'
-        +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
-    +'</label>';
-  });
+    var bg = i%2===0?'#f8fafc':'#fff';
+    var globalVal = globalRolePerms[f.key]!==undefined ? !!(globalRolePerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+    var bossLocked = isBoss && BOSS_LOCKED_OFF.indexOf(f.key)>=0;
+    var bossFixed  = isBoss && !bossLocked; // features boss CAN have (view_records, view_summary, etc.)
 
-  html += '</div>'
-    +'<div style="display:flex;gap:8px;margin-top:12px">'
-      +'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">'
-        +'💾 '+(EN?'Save':'Simpan')+'</button>'
-      +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">'
-        +'↺ Reset</button>'
-    +'</div>'
-    +'<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
+    if(isBoss){
+      // Show read-only indicator for boss
+      var bossHas = !!(DEFAULT_PERMS.boss[f.key]);
+      var bossIsLocked = BOSS_LOCKED_OFF.indexOf(f.key)>=0;
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px;opacity:'+(bossIsLocked?'0.5':'1')+'">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+          +(bossIsLocked
+            ?'<span style="font-size:10px;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:20px;padding:3px 8px">🔒 Fixed OFF</span>'
+            :'<span style="font-size:10px;font-weight:700;color:#065f46;background:#d1fae5;border-radius:20px;padding:3px 8px">✅ Fixed ON</span>'
+          )
+        +'</div>'
+      +'</div>';
+    } else if(isGlobal){
+      // Global mode — standard checkbox
+      var checked = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
+        +'<input type="checkbox" class="perm-cb" data-scope="global" '+(checked?'checked':'')
+          +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+          +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+      +'</label>';
+    } else {
+      // Store override — 3-state: inherit / ON / OFF
+      var hasOvr    = storeOverride && storeOverride[f.key]!==undefined;
+      var ovrVal    = hasOvr ? !!(storeOverride[f.key]) : null;
+      var state     = !hasOvr ? 'inherit' : (ovrVal ? 'on' : 'off');
+      var sc = {inherit:'#64748b', on:'#10b981', off:'#ef4444'};
+      var sl = {
+        inherit: '↩ Global ('+(globalVal?'ON':'OFF')+')',
+        on:      '✅ Force ON',
+        off:     '❌ Force OFF'
+      };
+      html += '<div style="padding:10px 12px;background:'+bg+';border-radius:10px;'+(hasOvr?'border-left:3px solid '+(ovrVal?'#10b981':'#ef4444')+';':'')+'">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
+          +'<div style="display:flex;gap:4px;flex-shrink:0">'
+            +['inherit','on','off'].map(function(st){
+              var active=state===st;
+              return '<button class="perm-store-btn" data-store="'+selStore.replace(/"/g,'&quot;')+'"'
+                +' data-role="'+selRole+'" data-feature="'+f.key+'" data-state="'+st+'"'
+                +' onclick="setStorePermState(this)" style="padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;'
+                +'border:2px solid '+(active?sc[st]:'var(--border)')+';'
+                +'background:'+(active?sc[st]:'#f8fafc')+';color:'+(active?'#fff':sc[st])+'">'
+                +(st==='inherit'?'↩':(st==='on'?'ON':'OFF'))
+              +'</button>';
+            }).join('')
+          +'</div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:'+sc[state]+';font-weight:700;margin-top:3px">'+sl[state]+'</div>'
+      +'</div>';
+    }
+  });
+  html += '</div>';
+
+  // Action buttons
+  if(!isBoss){
+    html += '<div style="display:flex;gap:8px;margin-top:12px">'
+      +(isGlobal
+        ?'<button class="btn success" style="flex:2;font-size:14px" onclick="savePermissionsFromUI()">💾 '+(EN?'Save Global':'Simpan Global')+'</button>'
+          +'<button class="btn secondary" style="flex:1;font-size:13px" onclick="resetPermissionsToDefault()">↺ Reset</button>'
+        :'<button class="btn secondary" style="flex:1;font-size:13px" onclick="clearStorePermOverrides(\''+selStore.replace(/'/g,"\\'")+'\',\''+selRole+'\')">🗑 Clear overrides for '+selStore+'</button>'
+      )
+    +'</div>';
+  }
+  html += '<div id="perms-saved-msg" style="display:none;text-align:center;font-size:12px;color:#10b981;font-weight:700;margin-top:8px">✅ '+(EN?t('permsSaved'):'Kebenaran disimpan!')+'</div>';
   el.innerHTML = html;
+}
+
+function setStorePermState(btn){
+  var store   = btn.dataset.store;
+  var role    = btn.dataset.role;
+  var feature = btn.dataset.feature;
+  var state   = btn.dataset.state;
+  var sp = getStorePerms();
+  if(!sp[store])       sp[store]={};
+  if(!sp[store][role]) sp[store][role]={};
+  if(state==='inherit'){
+    delete sp[store][role][feature];
+    if(!Object.keys(sp[store][role]).length) delete sp[store][role];
+    if(!Object.keys(sp[store]).length)       delete sp[store];
+  } else {
+    sp[store][role][feature] = state==='on' ? 1 : 0;
+  }
+  saveStorePerms(sp);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
+  applyPermissionsToNav();
+  renderPermissionsPanel();
+  showToast(lang==='en'?'Store override saved ✅':'Lebihan cawangan disimpan ✅','success');
+}
+
+function clearStorePermOverrides(store, role){
+  if(!confirm(lang==='en'?'Clear all overrides for '+store+' / '+role+'?':'Padam semua lebihan untuk '+store+'?')) return;
+  var sp=getStorePerms();
+  if(sp[store]&&sp[store][role]){
+    delete sp[store][role];
+    if(!Object.keys(sp[store]).length) delete sp[store];
+  }
+  saveStorePerms(sp);
+  fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:'saveStorePermissions',storePermissions:sp,savedBy:currentUser.name})}).catch(function(){});
+  applyPermissionsToNav();
+  renderPermissionsPanel();
+  showToast(lang==='en'?'Overrides cleared':'Lebihan dipadam','success');
 }
 
 function savePermissionsFromUI(){
@@ -1245,8 +1407,7 @@ function resetPermissionsToDefault(){
 
 function applyPermissionsToNav(){
   if(!currentUser) return;
-  var role = currentUser.role;
-  // Nav tab visibility based on permissions
+  var canSubmit = hasPerm('submit_sales'); // false for boss (hardcoded) + any store override
   var navMap = {
     'submit':     'submit_sales',
     'records':    'view_records',
@@ -1258,8 +1419,9 @@ function applyPermissionsToNav(){
     var el = document.getElementById('nav-'+tab);
     if(el){
       var allowed = hasPerm(navMap[tab]);
-      // Keep boss-specific overrides
-      if(tab==='submit' && role==='boss') allowed = false;
+      // If submit is blocked, also hide records and summary (no submit = no view)
+      if(!canSubmit && (tab==='records'||tab==='summary')) allowed = false;
+      // HQ staff have no store attendance
       if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
@@ -1690,7 +1852,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3_');
+  lines.push('_Daily Sales Reporter v4.7.3.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -1747,13 +1909,8 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
-          // Permissions sync — role and store overrides delivered to all devices
-          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object'){
-            savePerms(appJson.rolePermissions);
-          }
-          if(appJson.storePermissions && typeof appJson.storePermissions==='object'){
-            saveStorePerms(appJson.storePermissions);
-          }
+          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object') savePerms(appJson.rolePermissions);
+          if(appJson.storePermissions && typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
           applyPermissionsToNav();
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
@@ -2206,9 +2363,8 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     // the day immediately; everyone else's submission routes to their
     // store's Supervisor/Manager/Admin for approval (also enforced
     // server-side in handleUploadSettlement).
-    // Only staff requires approval for settlement.
-    // Supervisor has confirm_daily permission and self-approves directly.
-    window._needsApproval = !hasPerm('confirm_daily');
+    // Staff and supervisor require approval for settlement; manager/admin/boss can self-approve
+    window._needsApproval=['staff','supervisor'].includes(currentUser.role)||!hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
@@ -2238,8 +2394,8 @@ function _staffSubmitForApproval(withUpload) {
 
 function confirmSubmit(withUpload=false) {
   if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
-  // Staff (no confirm_daily) goes through approval queue
-  if(!hasPerm('confirm_daily') && withUpload){
+  // Staff must go through supervisor/admin/manager approval for settlement
+  if(currentUser.role==='staff'&&withUpload){
     window._needsApproval=true;
     _staffSubmitForApproval(true);
     return;
@@ -2282,6 +2438,16 @@ function confirmSubmit(withUpload=false) {
 // RECORDS TAB
 // ============================================================
 function renderRecordsTab() {
+  // Permission gate — no submit = no view of records
+  if(!hasPerm('submit_sales')||!hasPerm('view_records')){
+    document.getElementById('tab-records').innerHTML=
+      '<div class="card" style="text-align:center;padding:40px 20px">'
+      +'<div style="font-size:52px">🔒</div>'
+      +'<h3 style="margin:12px 0 8px">'+t('accessDenied')+'</h3>'
+      +'<p style="color:var(--text2)">'+t('accessMsg')+'</p>'
+      +'</div>';
+    return;
+  }
   // Auto-sync from GAS each time Records tab is opened
   const sales  =getSales();
   const isExec =['boss','admin','manager'].includes(currentUser.role);
@@ -2432,7 +2598,8 @@ function renderRecordsTab() {
 // ============================================================
 function renderSummaryTab() {
   const isExec=['boss','admin','manager'].includes(currentUser.role);
-  if(!isExec){
+  // Permission gate — no submit = no view of summary; also respects store overrides
+  if(!hasPerm('submit_sales')||!hasPerm('view_summary')){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
@@ -2482,7 +2649,7 @@ function renderSummaryTab() {
 
   // ── Today submission status ──────────────────────────────────
   const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
-  const todaySettled=new Set(getSettlementLocks().filter(r=>String(r.dateKey).slice(0,10)===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
+  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
