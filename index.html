@@ -714,45 +714,6 @@ var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
 let currentUser = null;
-
-// ── Force sign-out & refresh mechanism ───────────────────────────────────────
-// Admin writes force_signout_ts to GAS ScriptProperties.
-// On every sync, the app compares the server timestamp against the one it last
-// accepted. If newer → log out and hard-reload so the new HTML is fetched.
-// Same-tab/same-browser peers are also caught via the storage event.
-var _lastForceSignoutTs = loadData('last_force_signout_ts', 0);
-
-window.addEventListener('storage', function(e){
-  // Another tab on the same browser fired a force-signout
-  if(e.key === 'force_signout_trigger'){
-    var ts = parseInt(e.newValue||'0',10);
-    if(ts > _lastForceSignoutTs){
-      _lastForceSignoutTs = ts;
-      saveData('last_force_signout_ts', ts);
-      if(currentUser){ _forceSignoutAndReload('Admin pushed a sign-out & refresh.'); }
-    }
-  }
-});
-
-function _forceSignoutAndReload(reason){
-  showToast('🔄 '+(reason||'Forced sign-out by Admin. Reloading...'),'pending');
-  setTimeout(function(){
-    doLogout();
-    setTimeout(function(){ location.reload(true); }, 800);
-  }, 1200);
-}
-
-function _checkForceSignout(serverTs){
-  if(!serverTs) return;
-  var ts = parseInt(serverTs, 10);
-  if(ts > _lastForceSignoutTs){
-    _lastForceSignoutTs = ts;
-    saveData('last_force_signout_ts', ts);
-    // Broadcast to other tabs on this browser
-    saveData('force_signout_trigger', ts);
-    if(currentUser){ _forceSignoutAndReload('Admin pushed a sign-out & refresh. Please log in again.'); }
-  }
-}
 let currentTab = 'submit';
 let cachedUsers = {};
 let cachedLog = [];
@@ -1124,52 +1085,119 @@ function gasGet(action) {
 function getSettlementsData(){ return loadData('settlement_uploads',[]); }
 function saveSettlementsData(a){ saveData('settlement_uploads',a); }
 
+// Settlement reports filter state — persisted across re-renders
+if(typeof window._settlFilter==='undefined') window._settlFilter={date: dateKeyUTC8(), store:'all'};
+
 function renderSettlementReports(){
-  var EN=lang==='en';
-  var isExec=['admin','manager','boss'].includes(currentUser.role);
+  var EN=lang==='en'; var ZH=lang==='zh';
+  var isExec=['admin','manager','boss','tester'].includes(currentUser.role);
   var allSettlements=getSettlementsData();
-  // Staff/Supervisor only see own store
-  var visible=isExec?allSettlements:allSettlements.filter(function(r){
+  // Role scoping
+  var scoped=isExec?allSettlements:allSettlements.filter(function(r){
     return r.store===currentUser.store;
   });
-  visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
-  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(t('noSettlementRpt'))+'</p></div>';
-  // Group by store
+
+  // Ensure filter date is initialised
+  if(!window._settlFilter.date) window._settlFilter.date=dateKeyUTC8();
+  var fDate  = window._settlFilter.date;
+  var fStore = window._settlFilter.store||'all';
+
+  // Apply date filter
+  var filtered=scoped.filter(function(r){
+    return String(r.dateKey).slice(0,10)===fDate;
+  });
+  // Apply store filter
+  if(isExec && fStore!=='all'){
+    filtered=filtered.filter(function(r){ return r.store===fStore; });
+  }
+  filtered.sort(function(a,b){ return String(b.dateKey).localeCompare(String(a.dateKey)); });
+
+  // Build store filter pills (exec only)
+  var storeOptions=isExec?['all'].concat(BRANCHES):[];
+  var storePills=storeOptions.length>1?('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+    +storeOptions.map(function(s){
+      var active=fStore===s;
+      return '<button onclick="window._settlFilter.store=\''+s.replace(/'/g,"\\'")+'\';renderRecordsTab()" style="'
+        +'padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
+        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
+        +(s==='all'?(EN?'All Stores':'Semua'):s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.'))
+      +'</button>';
+    }).join('')
+  +'</div>'):'';
+
+  // Build the per-store status grid for selected date
+  var todayKey=dateKeyUTC8();
   var byStore={};
-  visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
-  var html='';
-  Object.keys(byStore).sort().forEach(function(store){
-    var rows=byStore[store];
-    html+='<div class="card" style="margin-bottom:12px">'
-      +'<div class="card-title" style="display:flex;align-items:center;gap:8px">'
-        +'<span>🏪</span><span>'+store+'</span>'
-        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
+  filtered.forEach(function(r){ if(!byStore[r.store]) byStore[r.store]=[]; byStore[r.store].push(r); });
+
+  var visibleBranches=isExec?BRANCHES:[currentUser.store];
+
+  var storeGrid='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+    +visibleBranches.map(function(br){
+      var rows=byStore[br]||[];
+      var done=rows.length>0;
+      var latest=done?rows[0]:null;
+      var statusColor=done?'#d1fae5':'#fee2e2';
+      var statusText=done?'✅ '+(EN?'Done':'Selesai'):'⏳ '+(EN?'Pending':'Belum');
+      var statusTextColor=done?'#065f46':'#b91c1c';
+      return '<div style="background:'+statusColor+';border-radius:12px;padding:10px 12px">'
+        +'<div style="font-size:11px;font-weight:800;color:#334155;margin-bottom:3px">🏪 '+br+'</div>'
+        +'<div style="font-size:12px;font-weight:900;color:'+statusTextColor+'">'+statusText+'</div>'
+        +(done&&latest?'<div style="font-size:10px;color:#475569;margin-top:3px">'
+          +(latest.datetime?'🕐 '+String(latest.datetime).slice(11,16):'')
+          +(latest.uploadedBy?' · '+latest.uploadedBy:'')
+        +'</div>':'')
+        +(done&&latest&&latest.fileUrl
+          ?'<a href="'+latest.fileUrl+'" target="_blank" style="display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:#1e3a8a;background:#eff6ff;border-radius:6px;padding:2px 7px;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>'
+          :'')
       +'</div>';
-    rows.forEach(function(r){
+    }).join('')
+  +'</div>';
+
+  // Detailed rows below the grid
+  var detailRows='';
+  if(filtered.length){
+    detailRows='<div style="margin-top:4px">';
+    filtered.forEach(function(r){
       var stBadge='';
       if(r.status==='pending_approval'){
-        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'⏳ 待审批':(lang==="en"?'⏳ Pending Approval':'⏳ Menunggu Kelulusan'))+'</span>';
+        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">⏳ '+(EN?'Pending Approval':'Menunggu Kelulusan')+'</span>';
       } else if(r.status==='rejected'){
-        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'❌ 已拒绝':(lang==="en"?'❌ Rejected':'❌ Ditolak'))+'</span>';
+        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">❌ '+(EN?'Rejected':'Ditolak')+'</span>';
       } else if(r.status==='confirmed'){
-        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'✅ 已确认':(lang==="en"?'✅ Confirmed':'✅ Disahkan'))+'</span>';
+        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">✅ '+(EN?'Confirmed':'Disahkan')+'</span>';
       }
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
-        +'<div>'
-          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+stBadge+'</div>'
-          +'<div style="font-size:11px;color:var(--text2)">'
-            +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
-            +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
-            +(r.datetime?cleanDateTime(r.datetime):'')
+      detailRows+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:.5px solid var(--border);gap:8px">'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:12px;font-weight:800;color:var(--text)">🏪 '+r.store+stBadge+'</div>'
+          +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'
+            +(r.uploadedBy?'👤 '+r.uploadedBy+'&nbsp;&nbsp;':'')
+            +(r.datetime?'🕐 '+String(r.datetime).slice(11,16):'')
           +'</div>'
-          +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
+          +(r.note?'<div style="font-size:11px;color:var(--accent);margin-top:2px">📝 '+r.note+'</div>':'')
         +'</div>'
-        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+('View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+('No link')+'</span>')
+        +'<div style="text-align:right;flex-shrink:0">'
+          +(r.total?'<div style="font-size:15px;font-weight:900;color:#1e3a8a">RM '+parseFloat(r.total||0).toFixed(2)+'</div>':'')
+          +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="display:inline-block;margin-top:4px;background:#eff6ff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+(EN?'No link':'Tiada')+'</span>')
+        +'</div>'
       +'</div>';
     });
-    html+='</div>';
-  });
-  return html;
+    detailRows+='</div>';
+  } else {
+    detailRows='<div class="empty-state" style="padding:16px"><p>'+(EN?'No settlement reports for this date':'Tiada laporan untuk tarikh ini')+'</p></div>';
+  }
+
+  return '<div style="background:#f8fafc;border-radius:14px;padding:12px;margin-top:4px">'
+    // Date filter row
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
+      +'<label style="font-size:11px;font-weight:800;color:#64748b;white-space:nowrap">'+(EN?'📅 Date:':'📅 Tarikh:')+'</label>'
+      +'<input type="date" value="'+fDate+'" onchange="window._settlFilter.date=this.value;renderRecordsTab()" style="flex:1;min-width:120px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700">'
+      +'<button onclick="window._settlFilter.date=\''+dateKeyUTC8()+'\';renderRecordsTab()" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid #1e3a8a;background:#eff6ff;color:#1e3a8a">'+(EN?'Today':'Hari Ini')+'</button>'
+    +'</div>'
+    +storePills
+    +storeGrid
+    +detailRows
+  +'</div>';
 }
 
 async function syncAttendanceNow(){
@@ -2016,8 +2044,6 @@ async function triggerSyncRefresh() {
           if(appJson.rolePermissions && typeof appJson.rolePermissions==='object') savePerms(appJson.rolePermissions);
           if(appJson.storePermissions && typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
           applyPermissionsToNav();
-          // Force sign-out check — if admin pushed a reload, this device acts on it
-          if(appJson.forceSignoutTs) _checkForceSignout(appJson.forceSignoutTs);
         }
       } catch(e3){ console.warn('App data sync skipped:', e3.message); }
     } else if(json && !json.sales) {
@@ -2606,6 +2632,10 @@ function renderRecordsTab() {
     ?`<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
     :filtered.map(r=>{
       const isUpdate=r.submissionType==='update';
+      // Best available submitted time
+      const submittedTime = r.dateTime||r.createdAt||'';
+      const timeStr = submittedTime ? String(submittedTime).slice(11,16) : '';
+      const editTimeStr = isUpdate&&r.updatedAt ? String(r.updatedAt).slice(11,16) : '';
       return `
         <div class="record-item">
           <div class="record-icon">🏪</div>
@@ -2622,14 +2652,12 @@ function renderRecordsTab() {
               💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
             </div>
             ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
-            <div style="font-size:10px;color:#94a3b8;margin-top:3px">
-              📅 ${cleanDateKey(r.dateKey)}
-              ${r.dateTime?` &nbsp;🕐 ${String(r.dateTime).slice(11,16)}`:(r.createdAt?` &nbsp;🕐 ${String(r.createdAt).slice(11,16)}`:'')}
-              ${isUpdate&&r.updatedAt?` &nbsp;✏️ ${String(r.updatedAt).slice(0,16).replace('T',' ')}`:''}
-            </div>
           </div>
-          <div style="text-align:right;flex-shrink:0">
+          <div style="text-align:right;flex-shrink:0;min-width:90px">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
+            <div style="font-size:11px;font-weight:700;color:#475569;margin-top:3px">📅 ${cleanDateKey(r.dateKey)}</div>
+            ${timeStr?`<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-top:1px">🕐 ${timeStr}</div>`:''}
+            ${editTimeStr?`<div style="font-size:10px;color:#b45309;margin-top:1px">✏️ ${editTimeStr}</div>`:''}
           </div>
         </div>`;
     }).join('');
@@ -2694,7 +2722,7 @@ function renderRecordsTab() {
     </div>`;
 
   var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
-    +'<h2 style="font-size:16px;font-weight:800">📎 '+('Settlement Reports')+'</h2>'
+    +'<h2 style="font-size:16px;font-weight:800">📎 '+(lang==='en'?'Settlement Reports':'Laporan Penyelesaian')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
   +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
@@ -3943,22 +3971,6 @@ async function renderAdminTab() {
     ${canManageUsers()?pendingHtml:''}
     ${canManageUsers()?`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:15px;font-weight:800">${t('userMgmt')}</div><button class="btn refresh-inline" onclick="openAddUser()" style="background:var(--success);color:#fff;border:none">${t('addUser')}</button></div><div class="card">${activeHtml||`<div class="empty-state"><p>No active users</p></div>`}</div>`:''}
     ${currentUser.role==='admin'?'<div id="perms-panel" style="margin-top:8px"></div>':''}
-    ${['admin','tester'].includes(currentUser.role)?`
-    <div class="card" style="margin-top:12px;border:2px solid #fecaca">
-      <div class="card-title" style="color:#b91c1c">⚡ Force Sign-Out All Users</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
-        Force all logged-in devices to sign out and reload the app immediately.
-        Use after pushing a new version of the HTML file.
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn danger" style="flex:1;font-size:14px;padding:12px" onclick="adminForceSignoutAll()">
-          🔄 Force All Users to Sign Out & Reload
-        </button>
-      </div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:8px">
-        ⚠️ This affects every phone on the next sync (within ~60 sec). You will also be signed out.
-      </div>
-    </div>`:''}
     <div id="monthly-report-panel"></div>`;
   if(currentUser.role==='admin') renderPermissionsPanel();
   renderMonthlyReportPanel();
@@ -4109,27 +4121,6 @@ function doLogout() {
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
-}
-
-async function adminForceSignoutAll(){
-  if(!confirm('Force ALL users on ALL devices to sign out and reload?\n\nThis will happen within ~60 seconds on their next sync.\nYou will also be signed out.')) return;
-  var ts = Date.now();
-  showToast('📡 Pushing force sign-out to all devices...','pending');
-  // Write timestamp to GAS ScriptProperties so every device gets it on next sync
-  try {
-    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'setForceSignout',ts:ts,by:currentUser.name})});
-  } catch(e){ console.warn('GAS push failed, using local broadcast only'); }
-  // Also broadcast to all tabs on this browser immediately via localStorage event
-  saveData('force_signout_trigger', ts);
-  // Sign out self after short delay so the toast is visible
-  setTimeout(function(){
-    _lastForceSignoutTs = ts;
-    saveData('last_force_signout_ts', ts);
-    doLogout();
-    setTimeout(function(){ location.reload(true); }, 800);
-  }, 1500);
 }
 
 function showToast(msg,type='') {
