@@ -709,7 +709,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUb45VI-XUJCwM5ruqfCoe48lHGuR_H53zLtxFpZGzrLK8nlVYySJqqQU6otyBRwGpgg/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxU85XuBVPXLWk0jkOv0ZfQj2ZQFOmXCLESVewW1H4BXtSzXWEq3vSMChlCwlSUFKFq5Q/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1085,119 +1085,52 @@ function gasGet(action) {
 function getSettlementsData(){ return loadData('settlement_uploads',[]); }
 function saveSettlementsData(a){ saveData('settlement_uploads',a); }
 
-// Settlement reports filter state — persisted across re-renders
-if(typeof window._settlFilter==='undefined') window._settlFilter={date: dateKeyUTC8(), store:'all'};
-
 function renderSettlementReports(){
-  var EN=lang==='en'; var ZH=lang==='zh';
-  var isExec=['admin','manager','boss','tester'].includes(currentUser.role);
+  var EN=lang==='en';
+  var isExec=['admin','manager','boss'].includes(currentUser.role);
   var allSettlements=getSettlementsData();
-  // Role scoping
-  var scoped=isExec?allSettlements:allSettlements.filter(function(r){
+  // Staff/Supervisor only see own store
+  var visible=isExec?allSettlements:allSettlements.filter(function(r){
     return r.store===currentUser.store;
   });
-
-  // Ensure filter date is initialised
-  if(!window._settlFilter.date) window._settlFilter.date=dateKeyUTC8();
-  var fDate  = window._settlFilter.date;
-  var fStore = window._settlFilter.store||'all';
-
-  // Apply date filter
-  var filtered=scoped.filter(function(r){
-    return String(r.dateKey).slice(0,10)===fDate;
-  });
-  // Apply store filter
-  if(isExec && fStore!=='all'){
-    filtered=filtered.filter(function(r){ return r.store===fStore; });
-  }
-  filtered.sort(function(a,b){ return String(b.dateKey).localeCompare(String(a.dateKey)); });
-
-  // Build store filter pills (exec only)
-  var storeOptions=isExec?['all'].concat(BRANCHES):[];
-  var storePills=storeOptions.length>1?('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    +storeOptions.map(function(s){
-      var active=fStore===s;
-      return '<button onclick="window._settlFilter.store=\''+s.replace(/'/g,"\\'")+'\';renderRecordsTab()" style="'
-        +'padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid '+(active?'#1e3a8a':'var(--border)')+';'
-        +'background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'
-        +(s==='all'?(EN?'All Stores':'Semua'):s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.'))
-      +'</button>';
-    }).join('')
-  +'</div>'):'';
-
-  // Build the per-store status grid for selected date
-  var todayKey=dateKeyUTC8();
+  visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
+  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(t('noSettlementRpt'))+'</p></div>';
+  // Group by store
   var byStore={};
-  filtered.forEach(function(r){ if(!byStore[r.store]) byStore[r.store]=[]; byStore[r.store].push(r); });
-
-  var visibleBranches=isExec?BRANCHES:[currentUser.store];
-
-  var storeGrid='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
-    +visibleBranches.map(function(br){
-      var rows=byStore[br]||[];
-      var done=rows.length>0;
-      var latest=done?rows[0]:null;
-      var statusColor=done?'#d1fae5':'#fee2e2';
-      var statusText=done?'✅ '+(EN?'Done':'Selesai'):'⏳ '+(EN?'Pending':'Belum');
-      var statusTextColor=done?'#065f46':'#b91c1c';
-      return '<div style="background:'+statusColor+';border-radius:12px;padding:10px 12px">'
-        +'<div style="font-size:11px;font-weight:800;color:#334155;margin-bottom:3px">🏪 '+br+'</div>'
-        +'<div style="font-size:12px;font-weight:900;color:'+statusTextColor+'">'+statusText+'</div>'
-        +(done&&latest?'<div style="font-size:10px;color:#475569;margin-top:3px">'
-          +(latest.datetime?'🕐 '+String(latest.datetime).slice(11,16):'')
-          +(latest.uploadedBy?' · '+latest.uploadedBy:'')
-        +'</div>':'')
-        +(done&&latest&&latest.fileUrl
-          ?'<a href="'+latest.fileUrl+'" target="_blank" style="display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:#1e3a8a;background:#eff6ff;border-radius:6px;padding:2px 7px;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>'
-          :'')
+  visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
+  var html='';
+  Object.keys(byStore).sort().forEach(function(store){
+    var rows=byStore[store];
+    html+='<div class="card" style="margin-bottom:12px">'
+      +'<div class="card-title" style="display:flex;align-items:center;gap:8px">'
+        +'<span>🏪</span><span>'+store+'</span>'
+        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
       +'</div>';
-    }).join('')
-  +'</div>';
-
-  // Detailed rows below the grid
-  var detailRows='';
-  if(filtered.length){
-    detailRows='<div style="margin-top:4px">';
-    filtered.forEach(function(r){
+    rows.forEach(function(r){
       var stBadge='';
       if(r.status==='pending_approval'){
-        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">⏳ '+(EN?'Pending Approval':'Menunggu Kelulusan')+'</span>';
+        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'⏳ 待审批':(lang==="en"?'⏳ Pending Approval':'⏳ Menunggu Kelulusan'))+'</span>';
       } else if(r.status==='rejected'){
-        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">❌ '+(EN?'Rejected':'Ditolak')+'</span>';
+        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'❌ 已拒绝':(lang==="en"?'❌ Rejected':'❌ Ditolak'))+'</span>';
       } else if(r.status==='confirmed'){
-        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">✅ '+(EN?'Confirmed':'Disahkan')+'</span>';
+        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'✅ 已确认':(lang==="en"?'✅ Confirmed':'✅ Disahkan'))+'</span>';
       }
-      detailRows+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:.5px solid var(--border);gap:8px">'
-        +'<div style="flex:1;min-width:0">'
-          +'<div style="font-size:12px;font-weight:800;color:var(--text)">🏪 '+r.store+stBadge+'</div>'
-          +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'
-            +(r.uploadedBy?'👤 '+r.uploadedBy+'&nbsp;&nbsp;':'')
-            +(r.datetime?'🕐 '+String(r.datetime).slice(11,16):'')
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+stBadge+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'
+            +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
+            +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
+            +(r.datetime?cleanDateTime(r.datetime):'')
           +'</div>'
-          +(r.note?'<div style="font-size:11px;color:var(--accent);margin-top:2px">📝 '+r.note+'</div>':'')
+          +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
         +'</div>'
-        +'<div style="text-align:right;flex-shrink:0">'
-          +(r.total?'<div style="font-size:15px;font-weight:900;color:#1e3a8a">RM '+parseFloat(r.total||0).toFixed(2)+'</div>':'')
-          +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="display:inline-block;margin-top:4px;background:#eff6ff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+(EN?'No link':'Tiada')+'</span>')
-        +'</div>'
+        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+('View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+('No link')+'</span>')
       +'</div>';
     });
-    detailRows+='</div>';
-  } else {
-    detailRows='<div class="empty-state" style="padding:16px"><p>'+(EN?'No settlement reports for this date':'Tiada laporan untuk tarikh ini')+'</p></div>';
-  }
-
-  return '<div style="background:#f8fafc;border-radius:14px;padding:12px;margin-top:4px">'
-    // Date filter row
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
-      +'<label style="font-size:11px;font-weight:800;color:#64748b;white-space:nowrap">'+(EN?'📅 Date:':'📅 Tarikh:')+'</label>'
-      +'<input type="date" value="'+fDate+'" onchange="window._settlFilter.date=this.value;renderRecordsTab()" style="flex:1;min-width:120px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700">'
-      +'<button onclick="window._settlFilter.date=\''+dateKeyUTC8()+'\';renderRecordsTab()" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid #1e3a8a;background:#eff6ff;color:#1e3a8a">'+(EN?'Today':'Hari Ini')+'</button>'
-    +'</div>'
-    +storePills
-    +storeGrid
-    +detailRows
-  +'</div>';
+    html+='</div>';
+  });
+  return html;
 }
 
 async function syncAttendanceNow(){
@@ -2632,10 +2565,13 @@ function renderRecordsTab() {
     ?`<div class="empty-state"><div class="e-icon">📭</div><p>${t('noRecords')}</p></div>`
     :filtered.map(r=>{
       const isUpdate=r.submissionType==='update';
-      // Best available submitted time
-      const submittedTime = r.dateTime||r.createdAt||'';
-      const timeStr = submittedTime ? String(submittedTime).slice(11,16) : '';
-      const editTimeStr = isUpdate&&r.updatedAt ? String(r.updatedAt).slice(11,16) : '';
+      // r.datetime is the canonical field from GAS (e.g. "2026-06-27T07:47:39.078Z" UTC)
+      // r.dateTime may exist on locally-saved records (camelCase variant)
+      const rawDT  = r.datetime || r.dateTime || r.createdAt || '';
+      const rawUpd = r.updatedAt || '';
+      // Always convert to MYT using fmtTimeUTC8 — never slice raw UTC string
+      const timeStr    = rawDT  ? fmtTimeUTC8(rawDT)  : '';
+      const editTimeStr= (isUpdate && rawUpd) ? fmtTimeUTC8(rawUpd) : '';
       return `
         <div class="record-item">
           <div class="record-icon">🏪</div>
@@ -2651,12 +2587,12 @@ function renderRecordsTab() {
               💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
               💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
             </div>
-            ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
+            ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px">📝 ${r.remark}</div>`:''}
           </div>
-          <div style="text-align:right;flex-shrink:0;min-width:90px">
+          <div style="text-align:right;flex-shrink:0;min-width:96px">
             <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
             <div style="font-size:11px;font-weight:700;color:#475569;margin-top:3px">📅 ${cleanDateKey(r.dateKey)}</div>
-            ${timeStr?`<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-top:1px">🕐 ${timeStr}</div>`:''}
+            ${timeStr ?`<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-top:1px">🕐 ${timeStr}</div>`:''}
             ${editTimeStr?`<div style="font-size:10px;color:#b45309;margin-top:1px">✏️ ${editTimeStr}</div>`:''}
           </div>
         </div>`;
@@ -2722,7 +2658,7 @@ function renderRecordsTab() {
     </div>`;
 
   var _settHtml=hasPerm('settlement_report')?'<div class="card-header-flex" style="margin-top:16px">'
-    +'<h2 style="font-size:16px;font-weight:800">📎 '+(lang==='en'?'Settlement Reports':'Laporan Penyelesaian')+'</h2>'
+    +'<h2 style="font-size:16px;font-weight:800">📎 '+('Settlement Reports')+'</h2>'
     +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button>'
   +'</div>'+renderSettlementReports():'';
   document.getElementById('tab-records').innerHTML=`
