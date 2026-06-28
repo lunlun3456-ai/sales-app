@@ -1085,95 +1085,52 @@ function gasGet(action) {
 function getSettlementsData(){ return loadData('settlement_uploads',[]); }
 function saveSettlementsData(a){ saveData('settlement_uploads',a); }
 
-// Settlement filter state
-if(typeof window._settlFilter==='undefined') window._settlFilter={date:dateKeyUTC8(),store:'all'};
-
 function renderSettlementReports(){
   var EN=lang==='en';
-  var isExec=['admin','manager','boss','tester'].includes(currentUser.role);
+  var isExec=['admin','manager','boss'].includes(currentUser.role);
   var allSettlements=getSettlementsData();
-  var scoped=isExec?allSettlements:allSettlements.filter(function(r){ return r.store===currentUser.store; });
-
-  if(!window._settlFilter.date) window._settlFilter.date=dateKeyUTC8();
-  var fDate  = window._settlFilter.date;
-  var fStore = window._settlFilter.store||'all';
-
-  var filtered=scoped.filter(function(r){ return String(r.dateKey).slice(0,10)===fDate; });
-  if(isExec && fStore!=='all') filtered=filtered.filter(function(r){ return r.store===fStore; });
-  filtered.sort(function(a,b){ return String(b.dateKey).localeCompare(String(a.dateKey)); });
-
-  // Store filter pills
-  var storePills=isExec?('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
-    +['all'].concat(BRANCHES).map(function(s){
-      var active=fStore===s;
-      return '<button onclick="window._settlFilter.store=\''+s.replace(/'/g,"\\'")+'\';renderRecordsTab()" style="padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid '+(active?'#1e3a8a':'var(--border)')+';background:'+(active?'#1e3a8a':'#f8fafc')+';color:'+(active?'#fff':'#334155')+'">'+(s==='all'?(EN?'All Stores':'Semua'):s.replace('Bonia ','B.').replace('Polo ','P.').replace('Gm ','G.'))+'</button>';
-    }).join('')+'</div>'):'';
-
-  // Per-store status grid
+  // Staff/Supervisor only see own store
+  var visible=isExec?allSettlements:allSettlements.filter(function(r){
+    return r.store===currentUser.store;
+  });
+  visible.sort(function(a,b){return String(b.dateKey).localeCompare(String(a.dateKey));});
+  if(!visible.length) return '<div class="empty-state" style="padding:20px"><p>'+(t('noSettlementRpt'))+'</p></div>';
+  // Group by store
   var byStore={};
-  filtered.forEach(function(r){ if(!byStore[r.store]) byStore[r.store]=[]; byStore[r.store].push(r); });
-  var visibleBranches=isExec?BRANCHES:[currentUser.store];
-
-  var storeGrid='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
-    +visibleBranches.map(function(br){
-      var rows=byStore[br]||[];
-      var done=rows.length>0;
-      var latest=done?rows[0]:null;
-      var bg=done?'#d1fae5':'#fee2e2';
-      var tc=done?'#065f46':'#b91c1c';
-      return '<div style="background:'+bg+';border-radius:12px;padding:10px 12px">'
-        +'<div style="font-size:11px;font-weight:800;color:#334155;margin-bottom:3px">🏪 '+br+'</div>'
-        +'<div style="font-size:12px;font-weight:900;color:'+tc+'">'+(done?'✅ '+(EN?'Done':'Selesai'):'⏳ '+(EN?'Pending':'Belum'))+'</div>'
-        +(done&&latest?'<div style="font-size:10px;color:#475569;margin-top:3px">'
-          // GAS column is uploadedAt; locally saved records use datetime or uploadedAt
-          +(latest.uploadedAt?'🕐 '+fmtTimeUTC8(latest.uploadedAt):(latest.datetime?'🕐 '+fmtTimeUTC8(latest.datetime):''))
-          // GAS column is submitter; local saves use uploadedBy
-          +((latest.submitter||latest.uploadedBy)?' · '+(latest.submitter||latest.uploadedBy):'')
-        +'</div>':'')
-        +(done&&latest&&latest.fileUrl?'<a href="'+latest.fileUrl+'" target="_blank" style="display:inline-block;margin-top:5px;font-size:10px;font-weight:700;color:#1e3a8a;background:#eff6ff;border-radius:6px;padding:2px 7px;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'')
+  visible.forEach(function(r){if(!byStore[r.store])byStore[r.store]=[];byStore[r.store].push(r);});
+  var html='';
+  Object.keys(byStore).sort().forEach(function(store){
+    var rows=byStore[store];
+    html+='<div class="card" style="margin-bottom:12px">'
+      +'<div class="card-title" style="display:flex;align-items:center;gap:8px">'
+        +'<span>🏪</span><span>'+store+'</span>'
+        +'<span style="margin-left:auto;font-size:12px;background:#eff6ff;color:#1e3a8a;border-radius:20px;padding:2px 8px;font-weight:700">'+rows.length+' '+('report(s)')+'</span>'
       +'</div>';
-    }).join('')
-  +'</div>';
-
-  // Detail rows
-  var detailRows='';
-  if(filtered.length){
-    detailRows='<div style="margin-top:4px">';
-    filtered.forEach(function(r){
+    rows.forEach(function(r){
       var stBadge='';
-      if(r.status==='pending_approval') stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">⏳ '+(EN?'Pending':'Menunggu')+'</span>';
-      else if(r.status==='rejected')    stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">❌ '+(EN?'Rejected':'Ditolak')+'</span>';
-      else if(r.status==='confirmed')   stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">✅ '+(EN?'Confirmed':'Disahkan')+'</span>';
-      var whoUploaded = r.submitter||r.uploadedBy||'';
-      var whenUploaded = r.uploadedAt||r.datetime||'';
-      detailRows+='<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:.5px solid var(--border);gap:8px">'
-        +'<div style="flex:1;min-width:0">'
-          +'<div style="font-size:12px;font-weight:800;color:var(--text)">🏪 '+r.store+stBadge+'</div>'
-          +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'
-            +(whoUploaded?'👤 '+whoUploaded+'&nbsp;&nbsp;':'')
-            +(whenUploaded?'🕐 '+fmtTimeUTC8(whenUploaded):'')
+      if(r.status==='pending_approval'){
+        stBadge='<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'⏳ 待审批':(lang==="en"?'⏳ Pending Approval':'⏳ Menunggu Kelulusan'))+'</span>';
+      } else if(r.status==='rejected'){
+        stBadge='<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'❌ 已拒绝':(lang==="en"?'❌ Rejected':'❌ Ditolak'))+'</span>';
+      } else if(r.status==='confirmed'){
+        stBadge='<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:20px;padding:2px 7px;font-weight:700;margin-left:6px">'+(ZH?'✅ 已确认':(lang==="en"?'✅ Confirmed':'✅ Disahkan'))+'</span>';
+      }
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--border)">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700">📅 '+cleanDateKey(r.dateKey)+stBadge+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'
+            +(r.uploadedBy?'👤 '+r.uploadedBy+' · ':'')
+            +(r.total?'🧾 RM '+parseFloat(r.total||0).toFixed(2)+'  ':'')
+            +(r.datetime?cleanDateTime(r.datetime):'')
           +'</div>'
-          +(r.note?'<div style="font-size:11px;color:var(--accent);margin-top:2px">📝 '+r.note+'</div>':'')
+          +(r.note?'<div style="font-size:11px;color:var(--accent)">📝 '+r.note+'</div>':'')  
         +'</div>'
-        +'<div style="text-align:right;flex-shrink:0">'
-          +(r.total?'<div style="font-size:15px;font-weight:900;color:#1e3a8a">RM '+parseFloat(r.total||0).toFixed(2)+'</div>':'')
-          +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="display:inline-block;margin-top:4px;background:#eff6ff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+(EN?'No link':'Tiada')+'</span>')
-        +'</div>'
+        +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="background:#eff6ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+('View')+'</a>':'<span style="font-size:11px;color:#94a3b8">'+('No link')+'</span>')
       +'</div>';
     });
-    detailRows+='</div>';
-  } else {
-    detailRows='<div class="empty-state" style="padding:16px"><p>'+(EN?'No settlement reports for this date':'Tiada laporan untuk tarikh ini')+'</p></div>';
-  }
-
-  return '<div style="background:#f8fafc;border-radius:14px;padding:12px;margin-top:4px">'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
-      +'<label style="font-size:11px;font-weight:800;color:#64748b;white-space:nowrap">📅 '+(EN?'Date:':'Tarikh:')+'</label>'
-      +'<input type="date" value="'+fDate+'" onchange="window._settlFilter.date=this.value;renderRecordsTab()" style="flex:1;min-width:120px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700">'
-      +'<button onclick="window._settlFilter.date=\''+dateKeyUTC8()+'\';renderRecordsTab()" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid #1e3a8a;background:#eff6ff;color:#1e3a8a">'+(EN?'Today':'Hari Ini')+'</button>'
-    +'</div>'
-    +storePills+storeGrid+detailRows
-  +'</div>';
+    html+='</div>';
+  });
+  return html;
 }
 
 async function syncAttendanceNow(){
@@ -1198,38 +1155,29 @@ async function syncAttendanceNow(){
 // PERMISSIONS SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
-  // ── Submit tab ───────────────────────────────────────────────
-  { key:'submit_sales',      grp:'Submit',   label:'Submit / Update Sales',           bm:'Hantar / Kemaskini Jualan' },
-  { key:'confirm_daily',     grp:'Submit',   label:'Daily Settlement (Lock Day)',      bm:'Kunci Penyelesaian Harian' },
-  { key:'settlement_report', grp:'Submit',   label:'View Settlement Reports',          bm:'Lihat Laporan Penyelesaian' },
-  // ── Records & Summary tabs ───────────────────────────────────
-  { key:'view_records',      grp:'Records',  label:'View Records Tab',                bm:'Lihat Tab Rekod' },
-  { key:'view_summary',      grp:'Summary',  label:'View Summary Tab',                bm:'Lihat Tab Ringkasan' },
-  // ── Admin panel sub-features ─────────────────────────────────
-  { key:'view_admin',        grp:'Admin',    label:'Admin Panel (access)',             bm:'Panel Admin (akses)' },
-  { key:'mgr_dashboard',     grp:'Admin',    label:'Mgr Dashboard',                   bm:'Papan Pemuka Pengurus' },
-  { key:'pending_approvals', grp:'Admin',    label:'Pending Approvals',               bm:'Kelulusan Tertunda' },
-  { key:'attendance',        grp:'Admin',    label:'Attendance Records',              bm:'Rekod Kehadiran' },
-  { key:'work_zone',         grp:'Admin',    label:'Work Zone',                       bm:'Zon Kerja' },
-  { key:'work_schedule',     grp:'Admin',    label:'Work Schedule',                   bm:'Jadual Kerja' },
-  { key:'db_backup',         grp:'Admin',    label:'Database Backup',                 bm:'Sandaran Data' },
-  { key:'role_perm',         grp:'Admin',    label:'Role & Store Permissions',         bm:'Kebenaran Peranan & Cawangan' },
-  { key:'user_mgmt',         grp:'Admin',    label:'User Management',                 bm:'Pengurusan Pengguna' },
-  { key:'monthly_report',    grp:'Admin',    label:'Monthly Email Report',             bm:'Laporan E-mel Bulanan' },
-  // ── Other ────────────────────────────────────────────────────
-  { key:'cash_drawer',       grp:'Other',    label:'Cash Drawer',                     bm:'Laci Tunai' },
-  { key:'approve_sales',     grp:'Other',    label:'Approve Submissions',             bm:'Luluskan Penghantaran' },
-  { key:'notifications',     grp:'Other',    label:'Notifications',                   bm:'Notifikasi' },
+  { key:'submit_sales',     label:'Update Sales',           bm:'Kemaskini Jualan' },
+  { key:'confirm_daily',    label:'Confirm Daily Sales',    bm:'Sahkan Jualan Harian' },
+  { key:'view_records',     label:'View Records',           bm:'Lihat Rekod' },
+  { key:'view_summary',     label:'View Summary',           bm:'Lihat Ringkasan' },
+  { key:'view_admin',       label:'Admin Panel',            bm:'Panel Admin' },
+  { key:'attendance',       label:'Attendance Check In/Out',bm:'Daftar Masuk/Keluar' },
+  { key:'cash_drawer',      label:'Cash Drawer',            bm:'Laci Tunai' },
+  { key:'approve_sales',    label:'Approve Submissions',    bm:'Luluskan Penghantaran' },
+  { key:'work_schedule',    label:t('workSchedule2'),          bm:'Jadual Kerja' },
+  { key:'work_zone',        label:'Work Zone',              bm:'Zon Kerja' },
+  { key:'settlement_report',label:'Settlement Reports',     bm:'Laporan Penyelesaian' },
+  { key:'user_mgmt',        label:'User Management',        bm:'Pengurusan Pengguna' },
+  { key:'db_backup',        label:t('dbBackup'),        bm:'Sandaran Data' },
+  { key:'notifications',    label:'Notifications',          bm:'Notifikasi' },
 ];
 
 const DEFAULT_PERMS = {
-  //                        submit  confirm  sett_rpt  rec   summ  admin  mgr_dash  pend_appr  att   work_zone  work_sched  db_bk  role_perm  user_mgmt  mth_rpt  cash  approve  notif
-  staff:      { submit_sales:1, confirm_daily:0, settlement_report:1, view_records:1, view_summary:0, view_admin:0, mgr_dashboard:0, pending_approvals:0, attendance:1, work_zone:0, work_schedule:0, db_backup:0, role_perm:0, user_mgmt:0, monthly_report:0, cash_drawer:0, approve_sales:0, notifications:1 },
-  supervisor: { submit_sales:1, confirm_daily:1, settlement_report:1, view_records:1, view_summary:0, view_admin:1, mgr_dashboard:1, pending_approvals:1, attendance:1, work_zone:0, work_schedule:1, db_backup:0, role_perm:0, user_mgmt:0, monthly_report:0, cash_drawer:1, approve_sales:1, notifications:1 },
-  manager:    { submit_sales:1, confirm_daily:1, settlement_report:1, view_records:1, view_summary:1, view_admin:1, mgr_dashboard:1, pending_approvals:1, attendance:1, work_zone:1, work_schedule:1, db_backup:0, role_perm:0, user_mgmt:1, monthly_report:1, cash_drawer:1, approve_sales:1, notifications:1 },
-  admin:      { submit_sales:1, confirm_daily:1, settlement_report:1, view_records:1, view_summary:1, view_admin:1, mgr_dashboard:1, pending_approvals:1, attendance:1, work_zone:1, work_schedule:1, db_backup:1, role_perm:1, user_mgmt:1, monthly_report:1, cash_drawer:1, approve_sales:1, notifications:1 },
-  boss:       { submit_sales:0, confirm_daily:0, settlement_report:1, view_records:1, view_summary:1, view_admin:1, mgr_dashboard:1, pending_approvals:0, attendance:0, work_zone:0, work_schedule:0, db_backup:0, role_perm:0, user_mgmt:0, monthly_report:1, cash_drawer:0, approve_sales:0, notifications:1 },
-  tester:     { submit_sales:1, confirm_daily:1, settlement_report:1, view_records:1, view_summary:1, view_admin:1, mgr_dashboard:1, pending_approvals:1, attendance:1, work_zone:1, work_schedule:1, db_backup:1, role_perm:1, user_mgmt:1, monthly_report:1, cash_drawer:1, approve_sales:1, notifications:1 },
+  staff:      { submit_sales:1, confirm_daily:0, view_records:1, view_summary:0, view_admin:0, attendance:1, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  supervisor: { submit_sales:1, confirm_daily:1, view_records:1, view_summary:0, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  manager:    { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:0, notifications:1 },
+  admin:      { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
+  boss:       { submit_sales:0, confirm_daily:0, view_records:1, view_summary:1, view_admin:1, attendance:0, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
+  tester:     { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
 };
 
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
@@ -1237,9 +1185,9 @@ function savePerms(p){ saveData('role_permissions', p); }
 function getStorePerms(){ return loadData('store_permissions', {}); }
 function saveStorePerms(sp){ saveData('store_permissions', sp); }
 
-// Boss ACTION features — permanently OFF, not editable in panel
-const BOSS_LOCKED_OFF = ['submit_sales','confirm_daily','attendance','cash_drawer','approve_sales',
-  'work_schedule','work_zone','user_mgmt','db_backup','role_perm','pending_approvals','mgr_dashboard'];
+// Boss-role ACTION features hardcoded OFF — boss is a viewer, cannot do any of these
+// View features (view_records, view_summary, view_admin, settlement_report, notifications) remain editable
+const BOSS_LOCKED_OFF = ['submit_sales','confirm_daily','attendance','cash_drawer','approve_sales','work_schedule','work_zone','user_mgmt','db_backup'];
 
 function hasPerm(feature){
   if(!currentUser) return false;
@@ -1340,56 +1288,86 @@ function renderPermissionsPanel(){
     +'</div>';
   }
 
-  // Feature rows — grouped by section
+  // Feature rows
   html += '<div style="display:flex;flex-direction:column;gap:2px">';
-  var _lastGrp='';
-  var _grpColors={Submit:'#1d4ed8',Records:'#065f46',Summary:'#6d28d9',Admin:'#b45309',Other:'#374151'};
   PERM_FEATURES.forEach(function(f, i){
     var bg = i%2===0?'#f8fafc':'#fff';
     var globalVal = globalRolePerms[f.key]!==undefined ? !!(globalRolePerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
-    var bossIsLocked = isBoss && BOSS_LOCKED_OFF.indexOf(f.key)>=0;
-    // Group header
-    if(f.grp !== _lastGrp){
-      _lastGrp=f.grp;
-      html += '<div style="font-size:10px;font-weight:900;letter-spacing:.8px;color:'+(_grpColors[f.grp]||'#64748b')+';background:#f1f5f9;padding:5px 12px;border-radius:8px;margin-top:'+(i===0?'0':'8')+'px">'+f.grp.toUpperCase()+'</div>';
-    }
+    var bossLocked = isBoss && BOSS_LOCKED_OFF.indexOf(f.key)>=0;
+    var bossFixed  = isBoss && !bossLocked; // features boss CAN have (view_records, view_summary, etc.)
+
     if(selRole==='tester'){
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:'+bg+';border-radius:10px;gap:10px">'
-        +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+f.label+'</div><div style="font-size:10px;color:var(--text2)">'+f.bm+'</div></div>'
+      // Tester — all features permanently ON, shown as locked
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
         +'<span style="font-size:10px;font-weight:700;color:#0369a1;background:#e0f2fe;border-radius:20px;padding:3px 8px;flex-shrink:0">🧪 Always ON</span>'
       +'</div>';
     } else if(isBoss){
+      var bossIsLocked = BOSS_LOCKED_OFF.indexOf(f.key)>=0;
       if(bossIsLocked){
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:'+bg+';border-radius:10px;gap:10px;opacity:0.45">'
-          +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+f.label+'</div><div style="font-size:10px;color:var(--text2)">'+f.bm+'</div></div>'
+        // Action feature — permanently OFF, show locked label
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px;opacity:0.45">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
           +'<span style="font-size:10px;font-weight:700;color:#b91c1c;background:#fee2e2;border-radius:20px;padding:3px 8px;flex-shrink:0">🔒 Fixed OFF</span>'
         +'</div>';
       } else {
-        var chkB = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
-        html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
-          +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+f.label+'</div><div style="font-size:10px;color:var(--text2)">'+f.bm+'</div></div>'
-          +'<input type="checkbox" class="perm-cb" data-scope="global" '+(chkB?'checked':'')+' data-role="'+selRole+'" data-feature="'+f.key+'" style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+        // View feature — editable checkbox
+        var checked = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+        html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
+          +'<input type="checkbox" class="perm-cb" data-scope="global" '+(checked?'checked':'')
+            +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+            +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
         +'</label>';
       }
     } else if(isGlobal){
-      var chkG = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
-      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
-        +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+f.label+'</div><div style="font-size:10px;color:var(--text2)">'+f.bm+'</div></div>'
-        +'<input type="checkbox" class="perm-cb" data-scope="global" '+(chkG?'checked':'')+' data-role="'+selRole+'" data-feature="'+f.key+'" style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
+      // Global mode — standard checkbox
+      var checked = p[selRole]&&p[selRole][f.key]!==undefined ? !!(p[selRole][f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
+      html += '<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;cursor:pointer;gap:10px">'
+        +'<div>'
+          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+        +'</div>'
+        +'<input type="checkbox" class="perm-cb" data-scope="global" '+(checked?'checked':'')
+          +' data-role="'+selRole+'" data-feature="'+f.key+'"'
+          +' style="width:22px;height:22px;accent-color:'+roleColors[selRole]+';cursor:pointer;flex-shrink:0">'
       +'</label>';
     } else {
-      var hasOvr=storeOverride&&storeOverride[f.key]!==undefined;
-      var ovrVal=hasOvr?!!(storeOverride[f.key]):null;
-      var state=!hasOvr?'inherit':(ovrVal?'on':'off');
-      var sc={inherit:'#64748b',on:'#10b981',off:'#ef4444'};
-      var sl={inherit:'↩ Global ('+(globalVal?'ON':'OFF')+')',on:'✅ Force ON',off:'❌ Force OFF'};
-      html += '<div style="padding:9px 12px;background:'+bg+';border-radius:10px;'+(hasOvr?'border-left:3px solid '+(ovrVal?'#10b981':'#ef4444')+';':'')+'">'
+      // Store override — 3-state: inherit / ON / OFF
+      var hasOvr    = storeOverride && storeOverride[f.key]!==undefined;
+      var ovrVal    = hasOvr ? !!(storeOverride[f.key]) : null;
+      var state     = !hasOvr ? 'inherit' : (ovrVal ? 'on' : 'off');
+      var sc = {inherit:'#64748b', on:'#10b981', off:'#ef4444'};
+      var sl = {
+        inherit: '↩ Global ('+(globalVal?'ON':'OFF')+')',
+        on:      '✅ Force ON',
+        off:     '❌ Force OFF'
+      };
+      html += '<div style="padding:10px 12px;background:'+bg+';border-radius:10px;'+(hasOvr?'border-left:3px solid '+(ovrVal?'#10b981':'#ef4444')+';':'')+'">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
-          +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+f.label+'</div><div style="font-size:10px;color:var(--text2)">'+f.bm+'</div></div>'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
+            +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
+          +'</div>'
           +'<div style="display:flex;gap:4px;flex-shrink:0">'
             +['inherit','on','off'].map(function(st){
-              var act=state===st;
-              return '<button class="perm-store-btn" data-store="'+selStore.replace(/"/g,'&quot;')+'" data-role="'+selRole+'" data-feature="'+f.key+'" data-state="'+st+'" onclick="setStorePermState(this)" style="padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:2px solid '+(act?sc[st]:'var(--border)')+';background:'+(act?sc[st]:'#f8fafc')+';color:'+(act?'#fff':sc[st])+'">'+(st==='inherit'?'↩':(st==='on'?'ON':'OFF'))+'</button>';
+              var active=state===st;
+              return '<button class="perm-store-btn" data-store="'+selStore.replace(/"/g,'&quot;')+'"'
+                +' data-role="'+selRole+'" data-feature="'+f.key+'" data-state="'+st+'"'
+                +' onclick="setStorePermState(this)" style="padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;'
+                +'border:2px solid '+(active?sc[st]:'var(--border)')+';'
+                +'background:'+(active?sc[st]:'#f8fafc')+';color:'+(active?'#fff':sc[st])+'">'
+                +(st==='inherit'?'↩':(st==='on'?'ON':'OFF'))
+              +'</button>';
             }).join('')
           +'</div>'
         +'</div>'
@@ -1789,7 +1767,8 @@ async function sendMonthlyReport(month){
 function renderMonthlyReportPanel(){
   var el=document.getElementById('monthly-report-panel');
   if(!el) return;
-  if(!hasPerm('monthly_report')){ el.innerHTML=''; return; }
+  // Only admin and manager see monthly report panel
+  if(!['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')) return;
   var ZH=lang==='zh'; var EN=lang==='en';
   var s=getReportSettings();
   var thisMonth=dateKeyUTC8().slice(0,7);
@@ -2451,9 +2430,8 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     // the day immediately; everyone else's submission routes to their
     // store's Supervisor/Manager/Admin for approval (also enforced
     // server-side in handleUploadSettlement).
-    // Only staff requires supervisor/manager approval for settlement.
-    // Supervisor, manager, admin can lock the day directly.
-    window._needsApproval = !hasPerm('confirm_daily');
+    // Staff and supervisor require approval for settlement; manager/admin/boss can self-approve
+    window._needsApproval=['staff','supervisor'].includes(currentUser.role)||!hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
@@ -2750,9 +2728,23 @@ function renderSummaryTab() {
   }
   const maxDay=Math.max(...days.map(d=>d.val),1);
 
-  // ── Today submission status ──────────────────────────────────
-  const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
-  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
+  // ── Submission status — follows the selected view mode date ─────
+  // For monthly view, use the selected month prefix; otherwise use the exact date
+  const statusKey = vm==='month' ? null : vmLabel; // null = monthly mode
+  const statusLabel = vm==='month'
+    ? (lang==='zh'?'本月':'Month: ')+selectedMonthValue
+    : vmLabel;
+
+  const statusSubmitted = new Set(
+    vm==='month'
+      ? sales.filter(s=>s.month===selectedMonthValue).map(s=>s.store)
+      : sales.filter(s=>String(s.dateKey).slice(0,10)===statusKey).map(s=>s.store)
+  );
+  const statusSettled = new Set(
+    vm==='month'
+      ? getSettlementLocks().filter(r=>String(r.dateKey).slice(0,7)===selectedMonthValue&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
+      : getSettlementLocks().filter(r=>String(r.dateKey).slice(0,10)===statusKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
+  );
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
@@ -2809,16 +2801,16 @@ function renderSummaryTab() {
       </div>
     </div>
 
-    <!-- TODAY STATUS STRIP -->
+    <!-- SUBMISSION STATUS STRIP — follows view mode date -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
+        📋 ${lang==='zh'?'提交状态':'Submission Status'} · <span style="color:var(--primary)">${statusLabel}</span>
       </div>
       <!-- Row 1: Sales submitted -->
       <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${branches.map(b=>{
-          const ok=todaySubmitted.has(b);
+          const ok=statusSubmitted.has(b);
           return `<span style="background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#b91c1c'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800">${ok?'✅':'⏳'} ${b}</span>`;
         }).join('')}
       </div>
@@ -2826,7 +2818,7 @@ function renderSummaryTab() {
       <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
-          const done=todaySettled.has(b);
+          const done=statusSettled.has(b);
           return `<span style="background:${done?'#eff6ff':'#fef3c7'};color:${done?'#1e40af':'#92400e'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;border:1.5px solid ${done?'#bfdbfe':'#fcd34d'}">${done?'🏦 Done':'💰 Pending'} ${b}</span>`;
         }).join('')}
       </div>
@@ -3664,7 +3656,7 @@ function renderOperationsDashboard(){
     </div>
 
     <!-- Pending approvals -->
-    ${hasPerm('pending_approvals')?`<div style="margin-top:12px">
+    ${hasPerm('approve_sales')?`<div style="margin-top:12px">
       <div style="font-size:13px;font-weight:800;margin-bottom:6px">${ZH?'✅ 待审批销售/结算':'✅ Pending Approvals'}</div>
       ${pending.length?`
         <div style="display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border-radius:10px;padding:7px 10px;margin-bottom:6px;border:1.5px solid var(--border)">
@@ -3683,7 +3675,7 @@ function renderOperationsDashboard(){
     </div>`:''}
 
     <!-- Attendance records — scoped to selected store only -->
-    ${hasPerm('attendance')?`<div style="margin-top:12px">
+    <div style="margin-top:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="font-size:13px;font-weight:800">📍 ${ZH?'出勤记录':'Attendance Records'}
           ${attendanceStoreFilter!=='all'?`<span style="font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af;border-radius:20px;padding:2px 8px;margin-left:6px">🏪 ${attendanceStoreFilter}</span>`:''}
@@ -3693,11 +3685,11 @@ function renderOperationsDashboard(){
       ${att.length
         ? att.map(attendanceRowHtml).join('')
         : `<div style="font-size:13px;color:var(--text2);padding:10px 0">${ZH?'该日期/门店暂无出勤记录。点击🔄同步加载。':'No attendance records for this date/store. Tap 🔄 Sync to load.'}</div>`}
-    </div>`:''}
+    </div>
 
     ${renderZoneScheduleTools(branches,users)}
     ${hasPerm('db_backup')?`<button class="btn secondary" style="margin-top:12px" onclick="createDatabaseBackup()">${ZH?'创建数据库备份':'Create Database Backup'}</button>`:''}
-    ${hasPerm('role_perm')?'<div id="perms-panel" style="margin-top:12px"></div>':''}
+    <div id="perms-panel" style="margin-top:12px"></div>
   </div>`;
 }
 function approvalRowHtml(r){
