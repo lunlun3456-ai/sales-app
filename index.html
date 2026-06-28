@@ -2716,15 +2716,26 @@ function renderSummaryTab() {
   const maxStore=Math.max(...Object.values(storeMap),1);
 
   // ── 7-day trend ──────────────────────────────────────────────
+  const ZH = lang==='zh';
+  // Chinese short day names: 一二三四五六日
+  const zhDays=['日','一','二','三','四','五','六'];
   const days=[];
   for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const dk=d.toISOString().slice(0,10);
-    const lbl=d.toLocaleDateString('en-MY',{weekday:'short',timeZone:'Asia/Kuala_Lumpur'}).slice(0,2);
+    // Use MYT date — avoid toISOString() which gives UTC and can be wrong day
+    const d=new Date();
+    d.setDate(d.getDate()-i);
+    const dk=d.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); // yyyy-MM-dd MYT
+    const dayNum=parseInt(d.toLocaleDateString('en-US',{timeZone:'Asia/Kuala_Lumpur',weekday:'numeric'})||d.getDay(),10);
+    // Short weekday label — locale-aware
+    const dayOfWeek = ZH
+      ? '周'+zhDays[new Date(dk+'T12:00:00').getDay()]
+      : d.toLocaleDateString('en-MY',{weekday:'short',timeZone:'Asia/Kuala_Lumpur'}).slice(0,2);
+    // Short date label e.g. "27" or "6/27"
+    const dateLabel = dk.slice(8); // just the day-of-month "27"
     const daySales = summaryStoreFilter==='all'
       ? sales.filter(s=>s.dateKey===dk)
       : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
-    days.push({lbl, val:daySales.reduce((a,s)=>a+parseFloat(s.total||0),0), dk});
+    days.push({lbl:dayOfWeek, date:dateLabel, val:daySales.reduce((a,s)=>a+parseFloat(s.total||0),0), dk});
   }
   const maxDay=Math.max(...days.map(d=>d.val),1);
 
@@ -2733,7 +2744,7 @@ function renderSummaryTab() {
     : vm==='custom_date'?summaryCustDate : selectedMonthValue;
 
   // ── Submission status — follows selected view mode ────────────
-  const vmDate = vmLabel; // the date or month string for the active view
+  const vmDate = vmLabel;
   const viewSubmitted = new Set(
     vm==='month'
       ? sales.filter(s=>String(s.dateKey).slice(0,7)===selectedMonthValue).map(s=>s.store)
@@ -2796,21 +2807,19 @@ function renderSummaryTab() {
       </div>
     </div>
 
-    <!-- SUBMISSION STATUS STRIP — follows view mode date -->
+    <!-- SUBMISSION STATUS STRIP — follows view mode -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${lang==='zh'?'提交状态':'Submission Status'} · <span style="color:var(--primary);font-weight:900">${vmLabel}</span>
+        📋 ${ZH?'提交状态':'Submission Status'} · <span style="color:var(--primary);font-weight:900">${vmLabel}</span>
       </div>
-      <!-- Row 1: Sales submitted -->
-      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${ZH?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${branches.map(b=>{
           const ok=viewSubmitted.has(b);
           return `<span style="background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#b91c1c'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800">${ok?'✅':'⏳'} ${b}</span>`;
         }).join('')}
       </div>
-      <!-- Row 2: Daily settlement done -->
-      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${ZH?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
           const done=viewSettled.has(b);
@@ -2830,6 +2839,7 @@ function renderSummaryTab() {
             </div>
             <div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*70)}px;background:${d.dk===todayKey?'linear-gradient(180deg,#10b981,#059669)':'linear-gradient(180deg,#3b82f6,#1d4ed8)'}"></div>
             <div class="bar-label">${d.lbl}</div>
+            <div style="font-size:9px;color:var(--text2);font-weight:600;margin-top:1px">${d.date}</div>
           </div>`).join('')}
       </div>
     </div>
