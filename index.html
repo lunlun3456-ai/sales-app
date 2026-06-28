@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -545,7 +545,6 @@
         <option value="manager">Manager</option>
         <option value="boss">Boss</option>
         <option value="admin">Admin</option>
-        <option value="tester">🧪 Tester (Dev)</option>
       </select>
     </div>
     <div class="input-wrap">
@@ -849,7 +848,7 @@ const T = {
     adminTab:'Admin Panel', logout:'Logout 退出', refresh:'Sync',
     submitted:'Synced to Cloud ✓', fillAll:'Please enter sales amounts.',
     confirmTitle:'Confirm Submission', allStores:'All Stores',
-    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin', tester:'Tester',
+    staff:'Staff', supervisor:'Supervisor', manager:'Manager', boss:'Boss', admin:'Admin',
     filterRange:'Date Range', todayOpt:'Today', yestOpt:'Yesterday', customOpt:'Pick Date',
     selectMonthLabel:'Month Filter',
     pendingApprovals:'Pending Approvals', noRequests:'No pending registration requests',
@@ -933,7 +932,7 @@ const T = {
     adminTab:'管理后台', logout:'安全退出', refresh:'同步',
     submitted:'数据已同步至云端 ✓', fillAll:'请填写销售金额。',
     confirmTitle:'确认提交', allStores:'所有门店',
-    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员', tester:'测试员',
+    staff:'员工', supervisor:'主管', manager:'经理', boss:'老板', admin:'管理员',
     filterRange:'日期筛选', todayOpt:'今天', yestOpt:'昨天', customOpt:'自选日期',
     selectMonthLabel:'月份筛选',
     pendingApprovals:'待审批申请', noRequests:'暂无待审批申请',
@@ -972,7 +971,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3 ──
+    // ── Additional zh keys v4.7.3.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1177,7 +1176,6 @@ const DEFAULT_PERMS = {
   manager:    { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:0, notifications:1 },
   admin:      { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
   boss:       { submit_sales:0, confirm_daily:0, view_records:1, view_summary:1, view_admin:1, attendance:0, cash_drawer:0, approve_sales:0, work_schedule:0, work_zone:0, settlement_report:1, user_mgmt:0, db_backup:0, notifications:1 },
-  tester:     { submit_sales:1, confirm_daily:1, view_records:1, view_summary:1, view_admin:1, attendance:1, cash_drawer:1, approve_sales:1, work_schedule:1, work_zone:1, settlement_report:1, user_mgmt:1, db_backup:1, notifications:1 },
 };
 
 function getPerms(){ return loadData('role_permissions', JSON.parse(JSON.stringify(DEFAULT_PERMS))); }
@@ -1193,8 +1191,6 @@ function hasPerm(feature){
   if(!currentUser) return false;
   var role  = currentUser.role;
   var store = currentUser.store;
-  // TESTER role — invincible, bypasses every permission check
-  if(role==='tester') return true;
   // Boss hardcoded overrides — these never change regardless of perm panel
   if(role==='boss' && BOSS_LOCKED_OFF.indexOf(feature)>=0) return false;
   // 1. Store-level override — only applies to non-boss, non-tester
@@ -1215,9 +1211,9 @@ function renderPermissionsPanel(){
   var EN = lang==='en';
   var p   = getPerms();
   var sp  = getStorePerms();
-  var roles      = ['staff','supervisor','manager','admin','boss','tester'];
-  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss', tester:'🧪 Tester' };
-  var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c', tester:'#0369a1' };
+  var roles      = ['staff','supervisor','manager','admin','boss'];
+  var roleLabels = { staff:'Staff', supervisor:'Supervisor', manager:'Manager', admin:'Admin', boss:'Boss' };
+  var roleColors = { staff:'#374151', supervisor:'#065f46', manager:'#1d4ed8', admin:'#6d28d9', boss:'#b91c1c' };
 
   if(!window._permTab   ||!roles.includes(window._permTab))    window._permTab='staff';
   if(!window._permStore) window._permStore='__global__';
@@ -1267,13 +1263,6 @@ function renderPermissionsPanel(){
     }).join('')
     +'</div>';
 
-  // Tester notice
-  if(selRole==='tester'){
-    html += '<div style="background:#e0f2fe;border:1.5px solid #7dd3fc;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#0369a1;font-weight:700">'
-      +'🧪 Tester is an <b>invincible dev role</b>. All features are permanently ON regardless of store overrides. No restrictions apply — use only for testing.'
-    +'</div>';
-  }
-
   // Boss notice
   if(isBoss){
     html += '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#b91c1c;font-weight:700">'
@@ -1294,18 +1283,8 @@ function renderPermissionsPanel(){
     var bg = i%2===0?'#f8fafc':'#fff';
     var globalVal = globalRolePerms[f.key]!==undefined ? !!(globalRolePerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
     var bossLocked = isBoss && BOSS_LOCKED_OFF.indexOf(f.key)>=0;
-    var bossFixed  = isBoss && !bossLocked; // features boss CAN have (view_records, view_summary, etc.)
 
-    if(selRole==='tester'){
-      // Tester — all features permanently ON, shown as locked
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+bg+';border-radius:10px;gap:10px">'
-        +'<div>'
-          +'<div style="font-size:13px;font-weight:700;color:var(--text)">'+f.label+'</div>'
-          +'<div style="font-size:11px;color:var(--text2)">'+f.bm+'</div>'
-        +'</div>'
-        +'<span style="font-size:10px;font-weight:700;color:#0369a1;background:#e0f2fe;border-radius:20px;padding:3px 8px;flex-shrink:0">🧪 Always ON</span>'
-      +'</div>';
-    } else if(isBoss){
+    if(isBoss){
       var bossIsLocked = BOSS_LOCKED_OFF.indexOf(f.key)>=0;
       if(bossIsLocked){
         // Action feature — permanently OFF, show locked label
@@ -1470,7 +1449,6 @@ function applyPermissionsToNav(){
   if(!currentUser) return;
   var role      = currentUser.role;
   var isBoss    = role==='boss';
-  var isTester  = role==='tester';
   var canSubmit = hasPerm('submit_sales');
   var navMap = {
     'submit':     'submit_sales',
@@ -1482,12 +1460,11 @@ function applyPermissionsToNav(){
   Object.keys(navMap).forEach(function(tab){
     var el = document.getElementById('nav-'+tab);
     if(el){
-      var allowed = isTester ? true : hasPerm(navMap[tab]);
-      // Staff with submit blocked: also hide records and summary
-      // Boss and Tester are exempt — always see records and summary
-      if(!canSubmit && !isBoss && !isTester && (tab==='records'||tab==='summary')) allowed = false;
-      // HQ accounts have no store attendance (tester can still see it)
-      if(tab==='attendance' && currentUser.store==='HQ' && !isTester) allowed = false;
+      var allowed = hasPerm(navMap[tab]);
+      // Staff with submit blocked: also hide records and summary (boss exempt)
+      if(!canSubmit && !isBoss && (tab==='records'||tab==='summary')) allowed = false;
+      // HQ accounts have no store attendance
+      if(tab==='attendance' && currentUser.store==='HQ') allowed = false;
       el.style.display = allowed ? 'flex' : 'none';
     }
   });
@@ -1917,7 +1894,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3_');
+  lines.push('_Daily Sales Reporter v4.7.3.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2103,9 +2080,8 @@ async function doLogin() {
     showToast('Account disabled — contact Admin','error'); return;
   }
 
-  // ✅ Credentials OK — zone-restrict staff & supervisor (tester bypasses)
-  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase())
-                          && userMatch.role !== 'tester';
+  // ✅ Credentials OK — zone-restrict staff & supervisor
+  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
   if(_roleRestricted && userMatch.store && userMatch.store !== 'HQ'){
     // Ensure work zones are loaded
     if(!cachedWorkZones.length){
@@ -2166,9 +2142,9 @@ async function doLogin() {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   const isBoss   = currentUser.role === 'boss';
-  const isTester = currentUser.role === 'tester';
-  const isAdmin  = ['admin','boss','tester'].includes(currentUser.role);
-  const isExec   = ['admin','boss','manager','tester'].includes(currentUser.role);
+  const isBoss2  = currentUser.role === 'boss';
+  const isAdmin  = ['admin','boss'].includes(currentUser.role);
+  const isExec   = ['admin','boss','manager'].includes(currentUser.role);
   // Permissions-based nav visibility
   applyPermissionsToNav();
   document.getElementById('nav-log').style.display = (isExec&&!isBoss) ? 'flex' : 'none';
@@ -2384,7 +2360,7 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   // ── HARD BLOCK: Staff & Supervisors cannot submit any date other than today ──
   const isRestricted=['staff','supervisor'].includes(currentUser.role);
   const todayStr=dateKeyUTC8();
-  if(isRestricted && currentUser.role!=='tester' && targetDate!==todayStr){
+  if(isRestricted && targetDate!==todayStr){
     showToast(t('onlyTodayAllowed'),'error'); return;
   }
 
@@ -2669,14 +2645,9 @@ function renderRecordsTab() {
 // SUMMARY TAB
 // ============================================================
 function renderSummaryTab() {
-  const role   = currentUser.role;
+  const role    = currentUser.role;
   const isBoss  = role==='boss';
-  const isTester= role==='tester';
-  // isExec — roles that see the full summary panel
-  const isExec = ['boss','admin','manager','tester'].includes(role);
-
-  // Single gate — hasPerm already handles tester (always true),
-  // boss (view_summary:1 default), and any store override
+  // Single permission gate — hasPerm handles all roles correctly
   if(!hasPerm('view_summary')){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
@@ -2685,21 +2656,19 @@ function renderSummaryTab() {
         <p style="color:var(--text2)">${t('accessMsg')}</p>
       </div>`; return;
   }
-
   const sales = getSales();
   const todayKey = dateKeyUTC8();
-  let yestD=new Date(); yestD.setDate(yestD.getDate()-1);
-  const yestKey = yestD.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
-  const allowedStores = (role==='admin'||isTester) ? STORES : STORES.filter(s=>s!=='HQ');
+  const yestKey  = (()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); })();
+  const allowedStores = role==='admin' ? STORES : STORES.filter(s=>s!=='HQ');
   const branches = allowedStores.filter(s=>s!=='HQ');
 
   // ── Determine date range for store ranking ──────────────────
   let rankingSales;
   const vm = summaryViewMode;
-  if(vm==='today')        rankingSales = sales.filter(s=>s.dateKey===todayKey);
-  else if(vm==='yesterday') rankingSales = sales.filter(s=>s.dateKey===yestKey);
-  else if(vm==='custom_date') rankingSales = sales.filter(s=>s.dateKey===summaryCustDate);
-  else                    rankingSales = sales.filter(s=>s.month===selectedMonthValue);
+  if(vm==='today')           rankingSales = sales.filter(s=>s.dateKey===todayKey);
+  else if(vm==='yesterday')  rankingSales = sales.filter(s=>s.dateKey===yestKey);
+  else if(vm==='custom_date')rankingSales = sales.filter(s=>s.dateKey===summaryCustDate);
+  else                       rankingSales = sales.filter(s=>s.month===selectedMonthValue);
 
   // Apply store filter
   const filteredForTotal = summaryStoreFilter==='all'
@@ -2713,26 +2682,38 @@ function renderSummaryTab() {
   rankingSales.forEach(s=>{if(storeMap[s.store]!==undefined) storeMap[s.store]+=parseFloat(s.total||0);});
   const maxStore=Math.max(...Object.values(storeMap),1);
 
-  // ── 7-day trend ──────────────────────────────────────────────
+  // ── 7-day trend — MYT dates, locale-aware weekday, date below bar ────
+  const ZH=lang==='zh';
+  const zhDays=['日','一','二','三','四','五','六'];
   const days=[];
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
-    const dk=d.toISOString().slice(0,10);
-    const lbl=d.toLocaleDateString('en-MY',{weekday:'short',timeZone:'Asia/Kuala_Lumpur'}).slice(0,2);
+    const dk=d.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); // MYT yyyy-MM-dd
+    const dow=new Date(dk+'T12:00:00').getDay(); // 0=Sun
+    const lbl=ZH?'周'+zhDays[dow]:d.toLocaleDateString('en-MY',{weekday:'short',timeZone:'Asia/Kuala_Lumpur'}).slice(0,2);
+    const dateNum=dk.slice(8); // day-of-month "27"
     const daySales = summaryStoreFilter==='all'
       ? sales.filter(s=>s.dateKey===dk)
       : sales.filter(s=>s.dateKey===dk&&s.store===summaryStoreFilter);
-    days.push({lbl, val:daySales.reduce((a,s)=>a+parseFloat(s.total||0),0), dk});
+    days.push({lbl, dateNum, val:daySales.reduce((a,s)=>a+parseFloat(s.total||0),0), dk});
   }
   const maxDay=Math.max(...days.map(d=>d.val),1);
-
-  // ── Today submission status ──────────────────────────────────
-  const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
-  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
     : vm==='custom_date'?summaryCustDate : selectedMonthValue;
+
+  // ── Submission status — follows selected view mode ────────────
+  const viewSubmitted=new Set(
+    vm==='month'
+      ? sales.filter(s=>String(s.dateKey).slice(0,7)===selectedMonthValue).map(s=>s.store)
+      : sales.filter(s=>String(s.dateKey).slice(0,10)===vmLabel).map(s=>s.store)
+  );
+  const viewSettled=new Set(
+    vm==='month'
+      ? getSettlementLocks().filter(r=>String(r.dateKey).slice(0,7)===selectedMonthValue&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
+      : getSettlementLocks().filter(r=>String(r.dateKey).slice(0,10)===vmLabel&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
+  );
 
   document.getElementById('tab-summary').innerHTML=`
     <div class="card-header-flex">
@@ -2785,24 +2766,22 @@ function renderSummaryTab() {
       </div>
     </div>
 
-    <!-- TODAY STATUS STRIP -->
+    <!-- SUBMISSION STATUS STRIP — follows view mode date -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
+        📋 ${ZH?'提交状态':'Submission Status'} · <span style="color:var(--primary);font-weight:900">${vmLabel}</span>
       </div>
-      <!-- Row 1: Sales submitted -->
-      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${ZH?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${branches.map(b=>{
-          const ok=todaySubmitted.has(b);
+          const ok=viewSubmitted.has(b);
           return `<span style="background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#b91c1c'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800">${ok?'✅':'⏳'} ${b}</span>`;
         }).join('')}
       </div>
-      <!-- Row 2: Daily settlement done -->
-      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
+      <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${ZH?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
-          const done=todaySettled.has(b);
+          const done=viewSettled.has(b);
           return `<span style="background:${done?'#eff6ff':'#fef3c7'};color:${done?'#1e40af':'#92400e'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;border:1.5px solid ${done?'#bfdbfe':'#fcd34d'}">${done?'🏦 Done':'💰 Pending'} ${b}</span>`;
         }).join('')}
       </div>
@@ -2819,6 +2798,7 @@ function renderSummaryTab() {
             </div>
             <div class="bar-fill" style="height:${Math.max(4,(d.val/maxDay)*70)}px;background:${d.dk===todayKey?'linear-gradient(180deg,#10b981,#059669)':'linear-gradient(180deg,#3b82f6,#1d4ed8)'}"></div>
             <div class="bar-label">${d.lbl}</div>
+            <div style="font-size:9px;color:var(--text2);font-weight:600;margin-top:1px">${d.dateNum}</div>
           </div>`).join('')}
       </div>
     </div>
