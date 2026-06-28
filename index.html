@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.1</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.1</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -971,7 +971,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3 ──
+    // ── Additional zh keys v4.7.1 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1235,7 +1235,7 @@ function hasPerm(feature){
 }
 
 function renderPermissionsPanel(){
-  if(!currentUser||currentUser.role!=='admin') return;
+  if(!currentUser||!hasPerm('role_perm')) return;
   var el = document.getElementById('perms-panel');
   if(!el) return;
   var EN = lang==='en';
@@ -1432,7 +1432,7 @@ function clearStorePermOverrides(store, role){
 }
 
 function savePermissionsFromUI(){
-  if(!currentUser||currentUser.role!=='admin'){showToast('Admin only','error');return;}
+  if(!currentUser||!hasPerm('role_perm')){showToast('No permission','error');return;}
   var p = getPerms();
   document.querySelectorAll('.perm-cb').forEach(function(cb){
     var role = cb.dataset.role, feat = cb.dataset.feature;
@@ -1764,8 +1764,7 @@ async function sendMonthlyReport(month){
 function renderMonthlyReportPanel(){
   var el=document.getElementById('monthly-report-panel');
   if(!el) return;
-  // Only admin and manager see monthly report panel
-  if(!['admin','manager','boss'].includes(currentUser&&currentUser.role?currentUser.role:'')) return;
+  if(!hasPerm('monthly_report')){ el.innerHTML=''; return; }
   var ZH=lang==='zh'; var EN=lang==='en';
   var s=getReportSettings();
   var thisMonth=dateKeyUTC8().slice(0,7);
@@ -1814,9 +1813,25 @@ function renderMonthlyReportPanel(){
 // ── Monthly Report: Excel + WhatsApp ────────────────────────────────────────
 function buildMonthlyData(month){
   var EN=lang==='en';
-  var sales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
-  var att=getAllAttendance().filter(function(r){return String(r.dateKey||'').slice(0,7)===month&&r.type==='check_in'&&r.status!=='voided'&&r.status!=='rejected';});
-  // Sales by store
+  var sales=getSales().filter(function(r){return (r.month||String(r.dateKey||'').slice(0,7))===month;});
+  // All attendance for the month (all types, non-voided, non-rejected)
+  var allAtt=getAllAttendance().filter(function(r){
+    return String(r.dateKey||'').slice(0,7)===month&&r.status!=='voided'&&r.status!=='rejected';
+  });
+  var checkIns=allAtt.filter(function(r){return r.type==='check_in';});
+
+  // ── Work days in month (Mon–Sat, adjust if needed) ─────────────
+  var workDays=[];
+  var y=parseInt(month.slice(0,4),10), m=parseInt(month.slice(5,7),10)-1;
+  var lastDay=new Date(y,m+1,0).getDate();
+  for(var dd=1;dd<=lastDay;dd++){
+    var dt=new Date(y,m,dd);
+    var dow=dt.getDay(); // 0=Sun
+    // Include Mon-Sat (skip Sunday) — adjust here if different work week
+    if(dow!==0) workDays.push(month+'-'+(dd<10?'0':'')+dd);
+  }
+
+  // ── Sales by store ────────────────────────────────────────────
   var storeMap={};
   sales.forEach(function(r){
     if(!storeMap[r.store])storeMap[r.store]={total:0,cash:0,qr:0,card:0,bank:0,days:0};
@@ -1827,62 +1842,147 @@ function buildMonthlyData(month){
     storeMap[r.store].bank +=parseFloat(r.bank||0);
     storeMap[r.store].days++;
   });
-  // Attendance by store+staff
-  var attMap={};
-  att.forEach(function(r){
-    if(!attMap[r.store])attMap[r.store]={};
-    if(!attMap[r.store][r.username])attMap[r.store][r.username]={name:r.name||r.username,days:0,late:0};
-    attMap[r.store][r.username].days++;
-    if(r.status==='late')attMap[r.store][r.username].late++;
+
+  // ── Attendance by store+staff with daily detail ───────────────
+  var users=Object.entries(cachedUsers||{}).map(function(e){return Object.assign({username:e[0]},e[1]);})
+    .filter(function(u){return u.status==='active'&&['staff','supervisor'].includes(u.role)&&u.store!=='HQ';});
+
+  var attMap={};  // store → { username → { name, presentDays:[], lateDays:[], absentDays:[], lateCount, presentCount } }
+  users.forEach(function(u){
+    if(!attMap[u.store]) attMap[u.store]={};
+    // Build set of days this user checked in
+    var checkedInDays={};
+    checkIns.filter(function(r){return r.username===u.username;}).forEach(function(r){
+      var dk=String(r.dateKey||'').slice(0,10);
+      checkedInDays[dk]={ status:r.status||'present' };
+    });
+    var presentDays=[],lateDays=[],absentDays=[];
+    workDays.forEach(function(dk){
+      if(checkedInDays[dk]){
+        presentDays.push(dk);
+        if(checkedInDays[dk].status==='late') lateDays.push(dk);
+      } else {
+        absentDays.push(dk);
+      }
+    });
+    attMap[u.store][u.username]={
+      name: u.name||u.username,
+      presentCount: presentDays.length,
+      lateCount:    lateDays.length,
+      absentCount:  absentDays.length,
+      presentDays:  presentDays,
+      lateDays:     lateDays,
+      absentDays:   absentDays,
+      workDaysTotal:workDays.length
+    };
   });
-  return {storeMap:storeMap,attMap:attMap,month:month};
+
+  return {storeMap:storeMap,attMap:attMap,month:month,workDays:workDays};
 }
 
 function downloadMonthlyExcel(month){
   if(typeof XLSX==='undefined'){showToast(lang==='en'?'Loading Excel library...':'Memuatkan pustaka Excel...','pending');return;}
+  var EN=lang==='en';
   var d=buildMonthlyData(month);
   var wb=XLSX.utils.book_new();
-  // ── Sheet 1: Sales Summary ──────────────────────────────────────────
-  var salesRows=[['Store',t('totalSalesLabel')+' (RM)',
-    'Cash','QR','Card','Bank Transfer','Sales Days']];
+
+  // ── Sheet 1: Sales Summary ────────────────────────────────────
+  var salesRows=[['Store','Total Sales (RM)','Cash','QR','Card','Bank Transfer','Sales Days']];
   var grandTotal=0;
   Object.keys(d.storeMap).sort().forEach(function(store){
     var s=d.storeMap[store];
-    salesRows.push([store,s.total.toFixed(2),s.cash.toFixed(2),s.qr.toFixed(2),s.card.toFixed(2),s.bank.toFixed(2),s.days]);
+    salesRows.push([store,+s.total.toFixed(2),+s.cash.toFixed(2),+s.qr.toFixed(2),+s.card.toFixed(2),+s.bank.toFixed(2),s.days]);
     grandTotal+=s.total;
   });
-  salesRows.push(['TOTAL',grandTotal.toFixed(2),'','','','','']);
+  salesRows.push(['TOTAL',+grandTotal.toFixed(2),'','','','','']);
   var ws1=XLSX.utils.aoa_to_sheet(salesRows);
-  // Style header row
   ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws1,'Sales Summary');
-  // ── Sheet 2: Attendance Summary ────────────────────────────────────
-  var attRows=[['Store','Staff Name',
-    'Days Present',lang==='en'?'Late':'Lambat']];
+
+  // ── Sheet 2: Attendance Summary (per staff) ───────────────────
+  var attSumRows=[['Store','Staff Name','Work Days','Present','Absent','Late','Attendance %']];
   Object.keys(d.attMap).sort().forEach(function(store){
     Object.values(d.attMap[store]).forEach(function(u){
-      attRows.push([store,u.name,u.days,u.late]);
+      var pct=d.workDays.length>0?((u.presentCount/d.workDays.length)*100).toFixed(1):'0';
+      attSumRows.push([store,u.name,d.workDays.length,u.presentCount,u.absentCount,u.lateCount,pct+'%']);
     });
   });
-  var ws2=XLSX.utils.aoa_to_sheet(attRows);
-  ws2['!cols']=[{wch:22},{wch:20},{wch:14},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws2,'Attendance');
-  // ── Sheet 3: Raw Sales Data ────────────────────────────────────────
-  var rawSales=getSales().filter(function(r){return (r.month||r.dateKey.slice(0,7))===month;});
+  var ws2=XLSX.utils.aoa_to_sheet(attSumRows);
+  ws2['!cols']=[{wch:22},{wch:20},{wch:12},{wch:10},{wch:10},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Attendance Summary');
+
+  // ── Sheet 3: Day-by-Day Attendance (matrix) ───────────────────
+  // Columns: Store | Staff Name | Date1 | Date2 ... | Total Present | Total Absent | Total Late
+  var dayLabels=d.workDays.map(function(dk){return dk.slice(5);}); // MM-DD
+  var dayHeader=['Store','Staff Name'].concat(dayLabels).concat(['Present','Absent','Late']);
+  var dayRows=[dayHeader];
+  Object.keys(d.attMap).sort().forEach(function(store){
+    Object.values(d.attMap[store]).forEach(function(u){
+      var row=[store,u.name];
+      d.workDays.forEach(function(dk){
+        if(u.presentDays.indexOf(dk)>=0){
+          row.push(u.lateDays.indexOf(dk)>=0?'L':'✓');
+        } else {
+          row.push('A');
+        }
+      });
+      row.push(u.presentCount,u.absentCount,u.lateCount);
+      dayRows.push(row);
+    });
+  });
+  var ws3=XLSX.utils.aoa_to_sheet(dayRows);
+  var dayCols=[{wch:22},{wch:20}];
+  d.workDays.forEach(function(){dayCols.push({wch:6});});
+  dayCols.push({wch:10},{wch:10},{wch:10});
+  ws3['!cols']=dayCols;
+  XLSX.utils.book_append_sheet(wb,ws3,'Day-by-Day Attendance');
+
+  // ── Sheet 4: Absent Log (list of each absent instance) ────────
+  var absentRows=[['Store','Staff Name','Absent Date','Day']];
+  var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  Object.keys(d.attMap).sort().forEach(function(store){
+    Object.values(d.attMap[store]).forEach(function(u){
+      u.absentDays.forEach(function(dk){
+        var dow=dayNames[new Date(dk+'T12:00:00').getDay()];
+        absentRows.push([store,u.name,dk,dow]);
+      });
+    });
+  });
+  var ws4=XLSX.utils.aoa_to_sheet(absentRows);
+  ws4['!cols']=[{wch:22},{wch:20},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws4,'Absent Log');
+
+  // ── Sheet 5: Late Days Log ────────────────────────────────────
+  var lateRows=[['Store','Staff Name','Late Date','Day']];
+  Object.keys(d.attMap).sort().forEach(function(store){
+    Object.values(d.attMap[store]).forEach(function(u){
+      u.lateDays.forEach(function(dk){
+        var dow=dayNames[new Date(dk+'T12:00:00').getDay()];
+        lateRows.push([store,u.name,dk,dow]);
+      });
+    });
+  });
+  var ws5=XLSX.utils.aoa_to_sheet(lateRows);
+  ws5['!cols']=[{wch:22},{wch:20},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws5,'Late Log');
+
+  // ── Sheet 6: Raw Sales Detail ─────────────────────────────────
+  var rawSales=getSales().filter(function(r){return (r.month||String(r.dateKey||'').slice(0,7))===month;});
+  rawSales.sort(function(a,b){return String(a.dateKey).localeCompare(String(b.dateKey));});
   var rawRows=[['Date','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
   rawSales.forEach(function(r){
-    rawRows.push([r.dateKey||'',r.store||'',parseFloat(r.total||0).toFixed(2),
-      parseFloat(r.cash||0).toFixed(2),parseFloat(r.qr||0).toFixed(2),
-      parseFloat(r.card||0).toFixed(2),parseFloat(r.bank||0).toFixed(2),
+    rawRows.push([r.dateKey||'',r.store||'',+parseFloat(r.total||0).toFixed(2),
+      +parseFloat(r.cash||0).toFixed(2),+parseFloat(r.qr||0).toFixed(2),
+      +parseFloat(r.card||0).toFixed(2),+parseFloat(r.bank||0).toFixed(2),
       r.submitter||'',r.remark||'']);
   });
-  var ws3=XLSX.utils.aoa_to_sheet(rawRows);
-  ws3['!cols']=[{wch:12},{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws3,'Sales Detail');
-  // Download
+  var ws6=XLSX.utils.aoa_to_sheet(rawRows);
+  ws6['!cols']=[{wch:12},{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws6,'Sales Detail');
+
   var filename='Monthly_Report_'+month+'.xlsx';
   XLSX.writeFile(wb,filename);
-  showToast((lang==='en'?'Excel downloaded: ':'Excel dimuat turun: ')+filename,'success');
+  showToast((EN?'Excel downloaded: ':'Excel dimuat turun: ')+filename,'success');
 }
 
 function shareMonthlyWhatsApp(month){
@@ -1914,7 +2014,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3_');
+  lines.push('_Daily Sales Reporter v4.7.1_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
