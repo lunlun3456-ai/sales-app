@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -972,7 +972,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3 ──
+    // ── Additional zh keys v4.7.3.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1917,7 +1917,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3_');
+  lines.push('_Daily Sales Reporter v4.7.3.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2669,10 +2669,15 @@ function renderRecordsTab() {
 // SUMMARY TAB
 // ============================================================
 function renderSummaryTab() {
-  const isExec=['boss','admin','manager'].includes(currentUser.role);
-  const isBoss = currentUser.role==='boss';
-  // Permission gate — boss is always a viewer role; only block non-boss/non-exec without submit perm
-  if(!isBoss && (!hasPerm('submit_sales')||!hasPerm('view_summary'))){
+  const role    = currentUser.role;
+  const isBoss   = role==='boss';
+  const isTester = role==='tester';
+  // isExec = roles that can see the full summary view
+  const isExec  = ['boss','admin','manager','tester'].includes(role);
+
+  // Single permission gate — hasPerm handles tester (always true), boss (view_summary editable),
+  // and store overrides for any role. No second hardcoded role check needed.
+  if(!hasPerm('view_summary')){
     document.getElementById('tab-summary').innerHTML=`
       <div class="card" style="text-align:center;padding:40px 20px">
         <div style="font-size:52px;">🔒</div>
@@ -2680,19 +2685,15 @@ function renderSummaryTab() {
         <p style="color:var(--text2)">${t('accessMsg')}</p>
       </div>`; return;
   }
-  if(!isExec){
-    document.getElementById('tab-summary').innerHTML=`
-      <div class="card" style="text-align:center;padding:40px 20px">
-        <div style="font-size:52px;">🔒</div>
-        <h3 style="margin:12px 0 8px">${t('accessDenied')}</h3>
-        <p style="color:var(--text2)">${t('accessMsg')}</p>
-      </div>`; return;
-  }
+
   const sales = getSales();
   const todayKey = dateKeyUTC8();
   let yestD=new Date(); yestD.setDate(yestD.getDate()-1);
-  const yestKey = yestD.toISOString().slice(0,10);
-  let allowedStores = currentUser.role==='admin' ? STORES : STORES.filter(s=>s!=='HQ');
+  const yestKey = yestD.toLocaleString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}).slice(0,10);
+
+  // allowedStores by role
+  const allowedStores = (role==='admin'||isTester) ? STORES
+    : STORES.filter(s=>s!=='HQ');
   const branches = allowedStores.filter(s=>s!=='HQ');
 
   // ── Determine date range for store ranking ──────────────────
@@ -2728,23 +2729,9 @@ function renderSummaryTab() {
   }
   const maxDay=Math.max(...days.map(d=>d.val),1);
 
-  // ── Submission status — follows the selected view mode date ─────
-  // For monthly view, use the selected month prefix; otherwise use the exact date
-  const statusKey = vm==='month' ? null : vmLabel; // null = monthly mode
-  const statusLabel = vm==='month'
-    ? (lang==='zh'?'本月':'Month: ')+selectedMonthValue
-    : vmLabel;
-
-  const statusSubmitted = new Set(
-    vm==='month'
-      ? sales.filter(s=>s.month===selectedMonthValue).map(s=>s.store)
-      : sales.filter(s=>String(s.dateKey).slice(0,10)===statusKey).map(s=>s.store)
-  );
-  const statusSettled = new Set(
-    vm==='month'
-      ? getSettlementLocks().filter(r=>String(r.dateKey).slice(0,7)===selectedMonthValue&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
-      : getSettlementLocks().filter(r=>String(r.dateKey).slice(0,10)===statusKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store)
-  );
+  // ── Today submission status ──────────────────────────────────
+  const todaySubmitted=new Set(sales.filter(s=>s.dateKey===todayKey).map(s=>s.store));
+  const todaySettled=new Set(getSettlementLocks().filter(r=>r.dateKey===todayKey&&String(r.locked).toLowerCase()!=='false').map(r=>r.store));
 
   // ── View mode label ──────────────────────────────────────────
   const vmLabel = vm==='today'?todayKey : vm==='yesterday'?yestKey
@@ -2801,16 +2788,16 @@ function renderSummaryTab() {
       </div>
     </div>
 
-    <!-- SUBMISSION STATUS STRIP — follows view mode date -->
+    <!-- TODAY STATUS STRIP -->
     <div class="card" style="padding:12px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px">
-        📋 ${lang==='zh'?'提交状态':'Submission Status'} · <span style="color:var(--primary)">${statusLabel}</span>
+        📋 ${lang==='zh'?'今日提交状态':'Today Submission Status'} · ${todayKey}
       </div>
       <!-- Row 1: Sales submitted -->
       <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'📊 销售提交':'📊 SALES SUBMITTED'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         ${branches.map(b=>{
-          const ok=statusSubmitted.has(b);
+          const ok=todaySubmitted.has(b);
           return `<span style="background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#b91c1c'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800">${ok?'✅':'⏳'} ${b}</span>`;
         }).join('')}
       </div>
@@ -2818,7 +2805,7 @@ function renderSummaryTab() {
       <div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.5px">${lang==='zh'?'🏦 日结完成':'🏦 DAILY SETTLEMENT'}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         ${branches.map(b=>{
-          const done=statusSettled.has(b);
+          const done=todaySettled.has(b);
           return `<span style="background:${done?'#eff6ff':'#fef3c7'};color:${done?'#1e40af':'#92400e'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;border:1.5px solid ${done?'#bfdbfe':'#fcd34d'}">${done?'🏦 Done':'💰 Pending'} ${b}</span>`;
         }).join('')}
       </div>
