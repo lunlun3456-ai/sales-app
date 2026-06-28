@@ -1177,27 +1177,28 @@ async function syncAttendanceNow(){
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
   // ── Submit tab ─────────────────────────────────────────────────
-  { key:'submit_sales',      grp:'Submit',  label:'Submit / Update Sales',          bm:'Hantar / Kemaskini Jualan' },
-  { key:'confirm_daily',     grp:'Submit',  label:'Daily Settlement (Lock Day)',     bm:'Kunci Penyelesaian Harian' },
-  { key:'settlement_report', grp:'Submit',  label:'View Settlement Reports',         bm:'Lihat Laporan Penyelesaian' },
+  { key:'submit_sales',      grp:'Submit',      label:'Submit / Update Sales',          bm:'Hantar / Kemaskini Jualan' },
+  { key:'confirm_daily',     grp:'Submit',      label:'Daily Settlement (Lock Day)',     bm:'Kunci Penyelesaian Harian' },
   // ── Records & Summary ──────────────────────────────────────────
-  { key:'view_records',      grp:'Records', label:'View Records Tab',               bm:'Lihat Tab Rekod' },
-  { key:'view_summary',      grp:'Summary', label:'View Summary Tab',               bm:'Lihat Tab Ringkasan' },
+  { key:'view_records',      grp:'Records',     label:'View Records Tab',               bm:'Lihat Tab Rekod' },
+  { key:'view_summary',      grp:'Summary',     label:'View Summary Tab',               bm:'Lihat Tab Ringkasan' },
+  // ── Settlement ─────────────────────────────────────────────────
+  { key:'settlement_report', grp:'Settlement',  label:'View Settlement Reports',         bm:'Lihat Laporan Penyelesaian' },
   // ── Admin panel sub-features ───────────────────────────────────
-  { key:'view_admin',        grp:'Admin',   label:'Admin Panel (access)',            bm:'Panel Admin (akses)' },
-  { key:'mgr_dashboard',     grp:'Admin',   label:'Mgr Dashboard',                  bm:'Papan Pemuka Pengurus' },
-  { key:'pending_approvals', grp:'Admin',   label:'Pending Approvals',              bm:'Kelulusan Tertunda' },
-  { key:'attendance',        grp:'Admin',   label:'Attendance Records',             bm:'Rekod Kehadiran' },
-  { key:'work_zone',         grp:'Admin',   label:'Work Zone',                      bm:'Zon Kerja' },
-  { key:'work_schedule',     grp:'Admin',   label:'Work Schedule',                  bm:'Jadual Kerja' },
-  { key:'db_backup',         grp:'Admin',   label:'Database Backup',                bm:'Sandaran Data' },
-  { key:'role_perm',         grp:'Admin',   label:'Role & Store Permissions',        bm:'Kebenaran Peranan & Cawangan' },
-  { key:'user_mgmt',         grp:'Admin',   label:'User Management',                bm:'Pengurusan Pengguna' },
-  { key:'monthly_report',    grp:'Admin',   label:'Monthly Email Report',            bm:'Laporan E-mel Bulanan' },
+  { key:'view_admin',        grp:'Admin',       label:'Admin Panel (access)',            bm:'Panel Admin (akses)' },
+  { key:'mgr_dashboard',     grp:'Admin',       label:'Mgr Dashboard',                  bm:'Papan Pemuka Pengurus' },
+  { key:'pending_approvals', grp:'Admin',       label:'Pending Approvals',              bm:'Kelulusan Tertunda' },
+  { key:'attendance',        grp:'Admin',       label:'Attendance Records',             bm:'Rekod Kehadiran' },
+  { key:'work_zone',         grp:'Admin',       label:'Work Zone',                      bm:'Zon Kerja' },
+  { key:'work_schedule',     grp:'Admin',       label:'Work Schedule',                  bm:'Jadual Kerja' },
+  { key:'db_backup',         grp:'Admin',       label:'Database Backup',                bm:'Sandaran Data' },
+  { key:'role_perm',         grp:'Admin',       label:'Role & Store Permissions',        bm:'Kebenaran Peranan & Cawangan' },
+  { key:'user_mgmt',         grp:'Admin',       label:'User Management',                bm:'Pengurusan Pengguna' },
+  { key:'monthly_report',    grp:'Admin',       label:'Monthly Email Report',            bm:'Laporan E-mel Bulanan' },
   // ── Other ──────────────────────────────────────────────────────
-  { key:'cash_drawer',       grp:'Other',   label:'Cash Drawer',                    bm:'Laci Tunai' },
-  { key:'approve_sales',     grp:'Other',   label:'Approve Submissions',            bm:'Luluskan Penghantaran' },
-  { key:'notifications',     grp:'Other',   label:'Notifications',                  bm:'Notifikasi' },
+  { key:'cash_drawer',       grp:'Other',       label:'Cash Drawer',                    bm:'Laci Tunai' },
+  { key:'approve_sales',     grp:'Other',       label:'Approve Submissions',            bm:'Luluskan Penghantaran' },
+  { key:'notifications',     grp:'Other',       label:'Notifications',                  bm:'Notifikasi' },
 ];
 
 const DEFAULT_PERMS = {
@@ -1326,7 +1327,7 @@ function renderPermissionsPanel(){
   // Feature rows with group headers
   html += '<div style="display:flex;flex-direction:column;gap:2px">';
   var _lastGrp='';
-  var _grpColors={Submit:'#1d4ed8',Records:'#065f46',Summary:'#6d28d9',Admin:'#b45309',Other:'#374151'};
+  var _grpColors={Submit:'#1d4ed8',Records:'#065f46',Summary:'#6d28d9',Settlement:'#0369a1',Admin:'#b45309',Other:'#374151'};
   PERM_FEATURES.forEach(function(f, i){
     var bg = i%2===0?'#f8fafc':'#fff';
     var globalVal = globalRolePerms[f.key]!==undefined ? !!(globalRolePerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
@@ -2087,7 +2088,17 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
-          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object') savePerms(appJson.rolePermissions);
+          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object'){
+            // Merge with DEFAULT_PERMS so new keys are never wiped by old GAS data
+            var _rp = JSON.parse(JSON.stringify(DEFAULT_PERMS));
+            Object.keys(appJson.rolePermissions).forEach(function(role){
+              if(!_rp[role]) _rp[role]={};
+              Object.keys(appJson.rolePermissions[role]).forEach(function(key){
+                _rp[role][key] = appJson.rolePermissions[role][key];
+              });
+            });
+            savePerms(_rp);
+          }
           if(appJson.storePermissions && typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
           applyPermissionsToNav();
         }
@@ -2127,7 +2138,15 @@ async function fetchLiveUsers(forceRefresh) {
   try {
     const permResp = await gasGet('getPermissions');
     if(permResp && permResp.permissions){
-      savePerms(permResp.permissions);
+      // Merge GAS perms with DEFAULT_PERMS — ensures new keys are never lost
+      var merged = JSON.parse(JSON.stringify(DEFAULT_PERMS));
+      Object.keys(permResp.permissions).forEach(function(role){
+        if(!merged[role]) merged[role]={};
+        Object.keys(permResp.permissions[role]).forEach(function(key){
+          merged[role][key] = permResp.permissions[role][key];
+        });
+      });
+      savePerms(merged);
       if(currentUser) applyPermissionsToNav();
     }
   } catch(e){ console.warn('permission sync failed:', e.message); }
