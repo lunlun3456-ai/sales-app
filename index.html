@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.0</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.0</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -687,6 +687,17 @@ function nowUTC8(){
   return s.replace(' ','T'); // plain MYT — no +08:00
 }
 function fmtTimeSUTC8(s){if(!s)return"--:--:--";try{var u=new Date(new Date(s).getTime()+_U8);return("0"+u.getUTCHours()).slice(-2)+":"+("0"+u.getUTCMinutes()).slice(-2)+":"+("0"+u.getUTCSeconds()).slice(-2);}catch(e){return"--:--:--";}}
+// ── Number formatting with thousand commas ────────────────────
+// Use for ALL currency/number display in the UI
+function fmtRM(n, dp){
+  if(dp===undefined) dp=2;
+  var num = parseFloat(n||0);
+  return num.toLocaleString('en-MY',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+// Alias for plain numbers (no currency symbol)
+function fmtNum(n, dp){
+  return fmtRM(n, dp===undefined?0:dp);
+}
 function fmtTimeUTC8(s){
   if(!s||s==='') return '--:--';
   try{
@@ -708,7 +719,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxQZ8uAE80C7wO-MMpJWRkBHk1IOIl7PupCPz6yqI0RwS7EuVHmGiazgTJ9JWTqdlWJ/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzJIN5MmZFoIRHIXNqYo69NOSpKNSN3Rm0z60fbqYSutoFUv6_jKCj34vtRHnStxvTx9w/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -971,7 +982,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3 ──
+    // ── Additional zh keys v4.7.3.0 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -1137,7 +1148,7 @@ function renderSettlementReports(){
           +(r.note?'<div style="font-size:11px;color:var(--accent);margin-top:2px">📝 '+r.note+'</div>':'')
         +'</div>'
         +'<div style="text-align:right;flex-shrink:0">'
-          +(r.total?'<div style="font-size:15px;font-weight:900;color:#1e3a8a">RM '+parseFloat(r.total||0).toFixed(2)+'</div>':'')
+          +(r.total?'<div style="font-size:15px;font-weight:900;color:#1e3a8a">RM '+fmtRM(r.total)+'</div>':'')
           +(r.fileUrl?'<a href="'+r.fileUrl+'" target="_blank" style="display:inline-block;margin-top:4px;background:#eff6ff;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1e3a8a;text-decoration:none">👁 '+(EN?'View':'Lihat')+'</a>':'')
         +'</div>'
       +'</div>';
@@ -1177,28 +1188,27 @@ async function syncAttendanceNow(){
 // ═══════════════════════════════════════════════════════════════════════════
 const PERM_FEATURES = [
   // ── Submit tab ─────────────────────────────────────────────────
-  { key:'submit_sales',      grp:'Submit',      label:'Submit / Update Sales',          bm:'Hantar / Kemaskini Jualan' },
-  { key:'confirm_daily',     grp:'Submit',      label:'Daily Settlement (Lock Day)',     bm:'Kunci Penyelesaian Harian' },
+  { key:'submit_sales',      grp:'Submit',  label:'Submit / Update Sales',          bm:'Hantar / Kemaskini Jualan' },
+  { key:'confirm_daily',     grp:'Submit',  label:'Daily Settlement (Lock Day)',     bm:'Kunci Penyelesaian Harian' },
+  { key:'settlement_report', grp:'Submit',  label:'View Settlement Reports',         bm:'Lihat Laporan Penyelesaian' },
   // ── Records & Summary ──────────────────────────────────────────
-  { key:'view_records',      grp:'Records',     label:'View Records Tab',               bm:'Lihat Tab Rekod' },
-  { key:'view_summary',      grp:'Summary',     label:'View Summary Tab',               bm:'Lihat Tab Ringkasan' },
-  // ── Settlement ─────────────────────────────────────────────────
-  { key:'settlement_report', grp:'Settlement',  label:'View Settlement Reports',         bm:'Lihat Laporan Penyelesaian' },
+  { key:'view_records',      grp:'Records', label:'View Records Tab',               bm:'Lihat Tab Rekod' },
+  { key:'view_summary',      grp:'Summary', label:'View Summary Tab',               bm:'Lihat Tab Ringkasan' },
   // ── Admin panel sub-features ───────────────────────────────────
-  { key:'view_admin',        grp:'Admin',       label:'Admin Panel (access)',            bm:'Panel Admin (akses)' },
-  { key:'mgr_dashboard',     grp:'Admin',       label:'Mgr Dashboard',                  bm:'Papan Pemuka Pengurus' },
-  { key:'pending_approvals', grp:'Admin',       label:'Pending Approvals',              bm:'Kelulusan Tertunda' },
-  { key:'attendance',        grp:'Admin',       label:'Attendance Records',             bm:'Rekod Kehadiran' },
-  { key:'work_zone',         grp:'Admin',       label:'Work Zone',                      bm:'Zon Kerja' },
-  { key:'work_schedule',     grp:'Admin',       label:'Work Schedule',                  bm:'Jadual Kerja' },
-  { key:'db_backup',         grp:'Admin',       label:'Database Backup',                bm:'Sandaran Data' },
-  { key:'role_perm',         grp:'Admin',       label:'Role & Store Permissions',        bm:'Kebenaran Peranan & Cawangan' },
-  { key:'user_mgmt',         grp:'Admin',       label:'User Management',                bm:'Pengurusan Pengguna' },
-  { key:'monthly_report',    grp:'Admin',       label:'Monthly Email Report',            bm:'Laporan E-mel Bulanan' },
+  { key:'view_admin',        grp:'Admin',   label:'Admin Panel (access)',            bm:'Panel Admin (akses)' },
+  { key:'mgr_dashboard',     grp:'Admin',   label:'Mgr Dashboard',                  bm:'Papan Pemuka Pengurus' },
+  { key:'pending_approvals', grp:'Admin',   label:'Pending Approvals',              bm:'Kelulusan Tertunda' },
+  { key:'attendance',        grp:'Admin',   label:'Attendance Records',             bm:'Rekod Kehadiran' },
+  { key:'work_zone',         grp:'Admin',   label:'Work Zone',                      bm:'Zon Kerja' },
+  { key:'work_schedule',     grp:'Admin',   label:'Work Schedule',                  bm:'Jadual Kerja' },
+  { key:'db_backup',         grp:'Admin',   label:'Database Backup',                bm:'Sandaran Data' },
+  { key:'role_perm',         grp:'Admin',   label:'Role & Store Permissions',        bm:'Kebenaran Peranan & Cawangan' },
+  { key:'user_mgmt',         grp:'Admin',   label:'User Management',                bm:'Pengurusan Pengguna' },
+  { key:'monthly_report',    grp:'Admin',   label:'Monthly Email Report',            bm:'Laporan E-mel Bulanan' },
   // ── Other ──────────────────────────────────────────────────────
-  { key:'cash_drawer',       grp:'Other',       label:'Cash Drawer',                    bm:'Laci Tunai' },
-  { key:'approve_sales',     grp:'Other',       label:'Approve Submissions',            bm:'Luluskan Penghantaran' },
-  { key:'notifications',     grp:'Other',       label:'Notifications',                  bm:'Notifikasi' },
+  { key:'cash_drawer',       grp:'Other',   label:'Cash Drawer',                    bm:'Laci Tunai' },
+  { key:'approve_sales',     grp:'Other',   label:'Approve Submissions',            bm:'Luluskan Penghantaran' },
+  { key:'notifications',     grp:'Other',   label:'Notifications',                  bm:'Notifikasi' },
 ];
 
 const DEFAULT_PERMS = {
@@ -1327,7 +1337,7 @@ function renderPermissionsPanel(){
   // Feature rows with group headers
   html += '<div style="display:flex;flex-direction:column;gap:2px">';
   var _lastGrp='';
-  var _grpColors={Submit:'#1d4ed8',Records:'#065f46',Summary:'#6d28d9',Settlement:'#0369a1',Admin:'#b45309',Other:'#374151'};
+  var _grpColors={Submit:'#1d4ed8',Records:'#065f46',Summary:'#6d28d9',Admin:'#b45309',Other:'#374151'};
   PERM_FEATURES.forEach(function(f, i){
     var bg = i%2===0?'#f8fafc':'#fff';
     var globalVal = globalRolePerms[f.key]!==undefined ? !!(globalRolePerms[f.key]) : !!(DEFAULT_PERMS[selRole]&&DEFAULT_PERMS[selRole][f.key]);
@@ -1908,10 +1918,10 @@ function downloadMonthlyExcel(month){
   var grandTotal=0;
   Object.keys(d.storeMap).sort().forEach(function(store){
     var s=d.storeMap[store];
-    salesRows.push([store,+s.total.toFixed(2),+s.cash.toFixed(2),+s.qr.toFixed(2),+s.card.toFixed(2),+s.bank.toFixed(2),s.days]);
+    salesRows.push([store,+s.total,+s.cash,+s.qr,+s.card,+s.bank,s.days]);
     grandTotal+=s.total;
   });
-  salesRows.push(['TOTAL',+grandTotal.toFixed(2),'','','','','']);
+  salesRows.push(['TOTAL',+grandTotal,'','','','','']);
   var ws1=XLSX.utils.aoa_to_sheet(salesRows);
   ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws1,'Sales Summary');
@@ -1988,9 +1998,9 @@ function downloadMonthlyExcel(month){
   rawSales.sort(function(a,b){return String(a.dateKey).localeCompare(String(b.dateKey));});
   var rawRows=[['Date','Store','Total','Cash','QR','Card','Bank','Submitter','Remark']];
   rawSales.forEach(function(r){
-    rawRows.push([r.dateKey||'',r.store||'',+parseFloat(r.total||0).toFixed(2),
-      +parseFloat(r.cash||0).toFixed(2),+parseFloat(r.qr||0).toFixed(2),
-      +parseFloat(r.card||0).toFixed(2),+parseFloat(r.bank||0).toFixed(2),
+    rawRows.push([r.dateKey||'',r.store||'',+fmtRM(r.total),
+      +fmtRM(r.cash),+fmtRM(r.qr),
+      +fmtRM(r.card),+fmtRM(r.bank),
       r.submitter||'',r.remark||'']);
   });
   var ws6=XLSX.utils.aoa_to_sheet(rawRows);
@@ -2014,11 +2024,11 @@ function shareMonthlyWhatsApp(month){
     var s=d.storeMap[store];
     grandTotal+=s.total;
     lines.push('🏪 *'+store+'*');
-    lines.push('  💰 Total: RM '+s.total.toFixed(2));
-    lines.push('  💵 Cash: RM '+s.cash.toFixed(2));
-    lines.push('  📱 QR: RM '+s.qr.toFixed(2));
-    lines.push('  💳 Card: RM '+s.card.toFixed(2));
-    lines.push('  🏦 Bank: RM '+s.bank.toFixed(2));
+    lines.push('  💰 Total: RM '+s.fmtRM(total));
+    lines.push('  💵 Cash: RM '+fmtRM(s.cash));
+    lines.push('  📱 QR: RM '+fmtRM(s.qr));
+    lines.push('  💳 Card: RM '+fmtRM(s.card));
+    lines.push('  🏦 Bank: RM '+fmtRM(s.bank));
     // Attendance
     if(d.attMap[store]){
       var staffList=Object.values(d.attMap[store]);
@@ -2029,9 +2039,9 @@ function shareMonthlyWhatsApp(month){
     lines.push('');
   });
   lines.push('─────────────────────');
-  lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
+  lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+fmtRM(grandTotal)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3_');
+  lines.push('_Daily Sales Reporter v4.7.3.0_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2088,17 +2098,7 @@ async function triggerSyncRefresh() {
           if(Array.isArray(appJson.workSchedules)) saveWorkSchedules(appJson.workSchedules);
           if(Array.isArray(appJson.backups)) saveBackups(appJson.backups);
           if(Array.isArray(appJson.userDevices)) saveUserDevices(appJson.userDevices);
-          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object'){
-            // Merge with DEFAULT_PERMS so new keys are never wiped by old GAS data
-            var _rp = JSON.parse(JSON.stringify(DEFAULT_PERMS));
-            Object.keys(appJson.rolePermissions).forEach(function(role){
-              if(!_rp[role]) _rp[role]={};
-              Object.keys(appJson.rolePermissions[role]).forEach(function(key){
-                _rp[role][key] = appJson.rolePermissions[role][key];
-              });
-            });
-            savePerms(_rp);
-          }
+          if(appJson.rolePermissions && typeof appJson.rolePermissions==='object') savePerms(appJson.rolePermissions);
           if(appJson.storePermissions && typeof appJson.storePermissions==='object') saveStorePerms(appJson.storePermissions);
           applyPermissionsToNav();
         }
@@ -2138,15 +2138,7 @@ async function fetchLiveUsers(forceRefresh) {
   try {
     const permResp = await gasGet('getPermissions');
     if(permResp && permResp.permissions){
-      // Merge GAS perms with DEFAULT_PERMS — ensures new keys are never lost
-      var merged = JSON.parse(JSON.stringify(DEFAULT_PERMS));
-      Object.keys(permResp.permissions).forEach(function(role){
-        if(!merged[role]) merged[role]={};
-        Object.keys(permResp.permissions[role]).forEach(function(key){
-          merged[role][key] = permResp.permissions[role][key];
-        });
-      });
-      savePerms(merged);
+      savePerms(permResp.permissions);
       if(currentUser) applyPermissionsToNav();
     }
   } catch(e){ console.warn('permission sync failed:', e.message); }
@@ -2469,7 +2461,7 @@ function renderSubmitTab() {
 function updateTotalFromMain(){
   var v=parseFloat(document.getElementById('s-total-main').value)||0;
   var el=document.getElementById('live-total');
-  if(el) el.textContent='RM '+v.toFixed(2);
+  if(el) el.textContent='RM '+fmtRM(v);
 }
 
 function checkAndLoadExistingSales() {
@@ -2504,7 +2496,7 @@ function updateLiveTotal() {
   const q=parseFloat(document.getElementById('s-qr').value)||0;
   const k=parseFloat(document.getElementById('s-card').value)||0;
   const b=parseFloat(document.getElementById('s-bank').value)||0;
-  document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
+  document.getElementById('live-total').textContent='RM '+fmtRM(c+q+k+b);
 }
 
 function openConfirm(withUpload) { withUpload=!!withUpload;
@@ -2549,7 +2541,7 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     <div class="stat-row"><span class="stat-label">📅 ${'Date'}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row" style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px">
       <span class="stat-label"><b>🧾 ${'totalSalesLabel'}</b></span>
-      <span class="stat-value big" style="font-size:26px;color:var(--primary)">RM ${total.toFixed(2)}</span>
+      <span class="stat-value big" style="font-size:26px;color:var(--primary)">RM ${fmtRM(total)}</span>
     </div>
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
@@ -2561,7 +2553,8 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     // the day immediately; everyone else's submission routes to their
     // store's Supervisor/Manager/Admin for approval (also enforced
     // server-side in handleUploadSettlement).
-    // Only staff (no confirm_daily) requires approval for settlement
+    // Supervisor and above: confirm_daily=1, never needs approval
+    // Staff: confirm_daily=0, must go through approval queue
     window._needsApproval = !hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
@@ -2592,7 +2585,8 @@ function _staffSubmitForApproval(withUpload) {
 
 function confirmSubmit(withUpload=false) {
   if(currentUser.role==='boss'){ showToast('Boss role cannot submit sales','error'); return; }
-  // Only staff without confirm_daily goes through approval (for settlement upload)
+  // Supervisor and above (anyone with confirm_daily) NEVER go through approval
+  // Only staff without confirm_daily needs approval for settlement upload
   if(!hasPerm('confirm_daily') && withUpload){
     window._needsApproval=true;
     _staffSubmitForApproval(true);
@@ -2708,8 +2702,8 @@ function renderRecordsTab() {
               </span>
             </div>
             <div class="record-meta">
-              💵 RM${parseFloat(r.cash||0).toFixed(2)} &nbsp;📱 RM${parseFloat(r.qr||0).toFixed(2)}<br>
-              💳 RM${parseFloat(r.card||0).toFixed(2)} &nbsp;🏦 RM${parseFloat(r.bank||0).toFixed(2)}
+              💵 RM${fmtRM(r.cash)} &nbsp;📱 RM${fmtRM(r.qr)}<br>
+              💳 RM${fmtRM(r.card)} &nbsp;🏦 RM${fmtRM(r.bank)}
             </div>
             ${r.remark?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.remark}</div>`:''}
             <div style="font-size:10px;color:#94a3b8;margin-top:3px">
@@ -2719,7 +2713,7 @@ function renderRecordsTab() {
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div class="record-amount">RM ${parseFloat(r.total||0).toFixed(2)}</div>
+            <div class="record-amount">RM ${fmtRM(r.total)}</div>
           </div>
         </div>`;
     }).join('');
@@ -2749,7 +2743,7 @@ function renderRecordsTab() {
             </div>
             <div style="font-size:11px;color:var(--text2)">${r.reason||''} · ${r.submitter||''}</div>
           </div>
-          <div class="${isIn?'move-in':'move-out'}">${isIn?'+':'-'}RM ${parseFloat(r.amount||0).toFixed(2)}</div>
+          <div class="${isIn?'move-in':'move-out'}">${isIn?'+':'-'}RM ${fmtRM(r.amount)}</div>
         </div>`;
       }).join('')}
     </div>`;
@@ -2777,7 +2771,7 @@ function renderRecordsTab() {
             ${r.note?`<div style="font-size:12px;color:var(--accent);margin-top:2px;">📝 ${r.note}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:20px;font-weight:900;color:#92400e">RM ${parseFloat(r.amount||0).toFixed(2)}</div>
+            <div style="font-size:20px;font-weight:900;color:#92400e">RM ${fmtRM(r.amount)}</div>
             <div class="record-sub">${cleanDateKey(r.dateKey)}</div>
           </div>
         </div>`).join('')}
@@ -2909,14 +2903,14 @@ function renderSummaryTab() {
         <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px">
           📊 ${vmLabel}
         </div>
-        <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${rangeTotal.toFixed(2)}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--primary)">RM ${fmtRM(rangeTotal)}</div>
         <div style="font-size:10px;color:var(--text2);margin-top:3px">${summaryStoreFilter==='all'?t('allStores'):summaryStoreFilter}</div>
       </div>
       <div class="card" style="margin:0;text-align:center;padding:14px">
         <div style="font-size:10px;font-weight:800;color:var(--text2);margin-bottom:4px">
           🗓️ ${selectedMonthValue}
         </div>
-        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${monthAllTotal.toFixed(2)}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--success)">RM ${fmtRM(monthAllTotal)}</div>
         <div style="font-size:10px;color:var(--text2);margin-top:3px">${t('allStores')}</div>
       </div>
     </div>
@@ -2974,7 +2968,7 @@ function renderSummaryTab() {
         <div style="margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:5px">
             <span>${medals[i]||'#'+(i+1)} &nbsp;${s}</span>
-            <span style="color:var(--primary)">RM ${(storeMap[s]||0).toFixed(2)}</span>
+            <span style="color:var(--primary)">RM ${fmtRM(storeMap[s]||0)}</span>
           </div>
           <div class="progress-bar-wrap" style="height:12px">
             <div class="progress-bar-fill" style="width:${pct}%;background:${i===0?'linear-gradient(90deg,#f59e0b,#fbbf24)':i===1?'linear-gradient(90deg,#94a3b8,#cbd5e1)':i===2?'linear-gradient(90deg,#b45309,#d97706)':'linear-gradient(90deg,var(--primary),#60a5fa)'}"></div>
@@ -3110,9 +3104,9 @@ function renderLogEntries() {
         diffHtml=`<div class="log-diff">
           ${changed.map(f=>`
             <span style="color:var(--text2)">${f.lbl}:</span>
-            <span class="diff-changed">RM ${parseFloat(f.before||0).toFixed(2)}</span>
+            <span class="diff-changed">RM ${fmtRM(f.before)}</span>
             <span class="diff-arrow">→</span>
-            <span class="diff-new">RM ${parseFloat(f.after||0).toFixed(2)}</span>
+            <span class="diff-new">RM ${fmtRM(f.after)}</span>
             &nbsp;&nbsp;
           `).join('')}
         </div>`;
@@ -3120,11 +3114,11 @@ function renderLogEntries() {
     } else {
       // New submission — just show totals
       diffHtml=`<div class="log-diff">
-        💵 RM${parseFloat(r.after_cash||0).toFixed(2)} &nbsp;
-        📱 RM${parseFloat(r.after_qr||0).toFixed(2)} &nbsp;
-        💳 RM${parseFloat(r.after_card||0).toFixed(2)} &nbsp;
-        🏦 RM${parseFloat(r.after_bank||0).toFixed(2)} &nbsp;
-        <strong style="color:var(--primary)">= RM${parseFloat(r.after_total||0).toFixed(2)}</strong>
+        💵 RM${fmtRM(r.after_cash)} &nbsp;
+        📱 RM${fmtRM(r.after_qr)} &nbsp;
+        💳 RM${fmtRM(r.after_card)} &nbsp;
+        🏦 RM${fmtRM(r.after_bank)} &nbsp;
+        <strong style="color:var(--primary)">= RM${fmtRM(r.after_total)}</strong>
       </div>`;
     }
 
@@ -3817,7 +3811,7 @@ function approvalRowHtml(r){
     :r.type==='sales_submission'?(ZH?'销售提交':'Sales Submission')
     :r.type==='cash_out'?(ZH?'现金出款':'Cash Out')
     :String(r.type||'').replace(/_/g,' ');
-  var amtStr=parseFloat(r.total||r.amount||0).toFixed(2);
+  var amtStr=fmtRM(r.total||r.amount);
   var reqName=r.name||r.requester||r.submitter||r.username||'—';
   var reqRole=r.requesterRole||r.role||'';
   var roleCol={boss:'#b91c1c',admin:'#6d28d9',manager:'#1d4ed8',supervisor:'#065f46',staff:'#374151'};
@@ -4292,7 +4286,7 @@ function requestSettlementApproval(){
     +'<div style="background:#f8fafc;border-radius:10px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">🏪 '+store+'</span><span class="stat-value">'+dateVal+'</span></div>'
       +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?'totalSalesLabel':'Jumlah')+'</b></span>'
-        +'<span class="stat-value big" style="color:#1e3a8a">RM '+total.toFixed(2)+'</span></div>'
+        +'<span class="stat-value big" style="color:#1e3a8a">RM '+fmtRM(total)+'</span></div>'
     +'</div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+('Your settlement requires approval from Supervisor / Manager / Admin.')+'</div>'
     +'<div style="display:flex;gap:10px">'
@@ -4322,7 +4316,7 @@ function openSettlementBreakdown(sd){
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
   ov.innerHTML='<div class="modal-box">'
     +'<div class="modal-title">💰 '+('Daily Sales Settlement')+'</div>'
-    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+fmtRM(total)+'</div></div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+('Enter payment breakdown:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
@@ -4338,8 +4332,8 @@ function openSettlementBreakdown(sd){
     var q=parseFloat(document.getElementById('bd-qr').value)||0;
     var k=parseFloat(document.getElementById('bd-card').value)||0;
     var b=parseFloat(document.getElementById('bd-bank').value)||0;
-    var sum=parseFloat((c+q+k+b).toFixed(2));
-    if(sum!==window._bdTotal){showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+sum.toFixed(2)+(lang==='en'?' must equal RM':' mesti RM')+(window._bdTotal||0).toFixed(2),'error');return;}
+    var sum=fmtRM((c+q+k+b));
+    if(sum!==window._bdTotal){showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+fmtRM(sum)+(lang==='en'?' must equal RM':' mesti RM')+fmtRM(window._bdTotal||0),'error');return;}
     window._bdCash=c;window._bdQr=q;window._bdCard=k;window._bdBank=b;
     var sales=getSales();var ri=sales.findIndex(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
     if(ri>=0){sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;saveSales(sales);
@@ -4350,9 +4344,9 @@ function openSettlementBreakdown(sd){
 function checkBdTotal(){
   var c=parseFloat(document.getElementById('bd-cash').value)||0,q=parseFloat(document.getElementById('bd-qr').value)||0;
   var k=parseFloat(document.getElementById('bd-card').value)||0,b=parseFloat(document.getElementById('bd-bank').value)||0;
-  var sum=parseFloat((c+q+k+b).toFixed(2));var ok=sum===(window._bdTotal||0);
+  var sum=fmtRM((c+q+k+b));var ok=sum===(window._bdTotal||0);
   var el=document.getElementById('bd-check');
-  if(el){el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+sum.toFixed(2)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+(window._bdTotal||0).toFixed(2));el.style.background=ok?'#f0fdf4':'#fff1f2';el.style.color=ok?'#10b981':'#ef4444';}
+  if(el){el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+fmtRM(sum)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+fmtRM(window._bdTotal||0));el.style.background=ok?'#f0fdf4':'#fff1f2';el.style.color=ok?'#10b981':'#ef4444';}
 }
 
 function openSettlementUploadFirst(){
@@ -4375,7 +4369,7 @@ function openSettlementUploadFirst(){
     +(needsApproval?'<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#5b21b6;font-weight:700">'+(ZH?'⏳ 此提交需要您门店主管/经理/管理员的审批':'⏳ This submission requires approval from your store\'s Supervisor/Manager/Admin')+'</div>':'')
     +'<div style="background:#eff6ff;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-size:12px;font-weight:700;color:#1e3a8a">🏪 '+store+' · 📅 '+dateKey+'</span>'
-      +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</span>'
+      +'<span style="font-size:20px;font-weight:900;color:#1e3a8a">RM '+fmtRM(total)+'</span>'
     +'</div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:10px">'+descTxt+'</div>'
     +'<div id="uf-preview" style="display:none;margin-bottom:12px;text-align:center">'
@@ -4664,19 +4658,19 @@ function renderCashDrawerCard(store, dateKey) {
   const variance = existing ? (actual - expected) : null;
   const isStaff  = currentUser.role === 'staff';
   const vc = variance===null?'#94a3b8':variance>0?'#10b981':variance<0?'#ef4444':'#10b981';
-  const vl = variance===null?'-':variance>0?('+RM '+variance.toFixed(2)+' \u2191'):variance<0?('-RM '+Math.abs(variance).toFixed(2)+' \u2193'):'RM 0.00 \u2713';
+  const vl = variance===null?'-':variance>0?('+RM '+fmtRM(variance)+' \u2191'):variance<0?('-RM '+fmtRM(Math.abs(variance))+' \u2193'):'RM 0.00 \u2713';
   const prevLbl = prev?'('+prev.dateKey+')':'';
   const carryHtml =
     '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #fde68a">'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+(lang==='zh'?'📂 开盘':'📂 Opening')+' '+prevLbl+'</span><span style="font-weight:900;color:#92400e">RM '+opening.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'今日现金销售':'Cash Sales today')+'</span><span style="font-weight:900;color:#1e3a8a">+RM '+cashSales.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'入款':'Cash In')+'</span><span style="font-weight:900;color:#10b981">+RM '+totalIn.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+(lang==='zh'?'出款':'Cash Out')+'</span><span style="font-weight:900;color:#ef4444">-RM '+totalOut.toFixed(2)+'</span></div>'
-    +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+(lang==='zh'?'预期余额':'Expected')+'</span><span style="color:#92400e">RM '+expected.toFixed(2)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">'+(lang==='zh'?'📂 开盘':'📂 Opening')+' '+prevLbl+'</span><span style="font-weight:900;color:#92400e">RM '+fmtRM(opening)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'今日现金销售':'Cash Sales today')+'</span><span style="font-weight:900;color:#1e3a8a">+RM '+fmtRM(cashSales)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">+ '+(lang==='zh'?'入款':'Cash In')+'</span><span style="font-weight:900;color:#10b981">+RM '+fmtRM(totalIn)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:.5px solid #fde68a;font-size:13px"><span style="color:#92400e;font-weight:600">- '+(lang==='zh'?'出款':'Cash Out')+'</span><span style="font-weight:900;color:#ef4444">-RM '+fmtRM(totalOut)+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-weight:800"><span style="color:#92400e">'+(lang==='zh'?'预期余额':'Expected')+'</span><span style="color:#92400e">RM '+fmtRM(expected)+'</span></div>'
     +'</div>';
   const varHtml =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+(lang==='zh'?'实际盘点':'Actual Count')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+actual.toFixed(2)+'</div></div>'
+    +'<div style="text-align:center;background:#fff7ed;border-radius:10px;padding:10px;border:1.5px solid #fde68a"><div style="font-size:10px;color:#b45309;font-weight:700">'+(lang==='zh'?'实际盘点':'Actual Count')+'</div><div style="font-size:20px;font-weight:900;color:#92400e">RM '+fmtRM(actual)+'</div></div>'
     +'<div style="text-align:center;border-radius:10px;padding:10px;border:1.5px solid '+vc+';background:'+(variance===null?'#f8fafc':variance>=0?'#f0fdf4':'#fff1f2')+'"><div style="font-size:10px;font-weight:700;color:'+vc+'">'+(lang==='zh'?'盈亏':'Gain/Loss')+'</div><div style="font-size:18px;font-weight:900;color:'+vc+'">'+vl+'</div></div>'
     +'</div>';
   const warnHtml = (variance!==null&&variance!==0)
@@ -4734,7 +4728,7 @@ function renderCashDrawerModal() {
     <div class="denom-card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span class="denom-label">${d.label}</span>
-        <span class="denom-total" id="dts-${d.val}">RM ${(((_cdQty[d.val]||0)*d.val)).toFixed(2)}</span>
+        <span class="denom-total" id="dts-${d.val}">RM ${(fmtRM((_cdQty[d.val]||0)*d.val))}</span>
       </div>
       <div class="denom-controls">
         <button class="denom-btn minus" onclick="cdQtyChange(${d.val},-1)">−</button>
@@ -4750,7 +4744,7 @@ function renderCashDrawerModal() {
     <div class="denom-card coin">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span class="denom-label" style="font-size:13px">${d.label}</span>
-        <span class="denom-total" id="dts-${d.val.toFixed(2).replace('.','_')}">RM ${((_cdQty[d.val]||0)*d.val).toFixed(2)}</span>
+        <span class="denom-total" id="dts-${d.val.toFixed(2).replace('.','_')}">RM ${fmtRM((_cdQty[d.val]||0)*d.val)}</span>
       </div>
       <div class="denom-controls">
         <button class="denom-btn minus" onclick="cdQtyChange(${d.val},-1)">−</button>
@@ -4770,7 +4764,7 @@ function renderCashDrawerModal() {
           <div style="font-size:11px;color:var(--text2)">${r.submitter||''} · ${r.datetime?fmtTimeUTC8(r.datetime):''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="${type==='in'?'move-in':'move-out'}">${type==='in'?'+':'-'}RM ${parseFloat(r.amount||0).toFixed(2)}</span>
+          <span class="${type==='in'?'move-in':'move-out'}">${type==='in'?'+':'-'}RM ${fmtRM(r.amount)}</span>
           <button onclick="deleteCashMovement('${r.id}')" style="background:#fee2e2;border:none;border-radius:8px;padding:3px 8px;font-size:11px;color:#ef4444;cursor:pointer;font-weight:700">✕</button>
         </div>
       </div>`).join('');
@@ -4795,15 +4789,15 @@ function renderCashDrawerModal() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
           <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:8px;text-align:center">
             <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'柜内现金':'In Drawer'}</div>
-            <div style="font-size:16px;font-weight:900" id="cd-live-total">RM ${cdCalcTotal().toFixed(2)}</div>
+            <div style="font-size:16px;font-weight:900" id="cd-live-total">RM ${fmtRM(cdCalcTotal())}</div>
           </div>
           <div style="background:rgba(16,185,129,.3);border-radius:10px;padding:8px;text-align:center">
             <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金入':'Cash In'}</div>
-            <div style="font-size:16px;font-weight:900">+${totalIn.toFixed(2)}</div>
+            <div style="font-size:16px;font-weight:900">+${fmtRM(totalIn)}</div>
           </div>
           <div style="background:rgba(239,68,68,.3);border-radius:10px;padding:8px;text-align:center">
             <div style="font-size:9px;font-weight:700;opacity:.8">${lang==='zh'?'现金出':'Cash Out'}</div>
-            <div style="font-size:16px;font-weight:900">-${totalOut.toFixed(2)}</div>
+            <div style="font-size:16px;font-weight:900">-${fmtRM(totalOut)}</div>
           </div>
         </div>
       </div>
@@ -4824,7 +4818,7 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            ✅ ${lang==='zh'?'现金入':'Cash IN'} <span style="font-weight:900;color:#10b981">+RM ${totalIn.toFixed(2)}</span>
+            ✅ ${lang==='zh'?'现金入':'Cash IN'} <span style="font-weight:900;color:#10b981">+RM ${fmtRM(totalIn)}</span>
           </div>
           <button onclick="openAddMovement('in')"
             style="background:#10b981;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
@@ -4839,7 +4833,7 @@ function renderCashDrawerModal() {
       <div class="cd-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="cd-section-title" style="margin-bottom:0">
-            🚫 ${lang==='zh'?'现金出':'Cash OUT'} <span style="font-weight:900;color:#ef4444">-RM ${totalOut.toFixed(2)}</span>
+            🚫 ${lang==='zh'?'现金出':'Cash OUT'} <span style="font-weight:900;color:#ef4444">-RM ${fmtRM(totalOut)}</span>
           </div>
           <button onclick="openAddMovement('out')"
             style="background:#ef4444;color:#fff;border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">
@@ -4894,13 +4888,13 @@ function cdQtySet(val, raw) {
 }
 
 function cdRefreshDenom(val) {
-  const key = val < 1 ? parseFloat(val).toFixed(2).replace('.','_') : val;
+  const key = val < 1 ? fmtRM(val).replace('.','_') : val;
   const qi = document.getElementById('dqi-'+key);
   const ts = document.getElementById('dts-'+key);
   const liveEl = document.getElementById('cd-live-total');
   if(qi) qi.value = _cdQty[val]||0;
-  if(ts) ts.textContent = 'RM '+((_cdQty[val]||0)*parseFloat(val)).toFixed(2);
-  if(liveEl) liveEl.textContent = 'RM '+cdCalcTotal().toFixed(2);
+  if(ts) ts.textContent = 'RM '+fmtRM((_cdQty[val]||0)*parseFloat(val));
+  if(liveEl) liveEl.textContent = 'RM '+fmtRM(cdCalcTotal());
 }
 
 // ── Cash In / Out movement ────────────────────────────────────
