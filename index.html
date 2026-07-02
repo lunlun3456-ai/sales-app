@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.30</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.30</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -640,6 +640,13 @@ function cleanDateKey(s){
   if(str.length<=10) return str.slice(0,10);
   // Has time component — parse and convert to MYT date
   try{ return new Date(str).toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); }catch(e){ return str.slice(0,10); }
+}
+
+// Format number with thousand comma separators — use for ALL currency display
+function fmtRM(n, dp){
+  if(dp===undefined) dp=2;
+  var num=parseFloat(n)||0;
+  return num.toLocaleString('en-MY',{minimumFractionDigits:dp,maximumFractionDigits:dp});
 }
 
 function cleanDateTime(s){
@@ -971,7 +978,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.30 ──
+    // ── Additional zh keys v4.7.3 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -2030,7 +2037,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.30_');
+  lines.push('_Daily Sales Reporter v4.7.3_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2504,7 +2511,7 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
     showToast(lang==='en'?'Settlement already uploaded. Manager/Admin approval required.':'Penyelesaian sudah dimuat naik. Perlu kelulusan.','error'); return;
   }
 
-  // Parse total cleanly with Math.round to kill float drift
+  // Math.round ensures clean 2dp — no floating point drift
   const total = Math.round((parseFloat(document.getElementById('s-total-main')?.value)||0)*100)/100;
   if(!total){
     showToast(lang==='en'?'Please enter Total Sales first':'Sila masukkan Jumlah Jualan dahulu','error');
@@ -2515,21 +2522,20 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
   const isEdit=!!existingRecord;
 
-  // Close any stale modals so they never block the new one
+  // Close any stale modals that might block the new one
   closeModal();
-  var _oldBd=document.getElementById('settle-bd-modal'); if(_oldBd) _oldBd.remove();
+  var _stale=document.getElementById('settle-bd-modal'); if(_stale) _stale.remove();
 
   window._pendingSubmit={store,targetDate,cash:total,qr:0,card:0,bank:0,total,remark};
   window._submitWithUpload=withUpload;
 
   if(withUpload){
-    // Supervisor and above: direct lock. Staff: approval queue.
     window._needsApproval = !hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
 
-  // Plain sales submit — open confirm modal
+  // Plain sales — open confirm modal
   document.getElementById('modal-title').innerHTML=t('confirmTitle')+
     (isEdit?` <span class="log-action-edit">${t('editEntry')}</span>`
            :`<span class="log-action-new" style="margin-left:8px;">${t('newEntry')}</span>`);
@@ -4264,7 +4270,7 @@ function requestSettlementApproval(){
   var dateVal=document.getElementById('submit-date')?.value||dateKeyUTC8();
   var total=parseFloat(document.getElementById('s-total-main')?.value)||0;
   var remark=document.getElementById('s-remark')?.value||'';
-  if(!total){showToast((lang==='en'?'Enter Total Sales first':'Masukkan Jumlah Jualan dahulu'),'error');return;}
+  if(!total){showToast('Enter totalSalesLabel first','error');return;}
   var EN=lang==='en';
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-appr-modal';
   ov.innerHTML=
@@ -4273,7 +4279,7 @@ function requestSettlementApproval(){
     +'<div class="modal-title">'+('Request Settlement Approval')+'</div>'
     +'<div style="background:#f8fafc;border-radius:10px;padding:12px;margin:10px 0;text-align:left">'
       +'<div class="stat-row"><span class="stat-label">🏪 '+store+'</span><span class="stat-value">'+dateVal+'</span></div>'
-      +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?t('totalSalesLabel'):'Jumlah')+'</b></span>'
+      +'<div class="stat-row"><span class="stat-label"><b>🧾 '+(EN?'totalSalesLabel':'Jumlah')+'</b></span>'
         +'<span class="stat-value big" style="color:#1e3a8a">RM '+total.toFixed(2)+'</span></div>'
     +'</div>'
     +'<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+('Your settlement requires approval from Supervisor / Manager / Admin.')+'</div>'
@@ -4302,7 +4308,7 @@ function requestSettlementApproval(){
 function openSettlementBreakdown(sd){
   var EN=lang==='en';
   var total=Math.round(parseFloat((sd&&sd.total)||0)*100)/100;
-  // Remove any stale breakdown modal first
+  // Remove any stale breakdown modal
   var _old=document.getElementById('settle-bd-modal'); if(_old) _old.remove();
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
   ov.innerHTML='<div class="modal-box">'
@@ -4311,13 +4317,13 @@ function openSettlementBreakdown(sd){
       +'<div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Total to match:':'Jumlah yang perlu dipadankan:')+'</div>'
       +'<div style="font-size:26px;font-weight:900;color:#1e3a8a">RM '+fmtRM(total)+'</div>'
     +'</div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Split into payment types — must add up to the total above:':'Bahagikan kepada jenis pembayaran:')+'</div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Split into payment types below:':'Bahagikan kepada jenis pembayaran:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc;color:#64748b">'
-      +(EN?'Enter amounts above — must equal RM '+fmtRM(total):'Masukkan jumlah — mesti RM '+fmtRM(total))
+      +(EN?'Enter amounts — must equal RM '+fmtRM(total):'Masukkan jumlah — mesti RM '+fmtRM(total))
     +'</div>'
     +'<div style="display:flex;gap:10px;margin-top:8px">'
       +'<button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button>'
@@ -4329,7 +4335,7 @@ function openSettlementBreakdown(sd){
   window._bdStore=(sd&&sd.store)||'';
   window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
 
-  // Pre-fill from existing record if a split was previously saved
+  // Pre-fill from existing record if split was previously saved
   var existRec=getSales().find(function(r){
     return r.store===window._bdStore&&String(r.dateKey).slice(0,10)===window._bdDate;
   });
