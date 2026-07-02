@@ -4299,62 +4299,87 @@ function requestSettlementApproval(){
 }
 
 function openSettlementBreakdown(sd){
-  var EN=lang==='en'; var total=parseFloat((sd&&sd.total)||0);
+  var EN=lang==='en';
+  // Always parse total as a clean number — never use formatted strings with commas
+  var total = Math.round(parseFloat((sd&&sd.total)||0)*100)/100;
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
   ov.innerHTML='<div class="modal-box">'
-    +'<div class="modal-title">💰 '+('Daily Sales Settlement')+'</div>'
-    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+('Enter payment breakdown:')+'</div>'
+    +'<div class="modal-title" style="color:#1e3a8a">💰 '+(EN?'Daily Sales Settlement':'Penyelesaian Jualan Harian')+'</div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+fmtRM(total)+'</div></div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Enter payment breakdown — must add up to the total above:':'Masukkan pecahan pembayaran — mesti sama dengan jumlah di atas:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
-    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+('Enter amounts above')+'</div>'
-    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+('Confirm & Upload Receipt')+'</button></div></div>';
+    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+(EN?'Enter amounts above — total must match':'Masukkan jumlah di atas — mesti sama')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+(EN?'Confirm & Upload Receipt':'Sahkan & Muat Naik Resit')+'</button></div></div>';
   document.body.appendChild(ov);
-  // Round to 2dp once — prevents floating-point drift in comparisons
-  window._bdTotal=Math.round(total*100)/100;
-  window._bdStore=(sd&&sd.store)||'';window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
-  // Pre-fill from existing record's breakdown if available (not just total→cash default)
-  var existRec=getSales().find(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
-  if(existRec){
-    if(existRec.cash!=null && existRec.cash!==existRec.total){ // meaningful split exists
-      var cashEl=document.getElementById('bd-cash'); if(cashEl&&existRec.cash) cashEl.value=parseFloat(existRec.cash||0);
-      var qrEl=document.getElementById('bd-qr'); if(qrEl&&existRec.qr) qrEl.value=parseFloat(existRec.qr||0);
-      var cardEl=document.getElementById('bd-card'); if(cardEl&&existRec.card) cardEl.value=parseFloat(existRec.card||0);
-      var bankEl=document.getElementById('bd-bank'); if(bankEl&&existRec.bank) bankEl.value=parseFloat(existRec.bank||0);
-      checkBdTotal();
-    }
+
+  // Store rounded total as the single source of truth for validation
+  window._bdTotal = total;
+  window._bdStore = (sd&&sd.store)||'';
+  window._bdDate  = (sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
+
+  // Pre-fill from existing record if user already entered a breakdown previously
+  var existRec = getSales().find(function(r){
+    return r.store===window._bdStore && String(r.dateKey).slice(0,10)===window._bdDate;
+  });
+  if(existRec && parseFloat(existRec.cash||0) !== parseFloat(existRec.total||0)){
+    // Meaningful split exists — pre-fill the fields
+    var f=document.getElementById('bd-cash'); if(f&&existRec.cash) f.value=parseFloat(existRec.cash)||0;
+    var g=document.getElementById('bd-qr');   if(g&&existRec.qr)   g.value=parseFloat(existRec.qr)||0;
+    var h=document.getElementById('bd-card'); if(h&&existRec.card) h.value=parseFloat(existRec.card)||0;
+    var j=document.getElementById('bd-bank'); if(j&&existRec.bank) j.value=parseFloat(existRec.bank)||0;
+    checkBdTotal();
   }
-  document.getElementById('bd-skip').onclick=function(){ov.remove();openSettlementUpload();};
-  document.getElementById('bd-ok').onclick=function(){
+
+  document.getElementById('bd-skip').onclick = function(){ ov.remove(); openSettlementUpload(); };
+  document.getElementById('bd-ok').onclick   = function(){
     var c=parseFloat(document.getElementById('bd-cash').value)||0;
     var q=parseFloat(document.getElementById('bd-qr').value)||0;
     var k=parseFloat(document.getElementById('bd-card').value)||0;
     var b=parseFloat(document.getElementById('bd-bank').value)||0;
-    // Round both sides to 2dp before comparing — eliminates floating-point false mismatches
-    var sum=Math.round((c+q+k+b)*100)/100;
-    var tgt=window._bdTotal;
-    if(sum!==tgt){showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+fmtRM(sum)+(lang==='en'?' must equal RM':' mesti RM')+fmtRM(tgt),'error');return;}
-    window._bdCash=c;window._bdQr=q;window._bdCard=k;window._bdBank=b;
-    var sales=getSales();var ri=sales.findIndex(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
-    if(ri>=0){sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;saveSales(sales);
-      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});}
-    ov.remove();openSettlementUploadFirst();
+    // Use Math.round to avoid floating-point drift (e.g. 159+29 = 188.00000003)
+    var sum = Math.round((c+q+k+b)*100)/100;
+    var tgt = window._bdTotal;
+    if(sum !== tgt){
+      showToast((EN?'Breakdown RM':'Pecahan RM')+fmtRM(sum)+(EN?' must equal RM':' mesti RM')+fmtRM(tgt),'error');
+      return;
+    }
+    window._bdCash=c; window._bdQr=q; window._bdCard=k; window._bdBank=b;
+    // Update the sales record with the breakdown
+    var sales=getSales();
+    var ri=sales.findIndex(function(r){return r.store===window._bdStore&&String(r.dateKey).slice(0,10)===window._bdDate;});
+    if(ri>=0){
+      sales[ri].cash=c; sales[ri].qr=q; sales[ri].card=k; sales[ri].bank=b;
+      saveSales(sales);
+      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});
+    }
+    ov.remove();
+    openSettlementUploadFirst();
   };
 }
 function checkBdTotal(){
-  var c=parseFloat(document.getElementById('bd-cash').value)||0,q=parseFloat(document.getElementById('bd-qr').value)||0;
-  var k=parseFloat(document.getElementById('bd-card').value)||0,b=parseFloat(document.getElementById('bd-bank').value)||0;
-  // Round to 2dp — eliminates floating-point false mismatches (e.g. 159+29=188.00000001)
-  var sum=Math.round((c+q+k+b)*100)/100;
-  var tgt=window._bdTotal||0;
-  var ok=sum===tgt;
-  var el=document.getElementById('bd-check');
-  if(el){
-    el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+fmtRM(sum)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+fmtRM(tgt));
-    el.style.background=ok?'#f0fdf4':'#fff1f2';
-    el.style.color=ok?'#10b981':'#ef4444';
+  var c=parseFloat(document.getElementById('bd-cash')?.value)||0;
+  var q=parseFloat(document.getElementById('bd-qr')?.value)||0;
+  var k=parseFloat(document.getElementById('bd-card')?.value)||0;
+  var b=parseFloat(document.getElementById('bd-bank')?.value)||0;
+  // Math.round to 2dp eliminates floating-point drift (e.g. 159+29=188.00000000003)
+  var sum = Math.round((c+q+k+b)*100)/100;
+  var tgt = window._bdTotal||0;
+  var ok  = (sum === tgt);
+  var el  = document.getElementById('bd-check');
+  if(!el) return;
+  var EN = lang==='en';
+  if(ok){
+    el.textContent = (EN?'Breakdown: RM':'Pecahan: RM')+fmtRM(sum)+' ✅';
+    el.style.background='#f0fdf4'; el.style.color='#10b981';
+  } else {
+    el.textContent = (EN?'Breakdown: RM':'Pecahan: RM')+fmtRM(sum)
+      +(EN?' — must be RM':' — mesti RM')+fmtRM(tgt);
+    el.style.background='#fff1f2'; el.style.color='#ef4444';
   }
 }
 
