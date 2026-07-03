@@ -364,7 +364,7 @@
         <!-- version -->
         <text x="314" y="216"
           font-family="system-ui,-apple-system,sans-serif"
-          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3.1</text>
+          font-weight="600" font-size="9" fill="#cbd5e1" text-anchor="end">v4.7.3</text>
 
       </svg>
     </div><!-- /login-logo -->
@@ -415,7 +415,7 @@
         <!-- by ki -->
         <text x="34" y="28" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="9" fill="rgba(255,255,255,0.45)" font-style="italic">by ki</text>
         <!-- version -->
-        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3.1</text>
+        <text x="198" y="34" font-family="system-ui,-apple-system,sans-serif" font-weight="600" font-size="7.5" fill="rgba(255,255,255,0.5)" text-anchor="end">v4.7.3</text>
       </svg>
       <div class="sub" id="app-user-info"></div>
     </div>
@@ -510,7 +510,7 @@
       <button class="btn secondary" style="flex:1" id="m-cancel-btn" onclick="closeModal()">Cancel 取消</button>
       <button class="btn success" style="flex:1" id="m-submit-btn" onclick="confirmSubmit(false)">✅ Confirm &amp; Submit</button>
     </div>
-    <button class="btn" id="m-upload-btn" onclick="confirmSubmit(true)" style="margin-top:8px;font-size:14px;background:#f59e0b;width:100%">
+    <button class="btn" id="m-upload-btn" onclick="confirmSubmit(true)" style="display:none;margin-top:8px;font-size:14px;background:#f59e0b;width:100%">
       📎 Submit + Upload Receipt (Confirms Daily Sales)
     </button>
   </div>
@@ -634,13 +634,15 @@ var _mytOffset = 0; // ms offset: server MYT - device local time
 var _mytSynced = false;
 
 function cleanDateKey(s){
+  // Convert any date format to YYYY-MM-DD in MYT
   if(!s) return '';
   var str=String(s);
   if(str.length<=10) return str.slice(0,10);
+  // Has time component — parse and convert to MYT date
   try{ return new Date(str).toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'}); }catch(e){ return str.slice(0,10); }
 }
 
-// Format number with thousand comma separators — RM 1,038.40
+// Format with thousand comma separators: 1038.40 → "1,038.40"
 function fmtRM(n,dp){ if(dp===undefined)dp=2; return (parseFloat(n)||0).toLocaleString('en-MY',{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
 
 function cleanDateTime(s){
@@ -972,7 +974,7 @@ const T = {
     selectStoreFrst:'请先选择门店',
     latLngRequired:'请输入经纬度坐标',
     zoneSaved:'区域已保存。',
-    // ── Additional zh keys v4.7.3.1 ──
+    // ── Additional zh keys v4.7.3 ──
     totalSalesLabel:'总销售额',storeLabel:'门店',dateLabel2:'日期',
     updateSalesBtn:'📝 更新销售',confirmDailyBtn:'📎 确认每日销售 (上传收据)',
     requestApprovalBtn:'📋 申请结算审批',
@@ -2031,7 +2033,7 @@ function shareMonthlyWhatsApp(month){
   lines.push('─────────────────────');
   lines.push('*'+(EN?'GRAND TOTAL: RM ':'JUMLAH KESELURUHAN: RM ')+grandTotal.toFixed(2)+'*');
   lines.push('');
-  lines.push('_Daily Sales Reporter v4.7.3.1_');
+  lines.push('_Daily Sales Reporter v4.7.3_');
   var msg=lines.join('\n');
   // WhatsApp - check if recipient phone in email field
   var s2=getReportSettings();
@@ -2423,31 +2425,17 @@ function renderSubmitTab() {
       </div>
             <div id="sales-lock-note"></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-        ${hasPerm('submit_sales')?`
-        <div style="display:flex;gap:6px;align-items:stretch">
-          <button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
-            style="font-size:15px;flex:1">
-            📝 ${lang==='en'?'Update Sales':'Kemaskini Jualan'}
-          </button>
-          <button onclick="openConfirmZero(false)"
-            title="${lang==='en'?'Submit Zero Sales (no sales today)':'Hantar Jualan Sifar'}"
-            style="padding:0 12px;border-radius:12px;border:2px solid #10b981;background:#f0fdf4;color:#065f46;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">
-            🚫 ${lang==='en'?'Zero':'Sifar'}
-          </button>
-        </div>`:''}
-        <div style="display:flex;gap:6px;align-items:stretch">
-          <button class="btn" onclick="openConfirm(true)" id="sales-settle-btn"
-            style="font-size:13px;flex:1;${hasPerm('confirm_daily')?'background:#f59e0b':'background:#7c3aed'}">
-            📎 ${hasPerm('confirm_daily')
-              ?(lang==='en'?'Confirm Daily Sales (Upload Receipt)':'Sahkan Jualan Harian (Muat Naik Resit)')
-              :(ZH?'确认每日销售（需审批）':(lang==='en'?'Confirm Daily Sales (Needs Approval)':'Sahkan Jualan Harian (Perlu Kelulusan)'))}
-          </button>
-          <button onclick="openConfirmZero(true)"
-            title="${lang==='en'?'Confirm Zero Sales today (no sales)':'Sahkan Jualan Sifar Hari Ini'}"
-            style="padding:0 12px;border-radius:12px;border:2px solid #f59e0b;background:#fffbeb;color:#92400e;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">
-            🚫 ${lang==='en'?'Zero':'Sifar'}
-          </button>
-        </div>
+        ${hasPerm('submit_sales')?`<button class="btn success" onclick="openConfirm(false)" id="sales-submit-btn"
+          style="font-size:17px">
+          📝 ${'Update Sales'}
+        </button>`:''}
+        ${hasPerm('confirm_daily')
+          ?`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#f59e0b">
+              📎 ${'Confirm Daily Sales (Upload Receipt)'}
+            </button>`
+          :`<button class="btn" onclick="openConfirm(true)" id="sales-settle-btn" style="font-size:14px;background:#7c3aed">
+              📎 ${ZH?'确认每日销售（需审批）':(lang==='en'?'Confirm Daily Sales (Needs Approval)':'Sahkan Jualan Harian (Perlu Kelulusan)')}
+            </button>`}
       </div>
 
     </div>
@@ -2503,15 +2491,6 @@ function updateLiveTotal() {
   document.getElementById('live-total').textContent='RM '+(c+q+k+b).toFixed(2);
 }
 
-// Zero Sales shortcut — sets total to 0.00 and opens the confirm flow
-function openConfirmZero(withUpload){
-  var el=document.getElementById('s-total-main');
-  if(el){ el.value='0'; updateTotalFromMain(); }
-  window._zeroSales=true; // flag so openConfirm allows total=0
-  openConfirm(withUpload);
-  window._zeroSales=false;
-}
-
 function openConfirm(withUpload) { withUpload=!!withUpload;
   const store     =document.getElementById('submit-store')?.value||'';
   const targetDate=document.getElementById('submit-date')?.value||'';
@@ -2529,16 +2508,11 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   }
 
   const total = Math.round((parseFloat(document.getElementById('s-total-main')?.value)||0)*100)/100;
-  // Block if total is 0 AND user didn't explicitly tap Zero Sales
-  if(!total && !window._zeroSales){
-    showToast(lang==='en'?'Please enter Total Sales first (or tap 🚫 Zero for no sales)':'Masukkan Jumlah Jualan atau ketik 🚫 Sifar','error');
-    return;
-  }
-
   const remark=document.getElementById('s-remark')?.value||'';
   const existingRecord=getSales().find(item=>item.dateKey===targetDate&&item.store===store);
   const isEdit=!!existingRecord;
 
+  // Close any stale modals before opening new ones
   closeModal();
   var _stale=document.getElementById('settle-bd-modal'); if(_stale) _stale.remove();
 
@@ -2546,11 +2520,13 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
   window._submitWithUpload=withUpload;
 
   if(withUpload){
+    // Supervisor and above: direct lock. Staff: approval queue.
     window._needsApproval = !hasPerm('confirm_daily');
     openSettlementBreakdown(window._pendingSubmit);
     return;
   }
 
+  // Plain sales — open confirm modal
   document.getElementById('modal-title').innerHTML=t('confirmTitle')+
     (isEdit?` <span class="log-action-edit">${t('editEntry')}</span>`
            :`<span class="log-action-new" style="margin-left:8px;">${t('newEntry')}</span>`);
@@ -2560,16 +2536,13 @@ function openConfirm(withUpload) { withUpload=!!withUpload;
       ✏️ ${lang==='zh'?'您正在修改已提交的数据，此操作将被记录在审计日志中。':'You are editing an existing submission. This change will be recorded in the audit log.'}
     </div>`;
   }
-  const zeroNote = (total===0)?`<div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#b91c1c;font-weight:700">
-    🚫 ${lang==='en'?'Zero Sales — confirming no sales for this date':'Jualan Sifar — tiada jualan untuk tarikh ini'}
-  </div>`:'';
   document.getElementById('modal-body').innerHTML=`
-    ${zeroNote}${editWarning}
+    ${editWarning}
     <div class="stat-row"><span class="stat-label">🏪 ${lang==='en'?'Store':'Kedai'}</span><span class="stat-value">${store}</span></div>
     <div class="stat-row"><span class="stat-label">📅 ${lang==='en'?'Date':'Tarikh'}</span><span class="stat-value">${targetDate}</span></div>
     <div class="stat-row" style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px">
       <span class="stat-label"><b>🧾 ${t('totalSalesLabel')}</b></span>
-      <span class="stat-value big" style="font-size:26px;color:${total===0?'#b91c1c':'var(--primary)'}">RM ${fmtRM(total)}</span>
+      <span class="stat-value big" style="font-size:26px;color:var(--primary)">RM ${total.toFixed(2)}</span>
     </div>
     ${remark?`<div class="stat-row"><span class="stat-label">📝</span><span class="stat-value" style="font-size:14px">${remark}</span></div>`:''}
   `;
@@ -2633,8 +2606,7 @@ function confirmSubmit(withUpload=false) {
     showToast(t('submitted'),'success');
     renderSubmitTab();
     checkAllStoresSubmitted();
-    if(withUpload) setTimeout(function(){openSettlementBreakdown(window._pendingSubmit);},600);
-    else setTimeout(()=>triggerSyncRefresh(),1500);
+    setTimeout(()=>triggerSyncRefresh(),1500);
   }).catch(err=>{showToast('Error: '+err,'error');});
 }
 
@@ -4324,97 +4296,48 @@ function requestSettlementApproval(){
 }
 
 function openSettlementBreakdown(sd){
-  var EN=lang==='en';
-  var total=Math.round(parseFloat((sd&&sd.total)||0)*100)/100;
-  var _old=document.getElementById('settle-bd-modal'); if(_old) _old.remove();
+  var EN=lang==='en'; var total=parseFloat((sd&&sd.total)||0);
   var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='settle-bd-modal';
-  var zeroMsg=total===0?'<div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#b91c1c;font-weight:700">🚫 '+(EN?'Zero Sales — all fields will be 0.00':'Jualan Sifar — semua medan ialah 0.00')+'</div>':'';
   ov.innerHTML='<div class="modal-box">'
-    +'<div class="modal-title" style="color:#1e3a8a">💰 '+(EN?'Daily Sales Breakdown':'Pecahan Jualan Harian')+'</div>'
-    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center">'
-      +'<div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Total to match:':'Jumlah yang perlu dipadankan:')+'</div>'
-      +'<div style="font-size:26px;font-weight:900;color:'+(total===0?'#b91c1c':'#1e3a8a')+'">RM '+fmtRM(total)+'</div>'
-    +'</div>'
-    +zeroMsg
-    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+(EN?'Split into payment types — must add up to the total above:':'Bahagikan kepada jenis pembayaran:')+'</div>'
+    +'<div class="modal-title">💰 '+('Daily Sales Settlement')+'</div>'
+    +'<div style="background:#eff6ff;border-radius:10px;padding:10px;margin:8px 0;text-align:center"><div style="font-size:11px;font-weight:700;color:#1e3a8a">'+(EN?'Submitted Total':'Jumlah Dihantar')+'</div><div style="font-size:24px;font-weight:900;color:#1e3a8a">RM '+total.toFixed(2)+'</div></div>'
+    +'<div style="font-size:12px;color:#64748b;margin-bottom:8px">'+('Enter payment breakdown:')+'</div>'
     +'<div class="input-wrap"><label class="field-label">💵 '+(EN?'Cash':'Tunai')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-cash" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">📱 QR / E-wallet</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-qr" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">💳 '+(EN?'Card':'Kad')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-card" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
     +'<div class="input-wrap"><label class="field-label">🏦 '+(EN?'Bank Transfer':'Pindahan Bank')+'</label><div class="amount-input-wrap"><span class="amount-prefix">RM</span><input type="number" id="bd-bank" class="amount-input" placeholder="0.00" min="0" step="0.01" inputmode="decimal" oninput="checkBdTotal()"></div></div>'
-    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc;color:#64748b">'
-      +(total===0?(EN?'All zeros ✅ — tap Confirm':'Semua sifar ✅ — ketik Sahkan'):(EN?'Enter amounts — must equal RM '+fmtRM(total):'Masukkan jumlah — mesti RM '+fmtRM(total)))
-    +'</div>'
-    +'<div style="display:flex;gap:10px;margin-top:8px">'
-      +'<button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button>'
-      +'<button class="btn success" style="flex:2" id="bd-ok">'+(EN?'Confirm & Upload Receipt':'Sahkan & Muat Naik Resit')+'</button>'
-    +'</div></div>';
+    +'<div id="bd-check" style="font-size:12px;font-weight:700;text-align:center;margin:8px 0;padding:8px;border-radius:8px;background:#f8fafc">'+('Enter amounts above')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:8px"><button class="btn secondary" style="flex:1" id="bd-skip">'+(EN?'Skip':'Langkau')+'</button><button class="btn success" style="flex:2" id="bd-ok">'+('Confirm & Upload Receipt')+'</button></div></div>';
   document.body.appendChild(ov);
-
-  window._bdTotal=total;
-  window._bdStore=(sd&&sd.store)||'';
-  window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
-
-  // For zero sales, mark the check as already valid
-  if(total===0){
-    var el=document.getElementById('bd-check');
-    if(el){el.style.background='#f0fdf4';el.style.color='#10b981';}
-  }
-
-  // Pre-fill from existing record if a split was previously saved
-  var existRec=getSales().find(function(r){
-    return r.store===window._bdStore&&String(r.dateKey).slice(0,10)===window._bdDate;
-  });
-  if(existRec&&total>0&&Math.round(parseFloat(existRec.cash||0)*100)/100!==total){
-    var fa=document.getElementById('bd-cash'); if(fa&&existRec.cash) fa.value=parseFloat(existRec.cash)||0;
-    var fb=document.getElementById('bd-qr');   if(fb&&existRec.qr)   fb.value=parseFloat(existRec.qr)||0;
-    var fc=document.getElementById('bd-card'); if(fc&&existRec.card) fc.value=parseFloat(existRec.card)||0;
-    var fd=document.getElementById('bd-bank'); if(fd&&existRec.bank) fd.value=parseFloat(existRec.bank)||0;
-    checkBdTotal();
-  }
-
+  window._bdTotal=total;window._bdStore=(sd&&sd.store)||'';window._bdDate=(sd&&(sd.targetDate||sd.dateKey))||dateKeyUTC8();
   document.getElementById('bd-skip').onclick=function(){ov.remove();openSettlementUpload();};
   document.getElementById('bd-ok').onclick=function(){
+    // Disable immediately — prevents double-tap creating two records
+    this.disabled=true; this.textContent=(lang==='en'?'Processing...':'Memproses...');
     var c=parseFloat(document.getElementById('bd-cash').value)||0;
     var q=parseFloat(document.getElementById('bd-qr').value)||0;
     var k=parseFloat(document.getElementById('bd-card').value)||0;
     var b=parseFloat(document.getElementById('bd-bank').value)||0;
-    var sum=Math.round((c+q+k+b)*100)/100;
-    var tgt=window._bdTotal;
-    if(sum!==tgt){
-      showToast((EN?'Breakdown RM':'Pecahan RM')+fmtRM(sum)+(EN?' must equal RM':' mesti RM')+fmtRM(tgt),'error');
+    var sum=parseFloat((c+q+k+b).toFixed(2));
+    if(sum!==window._bdTotal){
+      this.disabled=false;
+      this.textContent=lang==='en'?'Confirm & Upload Receipt':'Sahkan & Muat Naik Resit';
+      showToast((lang==='en'?'Breakdown RM':'Pecahan RM')+sum.toFixed(2)+(lang==='en'?' must equal RM':' mesti RM')+(window._bdTotal||0).toFixed(2),'error');
       return;
     }
     window._bdCash=c;window._bdQr=q;window._bdCard=k;window._bdBank=b;
-    var sales=getSales();
-    var ri=sales.findIndex(function(r){
-      return r.store===window._bdStore&&String(r.dateKey).slice(0,10)===window._bdDate;
-    });
-    if(ri>=0){
-      sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;
-      saveSales(sales);
-      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});
-    }
-    ov.remove();
-    openSettlementUploadFirst();
+    var sales=getSales();var ri=sales.findIndex(function(r){return r.store===window._bdStore&&r.dateKey===window._bdDate;});
+    if(ri>=0){sales[ri].cash=c;sales[ri].qr=q;sales[ri].card=k;sales[ri].bank=b;saveSales(sales);
+      fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({action:'submitSales'},sales[ri]))}).catch(function(){});}
+    ov.remove();openSettlementUploadFirst();
   };
 }
 function checkBdTotal(){
-  var c=parseFloat(document.getElementById('bd-cash')?.value)||0;
-  var q=parseFloat(document.getElementById('bd-qr')?.value)||0;
-  var k=parseFloat(document.getElementById('bd-card')?.value)||0;
-  var b=parseFloat(document.getElementById('bd-bank')?.value)||0;
-  var sum=Math.round((c+q+k+b)*100)/100;
-  var tgt=window._bdTotal||0;
-  var ok=(sum===tgt);
+  var c=parseFloat(document.getElementById('bd-cash').value)||0,q=parseFloat(document.getElementById('bd-qr').value)||0;
+  var k=parseFloat(document.getElementById('bd-card').value)||0,b=parseFloat(document.getElementById('bd-bank').value)||0;
+  var sum=parseFloat((c+q+k+b).toFixed(2));var ok=sum===(window._bdTotal||0);
   var el=document.getElementById('bd-check');
-  if(!el) return;
-  var EN=lang==='en';
-  el.textContent=(EN?'Breakdown: RM':'Pecahan: RM')+fmtRM(sum)
-    +(ok?' ✅':(EN?' — must be RM':' — mesti RM')+fmtRM(tgt));
-  el.style.background=ok?'#f0fdf4':'#fff1f2';
-  el.style.color=ok?'#10b981':'#ef4444';
+  if(el){el.textContent=(lang==='en'?'Breakdown: RM':'Pecahan: RM')+sum.toFixed(2)+(ok?' ✅':(lang==='en'?' — must be RM':' — mesti RM')+(window._bdTotal||0).toFixed(2));el.style.background=ok?'#f0fdf4':'#fff1f2';el.style.color=ok?'#10b981':'#ef4444';}
 }
 
 function openSettlementUploadFirst(){
