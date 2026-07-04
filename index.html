@@ -369,6 +369,19 @@
       </svg>
     </div><!-- /login-logo -->
 
+    <!-- Company selector — shown after central login validates user -->
+    <div id="company-select-wrap" style="display:none;margin-bottom:14px">
+      <label class="field-label" style="font-size:11px;font-weight:800;letter-spacing:.5px;color:#94a3b8">🏢 SELECT COMPANY / 选择公司</label>
+      <div style="position:relative">
+        <select id="login-company-select"
+          style="width:100%;padding:13px 16px;border-radius:14px;border:2px solid #dbeafe;font-size:15px;font-weight:700;color:#1e3a8a;background:#eff6ff;appearance:none;cursor:pointer;outline:none">
+        </select>
+        <div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;color:#1e3a8a">▼</div>
+      </div>
+      <button class="btn success" style="margin-top:10px;width:100%" onclick="_proceedToCompanyLogin()">
+        ▶ Enter Company / 进入公司
+      </button>
+    </div>
     <div class="input-wrap">
       <label class="field-label">Username 用户名</label>
       <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off" onkeydown="if(event.key==='Enter') document.getElementById('login-pin').focus()">
@@ -711,7 +724,38 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXPbDgndv-K_6kyG8_EFocidQZ6wTnRnnrYkURLXOxvWBrhlFeyze1dM69itKFMhDz7A/exec";
+// ═══════════════════════════════════════════════════════════════
+// CENTRAL GAS URL — paste your Central DB GAS URL here after deploy
+// ═══════════════════════════════════════════════════════════════
+const CENTRAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbyRE-mEj8bcFLaFn0KrtIC0nWIQJ-yIOYfQOfk_AsBTNSsOt-NlrOJ4tU23aFgTTXVY/exec';
+
+// Active company GAS URL — set dynamically after central login
+var WEB_APP_URL = '';
+var _activeCompany = '';
+var _centralUser = null;   // { username, name, role, allowedCompanies, isSuperAdmin, companies }
+
+function _allowedCompanies() { return _centralUser ? (_centralUser.allowedCompanies || []) : []; }
+function _isSuperAdmin()     { return _centralUser ? !!_centralUser.isSuperAdmin : false; }
+
+// Switch to a different company (used from profile tab or company selector)
+function setActiveCompany(name) {
+  if (!_centralUser || !_centralUser.companies) return;
+  var url = _centralUser.companies[name];
+  if (!url) { showToast('No GAS URL for ' + name, 'error'); return; }
+  _activeCompany = name;
+  WEB_APP_URL    = url;
+  localStorage.setItem('active_company', name);
+  saveData('active_company', name);
+}
+
+// Call central GAS (GET)
+async function centralGet_(params) {
+  if (!CENTRAL_GAS_URL || CENTRAL_GAS_URL.includes('PASTE_')) throw new Error('CENTRAL_GAS_URL not configured.');
+  var qs = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+  var url = CENTRAL_GAS_URL + '?t=' + Date.now() + '&' + qs;
+  var resp = await fetch(url, { method:'GET', cache:'no-cache' });
+  return resp.json();
+}
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -1014,8 +1058,11 @@ function t(k) { return T[lang][k] || k; }
 function toggleLang() { lang = lang === 'en' ? 'zh' : 'en'; renderCurrentTab(); updateTopBar(); updateNavLabels(); }
 
 function updateTopBar() {
-  if(currentUser) document.getElementById('app-user-info').textContent =
-    currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
+  if(currentUser){
+    var compTag = _activeCompany ? ' · ' + _activeCompany : '';
+    document.getElementById('app-user-info').textContent =
+      currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role) + compTag;
+  }
 }
 function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
@@ -2184,42 +2231,124 @@ function showPendingPopup(username){
   document.body.appendChild(ov);
 }
 
+// ── Stage 2: user has picked a company, now authenticate against company GAS ──
+async function _proceedToCompanyLogin() {
+  var sel = document.getElementById('login-company-select');
+  if (!sel || !sel.value) { showToast('Please select a company', 'error'); return; }
+  setActiveCompany(sel.value);
+  var loginBtn = document.getElementById('login-btn');
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.style.display = 'block'; }
+  document.getElementById('company-select-wrap').style.display = 'none';
+  showToast('✅ ' + sel.value + ' — now enter your PIN', 'success');
+}
+
 async function doLogin() {
   const username = document.getElementById('login-name').value.trim().toLowerCase();
   const pin      = document.getElementById('login-pin').value.trim();
-  if(!username){ showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
-  if(!pin)     { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
-  if(pin.length!==6){ showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits','error'); return; }
+  if (!username) { showToast(lang==='zh'?'请输入用户名':'Enter your username', 'error'); return; }
+  if (!pin)      { showToast(lang==='zh'?'请输入密码':'Enter your PIN', 'error'); return; }
+  if (pin.length !== 6) { showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits', 'error'); return; }
 
-  const loginBtn=document.getElementById('login-btn');
-  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=lang==='zh'?'连接中...':'Connecting...'; }
-  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = lang==='zh'?'验证中...':'Verifying...'; }
 
-  // Try live fetch first, fall back to cache
+  // ── STAGE 1: Validate against Central GAS ──────────────────
+  showToast(lang==='zh'?'正在验证身份...':'Verifying credentials...', 'pending');
+  try {
+    var centralResp = await centralGet_({ action:'login', username, pin, deviceId: getDeviceId() });
+
+    if (!centralResp.success) {
+      if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Login 登录'; }
+      if (centralResp.notFound) { showRegisterPopup(username); }
+      else { showToast(centralResp.message || 'Login failed', 'error'); }
+      return;
+    }
+
+    // Store central user info
+    _centralUser = centralResp;
+
+    var companies = _centralUser.allowedCompanies || [];
+    var companyMap = _centralUser.companies || {};
+
+    if (companies.length === 0) {
+      if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Login 登录'; }
+      showToast('No companies assigned. Contact Super Admin.', 'error');
+      return;
+    }
+
+    // ── STAGE 2a: Only 1 company → auto-select and login ──────
+    if (companies.length === 1) {
+      setActiveCompany(companies[0]);
+      await _finishLogin(username, pin, loginBtn);
+      return;
+    }
+
+    // ── STAGE 2b: Multiple companies → show company selector ──
+    if (loginBtn) { loginBtn.disabled = true; loginBtn.style.display = 'none'; }
+    var sel = document.getElementById('login-company-select');
+    sel.innerHTML = '';
+    companies.forEach(function(name) {
+      var opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      // Pre-select last used company
+      if (name === localStorage.getItem('active_company')) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    document.getElementById('company-select-wrap').style.display = 'block';
+    showToast(lang==='zh'?'请选择公司':'Please select your company', 'pending');
+
+  } catch(err) {
+    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Login 登录'; }
+    showToast('Central server error: ' + err.message, 'error');
+  }
+}
+
+// ── Stage 2 finish: fetch company users and complete login ─────
+async function _finishLogin(username, pin, loginBtn) {
+  showToast(lang==='zh'?'正在连接公司服务器...':'Connecting to company server...', 'pending');
   await fetchLiveUsers();
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Login 登录'; }
 
-  if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Login 登录'; }
-
-  // Validate
-  if(Object.keys(cachedUsers).length===0){
-    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
+  if (Object.keys(cachedUsers).length === 0) {
+    showToast('Cannot reach company server. Check GAS URL in Central DB.', 'error');
     return;
   }
+
+  // Validate against company GAS users
   const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
-  if(!userMatch){ showRegisterPopup(username); return; }
-  const _p = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
-  if(_p !== String(pin).trim()){
-    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
-  }
-  const _s = String(userMatch.status ?? 'active').trim().toLowerCase();
-  if(_s === 'pending'){
-    showPendingPopup(username); return;
-  }
-  if(_s === 'inactive' || _s === 'disabled'){
-    showToast('Account disabled — contact Admin','error'); return;
+  if (!userMatch) {
+    // Super admin from central may not exist in company GAS — use central user info
+    if (_centralUser && _centralUser.isSuperAdmin) {
+      _doAppLogin({
+        username: _centralUser.username,
+        name:     _centralUser.name,
+        role:     'admin',
+        store:    'HQ',
+        pin:      pin,
+        status:   'active'
+      });
+      return;
+    }
+    showRegisterPopup(username); return;
   }
 
-  // ✅ Credentials OK — zone-restrict staff & supervisor
+  const _p = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
+  if (_p !== String(pin).trim()) {
+    showToast(lang==='zh'?'密码错误':'Wrong PIN', 'error'); return;
+  }
+  const _s = String(userMatch.status ?? 'active').toLowerCase();
+  if (_s === 'pending') { showPendingPopup(username); return; }
+  if (_s !== 'active' && _s !== 'inactive' && _s !== '') {
+    if (_s === 'inactive' || _s === 'disabled') { showToast('Account disabled. Contact Admin.', 'error'); return; }
+  }
+  _doAppLogin(userMatch);
+}
+
+// ── _doAppLogin: completes login given a validated user object ──
+async function _doAppLogin(userMatch) {
+  var loginBtn = document.getElementById('login-btn');
+  var username = String(userMatch.username||'').toLowerCase();
+  // Zone check for staff/supervisor
   const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
   if(_roleRestricted && userMatch.store && userMatch.store !== 'HQ'){
     // Ensure work zones are loaded
@@ -4159,6 +4288,23 @@ async function deleteUser(username) {
 // PROFILE TAB
 // ============================================================
 function renderProfileTab() {
+  var allowedCos = _allowedCompanies();
+  var companySwitcher = allowedCos.length > 1 ? `
+    <div class="card" style="border:2px solid #dbeafe">
+      <div class="card-title">🏢 ${lang==='en'?'Switch Company':'Tukar Syarikat'}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${lang==='en'?'Currently:':'Syarikat aktif:'} <b>${_activeCompany}</b></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${allowedCos.map(name=>`
+          <button onclick="switchCompanyAndLogout('${name.replace(/'/g,"\\'")}')"
+            style="padding:12px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;
+              border:2px solid ${name===_activeCompany?'#1e3a8a':'var(--border)'};
+              background:${name===_activeCompany?'#eff6ff':'#f8fafc'};
+              color:${name===_activeCompany?'#1e3a8a':'var(--text)'}">
+            ${name===_activeCompany?'✅ ':''} ${name}
+            ${name===_activeCompany?`<span style="float:right;font-size:11px;color:#1e3a8a">${lang==='en'?'Active':'Aktif'}</span>`:''}
+          </button>`).join('')}
+      </div>
+    </div>` : '';
   document.getElementById('tab-profile').innerHTML=`
     <div class="card" style="text-align:center;padding:28px">
       <div style="font-size:54px;margin-bottom:10px">👤</div>
@@ -4166,7 +4312,9 @@ function renderProfileTab() {
       <div style="margin-top:8px"><span class="role-tag ${currentUser.role}">${t(currentUser.role)}</span></div>
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
+      ${_activeCompany?`<div style="margin-top:8px;font-size:12px;font-weight:700;color:#1e3a8a;background:#eff6ff;border-radius:20px;padding:4px 14px;display:inline-block">🏢 ${_activeCompany}</div>`:''}
     </div>
+    ${companySwitcher}
     <div class="card">
       <div class="card-title">${t('changePinTitle')}</div>
       <div class="input-wrap" style="margin-top:12px;">
@@ -4174,6 +4322,7 @@ function renderProfileTab() {
         <input type="password" id="profile-curr-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
       </div>
       <div class="input-wrap">
+
         <label class="field-label">${t('newPinLabel')}</label>
         <input type="password" id="profile-new-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
       </div>
@@ -4229,6 +4378,20 @@ function doLogout() {
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
+  // Reset company selector state
+  document.getElementById('company-select-wrap').style.display='none';
+  var lb=document.getElementById('login-btn'); if(lb){lb.style.display='block';lb.disabled=false;lb.textContent='Login 登录';}
+}
+
+function switchCompanyAndLogout(name){
+  if(!_centralUser||!_centralUser.companies||!_centralUser.companies[name]){
+    showToast('Company not available','error'); return;
+  }
+  var EN=lang==='en';
+  if(!confirm(EN?'Switch to '+name+'?\nYou will be logged out.':'Tukar ke '+name+'?\nAnda akan log keluar.')) return;
+  setActiveCompany(name);
+  doLogout();
+  showToast((EN?'Switched to ':'Ditukar ke ')+name+'. Please log in.','success');
 }
 
 function showToast(msg,type='') {
