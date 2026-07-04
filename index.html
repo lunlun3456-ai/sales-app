@@ -3305,6 +3305,23 @@ function _renderAttendanceContent(){
       +'<span style="font-size:16px;font-weight:900;color:'+(isRej?'#94a3b8':col)+';flex-shrink:0">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
     +'</div>';
   }).join('');
+  // ── ⚠️ Check for unclosed sessions in recent history ──────────
+  var unclosedWarnings='';
+  for(var _d=1;_d<=7;_d++){
+    var _pd=new Date(); _pd.setDate(_pd.getDate()-_d);
+    var _pdk=_pd.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+    var _pIn=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided';});
+    var _pOut=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_out'&&r.status!=='rejected'&&r.status!=='voided';});
+    if(_pIn&&!_pOut){
+      unclosedWarnings+='<div style="background:#fff7ed;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
+        +'<div style="font-size:18px">⚠️</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#92400e">'+(ZH?'未签退：':'Missing checkout: ')+_pdk+'</div>'
+          +'<div style="font-size:11px;color:#b45309">'+(ZH?'您于 '+fmtTimeUTC8(_pIn.datetime)+' 签到但未签退，请联系主管更正。':'Checked in at '+fmtTimeUTC8(_pIn.datetime)+' but no checkout. Ask supervisor to edit.')+'</div>'
+        +'</div>'
+      +'</div>';
+    }
+  }
+
   // Recent history
   var recent=getAllAttendance()
     .filter(function(r){return r.username===currentUser.username&&r.dateKey<today;})
@@ -3312,24 +3329,28 @@ function _renderAttendanceContent(){
   var _canResetHist=['admin','manager'].includes(currentUser.role);
   var recRows=recent.map(function(r){
     var ci=r.type==='check_in';
+    var isMissed=r.status==='missed_checkout';
     var isRej=r.status==='rejected'||r.status==='voided';
-    var col=isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
-    var showDel=!isRej&&(_canResetHist||r.username===currentUser.username);
+    var col=isMissed?'#f59e0b':isRej?'#94a3b8':ci?'#10b981':'#f59e0b';
+    var showDel=!isRej&&!isMissed&&(_canResetHist||r.username===currentUser.username);
     var delBtn=showDel
       ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
         +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
         +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'">🗑</button>'):'';
-    var srcIco=r.gpsSource==='gps'||r.source==='gps'?' 📡':r.gpsSource==='network'||r.source==='network'?' 📶':' ⚠️';
+    var srcIco=r.gpsSource==='gps'||r.source==='gps'?' 📡':r.gpsSource==='network'||r.source==='network'?' 📶':isMissed?' ⚠️':' ⚠️';
     var _dk=r.dateKey?String(r.dateKey).slice(0,10):'';
+    var typeLbl=isMissed?(ZH?'未签退':'MISSED OUT'):ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT');
+    var typeBg=isMissed?'#fff7ed':isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed';
+    var typeColor=isMissed?'#b45309':isRej?'#94a3b8':ci?'#065f46':'#92400e';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border)'+(isRej?';opacity:.55':'')+'">'
       +'<div><div style="font-size:12px;font-weight:700">'+_dk+srcIco
-        +' <span style="font-size:10px;background:'+(isRej?'#f1f5f9':ci?'#d1fae5':'#fff7ed')
-        +';color:'+(isRej?'#94a3b8':ci?'#065f46':'#92400e')+';border-radius:20px;padding:1px 6px">'
-        +(ci?(ZH?'签到':'IN'):(ZH?'签退':'OUT'))+(isRej?' ❌':'')+'</span></div>'
-        +'<div style="font-size:10px;color:var(--text2)">'+(r.store||'')+' · '+(r.status||'')+'</div>'
+        +' <span style="font-size:10px;background:'+typeBg
+        +';color:'+typeColor+';border-radius:20px;padding:1px 6px">'
+        +typeLbl+(isRej?' ❌':'')+'</span></div>'
+        +'<div style="font-size:10px;color:var(--text2)">'+(r.store||'')+' · '+(isMissed?(ZH?'需主管更正':'Supervisor edit required'):r.status||'')+'</div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:6px">'
-        +'<span style="font-size:16px;font-weight:900;color:'+col+'">'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'</span>'
+        +'<span style="font-size:16px;font-weight:900;color:'+col+'">'+(isMissed?'--:--':(r.datetime?fmtTimeUTC8(r.datetime):''))+'</span>'
         +delBtn
       +'</div>'
     +'</div>';
@@ -3338,6 +3359,7 @@ function _renderAttendanceContent(){
   document.getElementById('tab-attendance').innerHTML=
     '<div class="card-header-flex"><h2 style="font-size:18px;font-weight:900">📍 '+(ZH?'考勤':'Attendance')+'</h2>'
       +'<button class="btn refresh-inline" onclick="triggerSyncRefresh()">🔄</button></div>'
+    +unclosedWarnings
     +'<div class="card" style="margin-bottom:10px">'
       +'<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px">📅 '+dateLabel+'</div>'
       +'<div class="att-grid">'+inCard+outCard+'</div>'
@@ -3409,19 +3431,59 @@ async function submitAttendance(type){
   var ZH=lang==='zh';
   var label=type==='check_in'?(ZH?'签到':'Check In'):(ZH?'签退':'Check Out');
   var td=dateKeyUTC8();
-  // Use merged view for guard checks (session + stored)
-  // Check server + session records for today
+  // Merge server + session records for today
   var mine=getAllAttendance().filter(function(r){
     return r.dateKey===td&&r.username===currentUser.username&&r.status!=='rejected'&&r.status!=='voided';
   });
+  var todayCheckIn =mine.find(function(r){return r.type==='check_in';});
+  var todayCheckOut=mine.find(function(r){return r.type==='check_out';});
+
   if(type==='check_in'){
-    var prev=mine.find(function(r){return r.type==='check_in';});
-    if(prev){showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(prev.datetime),'error');return;}
+    if(todayCheckIn){
+      // Already checked in today — never block, but warn
+      showToast((ZH?'今日已于 ':'Already checked in at ')+fmtTimeUTC8(todayCheckIn.datetime)
+        +(ZH?' 签到，如需重新签到请联系管理员':'  — contact supervisor to edit if needed'),'error');
+      return;
+    }
+    // ── OPTION 3: Check if previous day has unclosed check-in (no checkout) ──
+    // If so, auto-flag it as "no checkout" and allow today's check-in
+    var yest=new Date(); yest.setDate(yest.getDate()-1);
+    var yestKey=yest.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+    var prevAll=getAllAttendance().filter(function(r){
+      return r.username===currentUser.username&&r.status!=='rejected'&&r.status!=='voided';
+    });
+    // Check last 3 days for any unclosed check-in (no corresponding checkout)
+    for(var d=1;d<=3;d++){
+      var checkD=new Date(); checkD.setDate(checkD.getDate()-d);
+      var checkDK=checkD.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+      var dayIn =prevAll.find(function(r){return r.dateKey===checkDK&&r.type==='check_in';});
+      var dayOut=prevAll.find(function(r){return r.dateKey===checkDK&&r.type==='check_out';});
+      if(dayIn&&!dayOut){
+        // Flag this unclosed session for supervisor to fix
+        showToast((ZH?'⚠️ '+checkDK+' 未签退 — 已记录，请联系主管修正'
+                     :'⚠️ '+checkDK+' — missing checkout. Flagged. Supervisor to edit.'),'pending');
+        // Auto-create a "missed checkout" marker in session so it shows in records
+        var missedRecord={
+          id:'missed_'+checkDK+'_'+currentUser.username,
+          username:currentUser.username,name:currentUser.name,role:currentUser.role,
+          store:currentUser.store,type:'check_out',status:'missed_checkout',
+          dateKey:checkDK,datetime:checkDK+'T23:59:00+08:00',
+          lat:'',lng:'',source:'auto',remark:ZH?'未签退（系统标记）':'Missed checkout (auto-flagged)',
+          createdAt:nowUTC8()
+        };
+        // Save to session so it shows in UI
+        if(!_attSession.find(function(r){return r.id===missedRecord.id;})){
+          _attSession.push(missedRecord);
+        }
+        break;
+      }
+    }
+    // Allow check-in to proceed — never block due to missing previous checkout
   }
+
   if(type==='check_out'){
-    if(!mine.find(function(r){return r.type==='check_in';})){showToast(ZH?'请先签到':'Check in first','error');return;}
-    var prev2=mine.find(function(r){return r.type==='check_out';});
-    if(prev2){showToast((ZH?'今日已于 ':'Already checked out at ')+fmtTimeUTC8(prev2.datetime),'error');return;}
+    if(!todayCheckIn){showToast(ZH?'请先签到':'Check in first','error');return;}
+    if(todayCheckOut){showToast((ZH?'今日已于 ':'Already checked out at ')+fmtTimeUTC8(todayCheckOut.datetime),'error');return;}
   }
   showToast(ZH?'正在获取位置...':'Getting location...','pending');
   try{
@@ -3614,30 +3676,35 @@ function doEditAttendance(recordId,username,dateKey,type,newTimeHHMM){
 }
 
 function attendanceRowHtml(r){
-  var canReset=['admin','manager'].includes(currentUser.role);
+  var canReset=['admin','manager','supervisor'].includes(currentUser.role);
   var isVoided=r.status==='voided'||r.status==='rejected';
-  var resetBtn=canReset&&!isVoided
+  var isMissed=r.status==='missed_checkout';
+  var resetBtn=canReset&&!isVoided&&!isMissed
     ?('<button class="btn-sm att-reset-btn" style="background:#fee2e2;color:#dc2626;font-size:10px;margin-left:6px"'
       +' data-username="'+r.username+'" data-datekey="'+r.dateKey+'" data-id="'+r.id+'"'
       +' data-type="'+(r.type||'')+'" data-time="'+(r.datetime?fmtTimeUTC8(r.datetime):'')+'"'
       +'>🗑</button>')
     :'';
   var editBtn=canReset&&!isVoided
-    ?('<button class="btn-sm att-edit-btn" style="background:#eff6ff;color:#1e3a8a;font-size:10px;margin-left:4px"'
+    ?('<button class="btn-sm att-edit-btn" style="background:'+(isMissed?'#fff7ed;color:#92400e':'#eff6ff;color:#1e3a8a')+';font-size:10px;margin-left:4px;font-weight:800"'
       +' data-id="'+r.id+'" data-username="'+r.username+'" data-datekey="'+r.dateKey+'"'
       +' data-type="'+(r.type||'')+'" data-datetime="'+(r.datetime||'')+'"'
-      +'>✏️</button>')
+      +'>'+(isMissed?'⚠️ Fix':'✏️')+'</button>')
     :'';
-  return '<div class="record-item">'
-    +'<div class="record-icon">AT</div>'
+  var rowStyle=isMissed?'border-left:3px solid #f59e0b;background:#fffbeb;':'';
+  var statusDisplay=isMissed?'⚠️ Missing Checkout':String(r.status||'present').replace('_',' ');
+  var statusColor=isMissed?'#92400e':'';
+  return '<div class="record-item" style="'+rowStyle+'">'
+    +'<div class="record-icon" style="'+(isMissed?'background:#fff7ed;color:#92400e':'')+'">AT</div>'
     +'<div class="record-info" style="flex:1">'
       +'<div class="record-store" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">'
         +'<b>'+(r.name||r.username)+'</b>'
-        +' <span class="status-pill status-'+(r.status||'present')+'">'+String(r.status||'present').replace('_',' ')+'</span>'
+        +' <span class="status-pill status-'+(r.status||'present')+'" style="'+(statusColor?'color:'+statusColor+';background:#fff7ed':'')+'">'+statusDisplay+'</span>'
         +resetBtn+editBtn
       +'</div>'
-      +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?cleanDateTime(r.datetime):'')+'<br>'
+      +'<div class="record-meta">'+(r.store||'')+' · '+(r.type||'')+' · '+(r.datetime?cleanDateTime(r.datetime):'--:--')+'<br>'
         +(r.lat?('📍 '+Number(r.lat).toFixed(5)+', '+Number(r.lng).toFixed(5)+' ±'+(r.accuracy||'')+'m'):'')
+        +(isMissed?'<span style="color:#b45309;font-weight:700"> — Tap ⚠️ Fix to add checkout time</span>':'')
       +'</div>'
       +(r.remark?'<div style="font-size:12px;color:var(--accent);margin-top:2px">'+r.remark+'</div>':'')
     +'</div>'
