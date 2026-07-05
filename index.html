@@ -369,20 +369,6 @@
       </svg>
     </div><!-- /login-logo -->
 
-    <!-- Company selector — shown after central auth when user has multiple companies -->
-    <div id="company-select-wrap" style="display:none;margin-bottom:14px">
-      <label class="field-label" style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.5px">🏢 SELECT COMPANY / 选择公司</label>
-      <div style="position:relative">
-        <select id="login-company-select"
-          style="width:100%;padding:13px 16px;border-radius:14px;border:2px solid #dbeafe;font-size:15px;font-weight:700;color:#1e3a8a;background:#eff6ff;appearance:none;cursor:pointer;outline:none">
-        </select>
-        <div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;color:#1e3a8a">▼</div>
-      </div>
-      <button class="btn success" style="margin-top:10px;width:100%" onclick="_proceedToCompanyLogin()">
-        ▶ Enter Company / 进入公司
-      </button>
-    </div>
-
     <div class="input-wrap">
       <label class="field-label">Username 用户名</label>
       <input type="text" id="login-name" placeholder="e.g. bonia_ali" autocomplete="off" autocapitalize="none" autocorrect="off" onkeydown="if(event.key==='Enter') document.getElementById('login-pin').focus()">
@@ -477,47 +463,40 @@
   <div class="modal-box">
     <div class="modal-title">📝 Account Registration Request</div>
     <div class="input-wrap">
-      <label class="field-label">Username 用户名</label>
-      <input type="text" id="reg-username" placeholder="e.g. leather_ali" autocapitalize="none" autocorrect="off">
+      <label class="field-label">Preferred Username 用户名</label>
+      <input type="text" id="reg-username" placeholder="e.g. bonia_ali (lowercase)" autocapitalize="none">
     </div>
     <div class="input-wrap">
-      <label class="field-label">Full Name 姓名</label>
+      <label class="field-label">Full Name / Staff Name 姓名</label>
       <input type="text" id="reg-name" placeholder="e.g. Ali Ahmad">
     </div>
     <div class="input-wrap">
-      <label class="field-label">WhatsApp 📱</label>
+      <label class="field-label">WhatsApp Phone Number 📱 电话号码</label>
       <input type="text" id="reg-phone" placeholder="e.g. 60123456789" inputmode="tel">
     </div>
     <div class="input-wrap">
-      <label class="field-label">Company 公司 <span style="color:#ef4444">*</span></label>
-      <select id="reg-company" onchange="updateRegStores(this.value)"
-        style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-weight:600;background:var(--surface);color:var(--text)">
-        <option value="">-- Select Company 选择公司 --</option>
-        <option value="IS LEATHER SDN. BHD.">IS LEATHER SDN. BHD.</option>
-        <option value="KASIH SAYANG">KASIH SAYANG</option>
-        <option value="I & S">I &amp; S</option>
-        <option value="RUMAH KU">RUMAH KU</option>
-        <option value="PAMANUSA SDN BHD">PAMANUSA SDN BHD</option>
+      <label class="field-label">Target Store Location 门店</label>
+      <select id="reg-store">
+        <option value="">-- Select Store --</option>
+        <option value="Bonia Sabindo">Bonia Sabindo</option>
+        <option value="Bonia Eastern">Bonia Eastern</option>
+        <option value="Polo Sabindo">Polo Sabindo</option>
+        <option value="Polo Eastern">Polo Eastern</option>
+        <option value="Gm Sabindo">Gm Sabindo</option>
+        <option value="Gm Eastern">Gm Eastern</option>
       </select>
     </div>
     <div class="input-wrap">
-      <label class="field-label">Store / Branch 门店 <span style="color:#ef4444">*</span></label>
-      <select id="reg-store"
-        style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-weight:600;background:var(--surface);color:var(--text)">
-        <option value="">-- Select Company first 先选公司 --</option>
-      </select>
-    </div>
-    <div class="input-wrap">
-      <label class="field-label">PIN (6 digits) 密码</label>
+      <label class="field-label">Preferred PIN (6 digits) 密码</label>
       <input type="password" id="reg-pin" maxlength="6" placeholder="••••••" inputmode="numeric">
     </div>
     <div style="background:#fff8e1;border:1.5px solid var(--accent);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#78350f;font-weight:600;">
-      ⚠️ Registration is for <strong>Staff</strong> only. Admin approves before you can login.<br>
-      <span style="font-size:12px;opacity:.8">注册仅限员工，管理员批准后方可登录。</span>
+      ⚠️ Registration is for <strong>Staff</strong> only. Your request will be sent to Admin for approval. You can login only after approval.<br>
+      <span style="font-size:12px;opacity:.8">注册仅限员工申请，管理员审批后方可登录。</span>
     </div>
     <div style="display:flex;gap:10px;">
       <button class="btn secondary" style="flex:1" onclick="closeRegisterModal()">Cancel 取消</button>
-      <button class="btn success"   style="flex:1" onclick="submitRegisterRequest()">Submit 提交</button>
+      <button class="btn success"   style="flex:1" onclick="submitRegisterRequest()">Submit Request 提交</button>
     </div>
   </div>
 </div>
@@ -732,45 +711,7 @@ function fmtDateTimeUTC8(s){
     return t.slice(0,10)+' '+t.slice(11,16);
   }catch(e){return '';}
 }
-// ═══════════════════════════════════════════════════════════════
-// CENTRAL GAS — paste your Central DB GAS URL here after deploy
-// ═══════════════════════════════════════════════════════════════
-const CENTRAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbz0KTtf706OtPU6iMqfOtrIwzO8ANsaXU45waYjsOia84a-m5bLSp283zfF2T00NAYI/exec';
-
-// Company → Stores mapping — matches Central DB Companies sheet exactly
-const COMPANY_STORES = {
-  'IS LEATHER SDN. BHD.': [
-    'Bonia Sabindo','Bonia Eastern',
-    'Polo Sabindo','Polo Eastern',
-    'Gm Sabindo','Gm Eastern'
-  ],
-  'KASIH SAYANG': ['KASIH SAYANG'],
-  'I & S':        ['I & S'],
-  'RUMAH KU':     ['RUMAH KU'],
-  'PAMANUSA SDN BHD': ['PAMANUSA SDN BHD'],
-};
-const ALL_COMPANIES  = Object.keys(COMPANY_STORES);
-const STORES   = ['HQ'].concat(Object.values(COMPANY_STORES).flat());
-const BRANCHES = Object.values(COMPANY_STORES).flat();
-
-// Company GAS URL — set dynamically after central login
-// For fallback (before Central GAS configured): paste your existing GAS URL here
-var WEB_APP_URL    = 'https://script.google.com/macros/s/AKfycbyXPbDgndv-K_6kyG8_EFocidQZ6wTnRnnrYkURLXOxvWBrhlFeyze1dM69itKFMhDz7A/exec';
-var _activeCompany = localStorage.getItem('active_company') || '';
-var _centralUser   = null; // full user profile returned by Central GAS
-
-function _allowedCompanies(){ return _centralUser?(_centralUser.allowedCompanies||[]):[]; }
-function _isSuperAdmin()    { return _centralUser?!!_centralUser.isSuperAdmin:false; }
-
-function setActiveCompany(name){
-  if(!_centralUser||!_centralUser.companies) return;
-  var url=_centralUser.companies[name]||'';
-  _activeCompany=name;
-  // Accept any URL — placeholder URLs will just fail on sync (handled gracefully)
-  WEB_APP_URL=url.includes('PASTE_')?'':url;
-  localStorage.setItem('active_company',name);
-  if(!WEB_APP_URL) showToast('⚠️ Company GAS URL not set. Add it in Central DB Companies sheet.','error');
-}
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbylipVaWET6oGALSxsbGnwoCEysa-OCILT4LEamtHl_ruI7w6EwWZPb4rtn4dpKrIJRoA/exec";
 var _attSession = []; // in-memory today's records, never wiped by sync
 
 let lang = 'en';
@@ -798,7 +739,8 @@ let summaryStoreFilter = 'all';   // 'all' or store name
 let summaryViewMode    = 'today'; // 'today','yesterday','custom_date','month'
 let summaryCustDate    = dateKeyUTC8();
 
-// STORES and BRANCHES are defined above via COMPANY_STORES mapping
+const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
 
 function getDeviceId(){
   let id = localStorage.getItem('attendance_device_id');
@@ -1072,11 +1014,8 @@ function t(k) { return T[lang][k] || k; }
 function toggleLang() { lang = lang === 'en' ? 'zh' : 'en'; renderCurrentTab(); updateTopBar(); updateNavLabels(); }
 
 function updateTopBar() {
-  if(currentUser){
-    var compTag=_activeCompany?' · '+_activeCompany:'';
-    document.getElementById('app-user-info').textContent=
-      currentUser.name+' | '+currentUser.store+' | '+t(currentUser.role)+compTag;
-  }
+  if(currentUser) document.getElementById('app-user-info').textContent =
+    currentUser.name + ' | ' + currentUser.store + ' | ' + t(currentUser.role);
 }
 function updateNavLabels() {
   document.getElementById('nav-submit-lbl').textContent  = t('submit');
@@ -1094,54 +1033,26 @@ function updateNavLabels() {
 // ============================================================
 // REGISTRATION
 // ============================================================
-function openRegisterModal(){
-  // Populate company dropdown (already in HTML as static options, just reset store)
-  document.getElementById('reg-store').innerHTML='<option value="">-- Select Company first 先选公司 --</option>';
-  document.getElementById('reg-company').value='';
-  ['reg-username','reg-name','reg-phone','reg-pin'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  document.getElementById('register-modal').classList.add('open');
-}
-function closeRegisterModal(){ document.getElementById('register-modal').classList.remove('open'); }
+function openRegisterModal()  { document.getElementById('register-modal').classList.add('open'); }
+function closeRegisterModal() { document.getElementById('register-modal').classList.remove('open'); }
 
-// Populate store dropdown when company is selected
-function updateRegStores(company){
-  var storeSel=document.getElementById('reg-store');
-  storeSel.innerHTML='<option value="">-- Select Store 选择门店 --</option>';
-  var stores=COMPANY_STORES[company]||[];
-  stores.forEach(function(s){
-    var opt=document.createElement('option');
-    opt.value=s; opt.textContent=s;
-    storeSel.appendChild(opt);
-  });
-  // Single-store companies: auto-select
-  if(stores.length===1) storeSel.value=stores[0];
-}
-
-async function submitRegisterRequest(){
-  var username=document.getElementById('reg-username').value.trim().toLowerCase();
-  var name    =document.getElementById('reg-name').value.trim();
-  var phone   =document.getElementById('reg-phone').value.trim();
-  var company =document.getElementById('reg-company').value;
-  var store   =document.getElementById('reg-store').value;
-  var pin     =document.getElementById('reg-pin').value.trim();
-  if(!username||!name||!phone||!company||!store||!pin){
-    showToast('Please fill all fields 请填写所有栏位','error'); return;
-  }
-  if(!/^\d{6}$/.test(pin)){showToast('PIN must be 6 digits','error'); return;}
-  showToast('Sending... 发送中...','pending');
-  try{
-    var url=(typeof CENTRAL_GAS_URL!=='undefined'&&!CENTRAL_GAS_URL.includes('PASTE_'))
-      ?CENTRAL_GAS_URL:WEB_APP_URL;
-    await fetch(url,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'registerRequest',username,name,phone,
-        company,store,role:'staff',pin,
-        homeCompany:company,allowedCompanies:company,status:'pending'})});
-    showToast('✅ Request sent! Wait for Admin approval.\n已提交，等待管理员审批。','success');
+async function submitRegisterRequest() {
+  const username = document.getElementById('reg-username').value.trim().toLowerCase();
+  const name     = document.getElementById('reg-name').value.trim();
+  const phone    = document.getElementById('reg-phone').value.trim();
+  const store    = document.getElementById('reg-store').value;
+  const role     = 'staff'; // Registration is always Staff — Admin can change role after approval
+  const pin      = document.getElementById('reg-pin').value.trim();
+  if(!username||!name||!store||!pin||!phone){showToast('Please fill all fields 请填写所有栏位','error');return;}
+  if(!/^\d{6}$/.test(pin)){showToast('PIN must be exactly 6 digits 密码必须为6位数字','error');return;}
+  showToast('Sending request... 发送中...','pending');
+  try {
+    await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'registerRequest',username,name,phone,store,role,pin})});
+    showToast('Registration sent! Waiting for Admin approval. 已提交，等待管理员审批。','success');
     closeRegisterModal();
-  }catch(e){showToast('Error: '+e.message,'error');}
+    ['reg-username','reg-name','reg-phone','reg-pin'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('reg-store').value='';
+  } catch(e){showToast('Error: '+e,'error');}
 }
 
 // ============================================================
@@ -2273,145 +2184,45 @@ function showPendingPopup(username){
   document.body.appendChild(ov);
 }
 
-// ── Direct login fallback (used when Central GAS URL not yet set) ──
-// Uses the original single-company WEB_APP_URL login flow
-async function _directFallbackLogin(username,pin,loginBtn){
-  // Try cached users first for instant login
-  var cached=loadData('cached_users',{});
-  if(Object.keys(cached).length>0) cachedUsers=cached;
+async function doLogin() {
+  const username = document.getElementById('login-name').value.trim().toLowerCase();
+  const pin      = document.getElementById('login-pin').value.trim();
+  if(!username){ showToast(lang==='zh'?'请输入用户名':'Enter your username','error'); return; }
+  if(!pin)     { showToast(lang==='zh'?'请输入密码':'Enter your PIN','error'); return; }
+  if(pin.length!==6){ showToast(lang==='zh'?'密码必须是6位数字':'PIN must be 6 digits','error'); return; }
 
-  // Try fetching live users if WEB_APP_URL is set
-  if(WEB_APP_URL&&!WEB_APP_URL.includes('PASTE_')&&WEB_APP_URL.length>20){
-    try{ await fetchLiveUsers(); }catch(e){}
-  }
+  const loginBtn=document.getElementById('login-btn');
+  if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent=lang==='zh'?'连接中...':'Connecting...'; }
+  showToast(lang==='zh'?'正在连接服务器...':'Connecting to server...','pending');
 
-  if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
+  // Try live fetch first, fall back to cache
+  await fetchLiveUsers();
 
+  if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='Login 登录'; }
+
+  // Validate
   if(Object.keys(cachedUsers).length===0){
-    showToast('Cannot reach server. Check WEB_APP_URL or CENTRAL_GAS_URL.','error'); return;
+    showToast(lang==='zh'?'无法连接服务器且无缓存 — 请检查网络及脚本部署':'Cannot reach server & no cache — check internet & GAS deployment','error');
+    return;
   }
-  var userMatch=cachedUsers[username]||cachedUsers[username.toLowerCase()];
-  if(!userMatch){showRegisterPopup(username);return;}
-
-  var _p=String(userMatch.pin??'').trim().replace(/\.0$/,'');
-  if(_p!==String(pin).trim()){showToast('Wrong PIN','error');return;}
-
-  var _s=String(userMatch.status??'active').trim().toLowerCase();
-  if(_s==='pending'){showPendingPopup(username);return;}
-  if(_s==='inactive'||_s==='disabled'){showToast('Account disabled. Contact Admin.','error');return;}
-
-  // Create a minimal _centralUser so the rest of the app works
-  _centralUser={
-    username:username,name:userMatch.name||username,
-    role:userMatch.role||'staff',store:userMatch.store||'HQ',
-    phone:userMatch.phone||'',homeCompany:'',
-    allowedCompanies:[],isSuperAdmin:false,companies:{}
-  };
-  _doAppLogin(userMatch);
-}
-
-// ── Stage 2: after company selected, proceed to login ──────────
-async function _proceedToCompanyLogin(){
-  var sel=document.getElementById('login-company-select');
-  if(!sel||!sel.value){showToast('Please select a company','error');return;}
-  setActiveCompany(sel.value);
-  document.getElementById('company-select-wrap').style.display='none';
-  var lb=document.getElementById('login-btn');
-  if(lb){lb.style.display='block';lb.disabled=false;lb.textContent='Login 登录';}
-  var username=document.getElementById('login-name').value.trim().toLowerCase();
-  var pin=document.getElementById('login-pin').value.trim();
-  await _finishLogin(username,pin,lb);
-}
-
-async function doLogin(){
-  var username=document.getElementById('login-name').value.trim().toLowerCase();
-  var pin=document.getElementById('login-pin').value.trim();
-  if(!username){showToast(lang==='zh'?'请输入用户名':'Enter username','error');return;}
-  if(!pin){showToast(lang==='zh'?'请输入密码':'Enter PIN','error');return;}
-  if(pin.length!==6){showToast('PIN must be 6 digits','error');return;}
-
-  var loginBtn=document.getElementById('login-btn');
-  if(loginBtn){loginBtn.disabled=true;loginBtn.textContent=lang==='zh'?'验证中...':'Verifying...';}
-  showToast(lang==='zh'?'正在验证身份...':'Verifying...','pending');
-
-  // ── STAGE 1: Central GAS authentication ────────────────────
-  try{
-    // ── FALLBACK: If Central GAS not yet configured, use direct login ──
-    if(!CENTRAL_GAS_URL||CENTRAL_GAS_URL.includes('PASTE_')){
-      showToast('⚠️ Central GAS not configured — using direct login','pending');
-      await _directFallbackLogin(username,pin,loginBtn);
-      return;
-    }
-    var resp=await fetch(CENTRAL_GAS_URL+'?action=login&username='
-      +encodeURIComponent(username)+'&pin='+encodeURIComponent(pin)+'&t='+Date.now(),
-      {method:'GET',cache:'no-cache'});
-    var cr=await resp.json();
-
-    if(!cr.success){
-      if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
-      if(cr.notFound) showRegisterPopup(username);
-      else showToast(cr.message||'Login failed','error');
-      return;
-    }
-
-    _centralUser=cr;
-    var companies=cr.allowedCompanies||[];
-    var companyMap=cr.companies||{};
-
-    if(companies.length===0){
-      if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
-      showToast('No companies assigned. Contact Admin.','error'); return;
-    }
-
-    // ── STAGE 2a: Single company → login directly ──────────
-    if(companies.length===1){
-      setActiveCompany(companies[0]);
-      await _finishLogin(username,pin,loginBtn);
-      return;
-    }
-
-    // ── STAGE 2b: Multiple → show company selector ─────────
-    if(loginBtn){loginBtn.disabled=true;loginBtn.style.display='none';}
-    var selEl=document.getElementById('login-company-select');
-    selEl.innerHTML='';
-    companies.forEach(function(name){
-      var opt=document.createElement('option');
-      opt.value=name; opt.textContent=name;
-      if(name===localStorage.getItem('active_company')) opt.selected=true;
-      selEl.appendChild(opt);
-    });
-    document.getElementById('company-select-wrap').style.display='block';
-    showToast('Please select your company','pending');
-
-  }catch(err){
-    if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
-    showToast('Error: '+err.message,'error');
+  const userMatch = cachedUsers[username] || cachedUsers[username.toLowerCase()];
+  if(!userMatch){ showRegisterPopup(username); return; }
+  const _p = String(userMatch.pin ?? '').trim().replace(/\.0$/, '');
+  if(_p !== String(pin).trim()){
+    showToast(lang==='zh'?'密码错误，请重试':'Wrong PIN, please try again','error'); return;
   }
-}
+  const _s = String(userMatch.status ?? 'active').trim().toLowerCase();
+  if(_s === 'pending'){
+    showPendingPopup(username); return;
+  }
+  if(_s === 'inactive' || _s === 'disabled'){
+    showToast('Account disabled — contact Admin','error'); return;
+  }
 
-// ── Complete login using Central user profile ──────────────────
-async function _finishLogin(username,pin,loginBtn){
-  showToast(lang==='zh'?'正在进入...':'Entering...','pending');
-  if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
-  var userObj={
-    username:    _centralUser.username,
-    name:        _centralUser.name,
-    role:        _centralUser.role,
-    store:       _centralUser.store||'HQ',
-    phone:       _centralUser.phone||'',
-    pin:         pin,
-    status:      'active',
-    homeCompany: _centralUser.homeCompany
-  };
-  _doAppLogin(userObj);
-  setTimeout(function(){ triggerSyncRefresh().catch(function(){}); },1000);
-}
-
-// ── Enter app with validated user object ──────────────────────
-async function _doAppLogin(userMatch){
-  var loginBtn=document.getElementById('login-btn');
-  const _roleRestricted=['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
-  if(_roleRestricted && userMatch.store && userMatch.store!=='HQ'){
+  // ✅ Credentials OK — zone-restrict staff & supervisor
+  const _roleRestricted = ['staff','supervisor'].includes(String(userMatch.role||'').toLowerCase());
+  if(_roleRestricted && userMatch.store && userMatch.store !== 'HQ'){
+    // Ensure work zones are loaded
     if(!cachedWorkZones.length){
       var _wz=loadData('work_zones',[]);
       if(_wz.length) cachedWorkZones=_wz;
@@ -2453,25 +2264,27 @@ async function _doAppLogin(userMatch){
   }
 
   // ✅ Login success
-  currentUser=Object.assign({},userMatch);
-  var _username=currentUser.username; // safe reference for callbacks below
+  currentUser={...userMatch, username};
   // If admin reset this user's device binding, clear it locally
   if(userMatch.deviceReset==='pending'){
     var oldB=loadData('_device_bindings',{});
     Object.keys(oldB).forEach(function(k){
-      if(String(oldB[k]).toLowerCase()===_username) delete oldB[k];
+      if(String(oldB[k]).toLowerCase()===username) delete oldB[k];
     });
     saveData('_device_bindings',oldB);
+    // Tell GAS to confirm clear
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
       headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'confirmDeviceReset',username:_username})}).catch(function(){});
+      body:JSON.stringify({action:'confirmDeviceReset',username:username})}).catch(function(){});
   }
   recordLoginDevice();
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  const isBoss  = currentUser.role === 'boss';
-  const isAdmin = ['admin','boss'].includes(currentUser.role);
-  const isExec  = ['admin','boss','manager'].includes(currentUser.role);
+  const isBoss   = currentUser.role === 'boss';
+  const isBoss2  = currentUser.role === 'boss';
+  const isAdmin  = ['admin','boss'].includes(currentUser.role);
+  const isExec   = ['admin','boss','manager'].includes(currentUser.role);
+  // Permissions-based nav visibility
   applyPermissionsToNav();
   document.getElementById('nav-log').style.display = (isExec&&!isBoss) ? 'flex' : 'none';
   updateTopBar(); updateNavLabels();
@@ -3347,7 +3160,7 @@ async function biometricLogin(){
   try{
     const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
     await navigator.credentials.get({publicKey:{challenge,allowCredentials:[{type:'public-key',id:base64ToArrayBuffer(credId)}],userVerification:'required',timeout:60000}});
-    currentUser=Object.assign({},userMatch);
+    currentUser={...userMatch,username};
     recordLoginDevice();
     document.getElementById('login-screen').classList.remove('active');
     document.getElementById('app-screen').classList.add('active');
@@ -3494,53 +3307,18 @@ function _renderAttendanceContent(){
   }).join('');
   // ── ⚠️ Check for unclosed sessions in recent history ──────────
   var unclosedWarnings='';
-  var _canFix=['admin','manager','supervisor'].includes(currentUser.role);
-  // Scan own missing checkouts (last 7 days)
   for(var _d=1;_d<=7;_d++){
     var _pd=new Date(); _pd.setDate(_pd.getDate()-_d);
     var _pdk=_pd.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
     var _pIn=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided';});
     var _pOut=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_out'&&r.status!=='rejected'&&r.status!=='voided';});
     if(_pIn&&!_pOut){
-      var _fixBtn=_canFix
-        ?'<button onclick="openFixCheckout(\''+(_pIn.id||'')+'\',\''+currentUser.username+'\',\''+_pdk+'\')" '
-          +'style="padding:6px 12px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">'
-          +'⚠️ '+(ZH?'补签退':'Fix Checkout')+'</button>'
-        :'<span style="font-size:11px;color:#b45309;font-weight:700">'+( ZH?'请联系主管':'Ask supervisor')+'</span>';
       unclosedWarnings+='<div style="background:#fff7ed;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
         +'<div style="font-size:18px">⚠️</div>'
         +'<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#92400e">'+(ZH?'未签退：':'Missing checkout: ')+_pdk+'</div>'
-          +'<div style="font-size:11px;color:#b45309">'+(ZH?'于 '+fmtTimeUTC8(_pIn.datetime)+' 签到，未签退':'Checked in at '+fmtTimeUTC8(_pIn.datetime)+' — no checkout')+'</div>'
-        +'</div>'+_fixBtn
+          +'<div style="font-size:11px;color:#b45309">'+(ZH?'您于 '+fmtTimeUTC8(_pIn.datetime)+' 签到但未签退，请联系主管更正。':'Checked in at '+fmtTimeUTC8(_pIn.datetime)+' but no checkout. Ask supervisor to edit.')+'</div>'
+        +'</div>'
       +'</div>';
-    }
-  }
-  // If supervisor/admin — also scan store staff for missing checkouts (last 2 days)
-  if(_canFix){
-    var _allAtt=getAllAttendance();
-    var _storeUsers=_allAtt.filter(function(r){
-      return r.store===currentUser.store && r.username!==currentUser.username;
-    });
-    var _staffUsernames=[...new Set(_storeUsers.map(function(r){return r.username;}))];
-    for(var _sd=1;_sd<=2;_sd++){
-      var _spd=new Date(); _spd.setDate(_spd.getDate()-_sd);
-      var _spdk=_spd.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
-      _staffUsernames.forEach(function(uname){
-        var _sIn=_allAtt.find(function(r){return r.username===uname&&r.dateKey===_spdk&&r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided';});
-        var _sOut=_allAtt.find(function(r){return r.username===uname&&r.dateKey===_spdk&&r.type==='check_out'&&r.status!=='rejected'&&r.status!=='voided';});
-        if(_sIn&&!_sOut){
-          unclosedWarnings+='<div style="background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
-            +'<div style="font-size:18px">👤</div>'
-            +'<div style="flex:1">'
-              +'<div style="font-size:13px;font-weight:800;color:#92400e">'+(_sIn.name||uname)+' — '+_spdk+'</div>'
-              +'<div style="font-size:11px;color:#b45309">'+(ZH?'签到 ':'Check in ')+fmtTimeUTC8(_sIn.datetime)+(ZH?' 未签退':' — no checkout')+'</div>'
-            +'</div>'
-            +'<button onclick="openFixCheckout(\''+(_sIn.id||'')+'\',\''+uname+'\',\''+_spdk+'\')" '
-              +'style="padding:6px 12px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">'
-              +'⚠️ '+(ZH?'补签退':'Fix Checkout')+'</button>'
-          +'</div>';
-        }
-      });
     }
   }
 
@@ -3846,82 +3624,6 @@ function resetStaffAttendance(username,dateKey,recordId){
   showToast(('Attendance reset for ')+username,'success');
   fetchServerAttendance().then(function(){renderAttendanceTab();if(currentTab==='admin')renderAdminTab();});
 }
-// Opens the edit modal to add a missing checkout for a specific user/date
-function openFixCheckout(recordId, username, dateKey){
-  var EN=lang==='en';
-  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='fix-checkout-modal';
-  var sched=null;
-  // Default checkout to end-of-shift or 20:00
-  var defaultTime='20:00';
-  ov.innerHTML='<div class="modal-box">'
-    +'<div class="modal-title" style="color:#92400e">⚠️ '+(EN?'Add Missing Checkout':'Tambah Keluar yang Hilang')+'</div>'
-    +'<div style="background:#fff7ed;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#92400e">'
-      +'<b>'+(EN?'Staff:':'Pekerja:')+' '+username+'</b><br>'
-      +'<b>'+(EN?'Date:':'Tarikh:')+' '+dateKey+'</b><br>'
-      +(EN?'Add the checkout time for this day. This will be saved to the server and the warning will disappear.'
-           :'Tambah masa keluar untuk hari ini. Amaran akan hilang setelah disimpan.')
-    +'</div>'
-    +'<div class="input-wrap"><label class="field-label">'+(EN?'Checkout Time (HH:MM)':'Masa Keluar (HH:MM)')+'</label>'
-      +'<input type="time" id="fix-checkout-time" value="'+defaultTime+'" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);font-size:18px;font-weight:700;text-align:center">'
-    +'</div>'
-    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'
-      +(EN?'⚠️ This edit is recorded in the audit log.':'⚠️ Pengeditan ini direkodkan dalam log audit.')
-    +'</div>'
-    +'<div style="display:flex;gap:10px">'
-      +'<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'fix-checkout-modal\').remove()">'+(EN?'Cancel':'Batal')+'</button>'
-      +'<button class="btn success" style="flex:2" id="fix-checkout-save">'+(EN?'💾 Save Checkout':'💾 Simpan Keluar')+'</button>'
-    +'</div></div>';
-  document.body.appendChild(ov);
-
-  document.getElementById('fix-checkout-save').onclick=function(){
-    var timeVal=document.getElementById('fix-checkout-time').value;
-    if(!timeVal){showToast(EN?'Enter checkout time':'Masukkan masa keluar','error');return;}
-    this.disabled=true; this.textContent=EN?'Saving...':'Menyimpan...';
-
-    // Build the datetime string for this checkout
-    var isoDatetime=dateKey+'T'+timeVal+':00+08:00';
-
-    // Submit as a new check_out record to GAS
-    var newRecord={
-      action:'submitAttendance',
-      type:'check_out',
-      username:username,
-      name:(cachedUsers&&cachedUsers[username]?cachedUsers[username].name:username),
-      store:currentUser.store,
-      role:currentUser.role,
-      dateKey:dateKey,
-      datetime:isoDatetime,
-      status:'present',
-      source:'manual_fix',
-      remark:(EN?'Manual checkout added by '+currentUser.name:'Keluar manual oleh '+currentUser.name),
-      editedBy:currentUser.username,
-      editedAt:nowUTC8()
-    };
-
-    fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify(newRecord)}).catch(function(){});
-
-    // Also update local session so banner disappears immediately
-    var localRec=Object.assign({},newRecord,{
-      id:'fix_'+dateKey+'_'+username+'_checkout',
-      lat:'',lng:'',accuracy:''
-    });
-    if(!_attSession.find(function(r){return r.id===localRec.id;})){
-      _attSession.push(localRec);
-    }
-    // Remove any missed_checkout marker for this date/user
-    var missedId='missed_'+dateKey+'_'+username;
-    var midx=_attSession.findIndex(function(r){return r.id===missedId;});
-    if(midx>=0) _attSession.splice(midx,1);
-
-    ov.remove();
-    showToast((EN?'Checkout saved for '+dateKey:'Keluar disimpan untuk '+dateKey),'success');
-    // Re-render attendance tab so banner disappears
-    renderAttendanceTab();
-  };
-}
-
 function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
   var ex=document.getElementById('att-edit-modal');if(ex)ex.remove();
   var EN=lang==='en';
@@ -4457,21 +4159,6 @@ async function deleteUser(username) {
 // PROFILE TAB
 // ============================================================
 function renderProfileTab() {
-  var allowedCos=_allowedCompanies();
-  var switcher=allowedCos.length>1?`
-    <div class="card" style="border:2px solid #dbeafe">
-      <div class="card-title">🏢 ${lang==='en'?'Switch Company':'Tukar Syarikat'}</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${lang==='en'?'Active:':'Aktif:'} <b>${_activeCompany}</b></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${allowedCos.map(name=>`<button onclick="switchCompanyAndLogout('${name.replace(/'/g,"\\'")}')"
-          style="padding:12px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;
-            border:2px solid ${name===_activeCompany?'#1e3a8a':'var(--border)'};
-            background:${name===_activeCompany?'#eff6ff':'#f8fafc'};color:${name===_activeCompany?'#1e3a8a':'var(--text)'}">
-          ${name===_activeCompany?'✅ ':''} ${name}
-          ${name===_activeCompany?`<span style="float:right;font-size:11px;color:#1e3a8a">${lang==='en'?'Active':'Aktif'}</span>`:''}
-        </button>`).join('')}
-      </div>
-    </div>`:'';
   document.getElementById('tab-profile').innerHTML=`
     <div class="card" style="text-align:center;padding:28px">
       <div style="font-size:54px;margin-bottom:10px">👤</div>
@@ -4479,9 +4166,7 @@ function renderProfileTab() {
       <div style="margin-top:8px"><span class="role-tag ${currentUser.role}">${t(currentUser.role)}</span></div>
       <div style="margin-top:10px;color:var(--text2);font-size:15px">🏪 ${currentUser.store}</div>
       <div style="margin-top:4px;color:var(--text2);font-size:13px">@${currentUser.username}</div>
-      ${_activeCompany?`<div style="margin-top:8px;font-size:12px;font-weight:700;color:#1e3a8a;background:#eff6ff;border-radius:20px;padding:4px 14px;display:inline-block">🏢 ${_activeCompany}</div>`:''}
     </div>
-    ${switcher}
     <div class="card">
       <div class="card-title">${t('changePinTitle')}</div>
       <div class="input-wrap" style="margin-top:12px;">
@@ -4543,19 +4228,7 @@ function doLogout() {
   stopNotifScheduler(); stopInactivityWatcher(); currentUser=null;
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('login-screen').classList.add('active');
-  document.getElementById('login-pin').value='';
-  document.getElementById('login-name').value='';
-  var cw=document.getElementById('company-select-wrap'); if(cw) cw.style.display='none';
-  var lb=document.getElementById('login-btn'); if(lb){lb.style.display='block';lb.disabled=false;lb.textContent='Login 登录';}
-}
-
-function switchCompanyAndLogout(name){
-  if(!_centralUser||!(_centralUser.companies||{})[name]){showToast('Company not available','error');return;}
-  var EN=lang==='en';
-  if(!confirm(EN?'Switch to '+name+'?\nYou will be logged out.':'Tukar ke '+name+'?\nAnda akan log keluar.')) return;
-  setActiveCompany(name);
-  doLogout();
-  showToast((EN?'Switched to ':'Ditukar ke ')+name,'success');
+  document.getElementById('login-pin').value=''; document.getElementById('login-name').value='';
 }
 
 function showToast(msg,type='') {
