@@ -735,7 +735,7 @@ function fmtDateTimeUTC8(s){
 // ═══════════════════════════════════════════════════════════════
 // CENTRAL GAS — paste your Central DB GAS URL here after deploy
 // ═══════════════════════════════════════════════════════════════
-const CENTRAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbyYXJEk-CSSGUltHfBIO0q8Ifxn5PKEDVO2sRuBC2dP1nVSLe5-CyDRzooPmFm5iClE/exec';
+const CENTRAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbz0KTtf706OtPU6iMqfOtrIwzO8ANsaXU45waYjsOia84a-m5bLSp283zfF2T00NAYI/exec';
 
 // Company → Stores mapping — matches Central DB Companies sheet exactly
 const COMPANY_STORES = {
@@ -2412,7 +2412,7 @@ async function _doAppLogin(userMatch){
   }
 
   // ✅ Login success
-  currentUser={...userMatch, username};
+  currentUser=Object.assign({},userMatch);
   // If admin reset this user's device binding, clear it locally
   if(userMatch.deviceReset==='pending'){
     var oldB=loadData('_device_bindings',{});
@@ -3308,7 +3308,7 @@ async function biometricLogin(){
   try{
     const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
     await navigator.credentials.get({publicKey:{challenge,allowCredentials:[{type:'public-key',id:base64ToArrayBuffer(credId)}],userVerification:'required',timeout:60000}});
-    currentUser={...userMatch,username};
+    currentUser=Object.assign({},userMatch);
     recordLoginDevice();
     document.getElementById('login-screen').classList.remove('active');
     document.getElementById('app-screen').classList.add('active');
