@@ -763,11 +763,12 @@ function _isSuperAdmin()    { return _centralUser?!!_centralUser.isSuperAdmin:fa
 
 function setActiveCompany(name){
   if(!_centralUser||!_centralUser.companies) return;
-  var url=_centralUser.companies[name];
-  if(!url){ showToast('No GAS URL for '+name,'error'); return; }
+  var url=_centralUser.companies[name]||'';
   _activeCompany=name;
-  WEB_APP_URL=url;
+  // Accept any URL — placeholder URLs will just fail on sync (handled gracefully)
+  WEB_APP_URL=url.includes('PASTE_')?'':url;
   localStorage.setItem('active_company',name);
+  if(!WEB_APP_URL) showToast('⚠️ Company GAS URL not set. Add it in Central DB Companies sheet.','error');
 }
 var _attSession = []; // in-memory today's records, never wiped by sync
 
@@ -2413,26 +2414,24 @@ async function _doAppLogin(userMatch){
 
   // ✅ Login success
   currentUser=Object.assign({},userMatch);
+  var _username=currentUser.username; // safe reference for callbacks below
   // If admin reset this user's device binding, clear it locally
   if(userMatch.deviceReset==='pending'){
     var oldB=loadData('_device_bindings',{});
     Object.keys(oldB).forEach(function(k){
-      if(String(oldB[k]).toLowerCase()===username) delete oldB[k];
+      if(String(oldB[k]).toLowerCase()===_username) delete oldB[k];
     });
     saveData('_device_bindings',oldB);
-    // Tell GAS to confirm clear
     fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
       headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'confirmDeviceReset',username:username})}).catch(function(){});
+      body:JSON.stringify({action:'confirmDeviceReset',username:_username})}).catch(function(){});
   }
   recordLoginDevice();
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
-  const isBoss   = currentUser.role === 'boss';
-  const isBoss2  = currentUser.role === 'boss';
-  const isAdmin  = ['admin','boss'].includes(currentUser.role);
-  const isExec   = ['admin','boss','manager'].includes(currentUser.role);
-  // Permissions-based nav visibility
+  const isBoss  = currentUser.role === 'boss';
+  const isAdmin = ['admin','boss'].includes(currentUser.role);
+  const isExec  = ['admin','boss','manager'].includes(currentUser.role);
   applyPermissionsToNav();
   document.getElementById('nav-log').style.display = (isExec&&!isBoss) ? 'flex' : 'none';
   updateTopBar(); updateNavLabels();
