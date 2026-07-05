@@ -3307,18 +3307,53 @@ function _renderAttendanceContent(){
   }).join('');
   // ── ⚠️ Check for unclosed sessions in recent history ──────────
   var unclosedWarnings='';
+  var _canFix=['admin','manager','supervisor'].includes(currentUser.role);
+  // Scan own missing checkouts (last 7 days)
   for(var _d=1;_d<=7;_d++){
     var _pd=new Date(); _pd.setDate(_pd.getDate()-_d);
     var _pdk=_pd.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
     var _pIn=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided';});
     var _pOut=getAllAttendance().find(function(r){return r.username===currentUser.username&&r.dateKey===_pdk&&r.type==='check_out'&&r.status!=='rejected'&&r.status!=='voided';});
     if(_pIn&&!_pOut){
+      var _fixBtn=_canFix
+        ?'<button onclick="openFixCheckout(\''+(_pIn.id||'')+'\',\''+currentUser.username+'\',\''+_pdk+'\')" '
+          +'style="padding:6px 12px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">'
+          +'⚠️ '+(ZH?'补签退':'Fix Checkout')+'</button>'
+        :'<span style="font-size:11px;color:#b45309;font-weight:700">'+( ZH?'请联系主管':'Ask supervisor')+'</span>';
       unclosedWarnings+='<div style="background:#fff7ed;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
         +'<div style="font-size:18px">⚠️</div>'
         +'<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#92400e">'+(ZH?'未签退：':'Missing checkout: ')+_pdk+'</div>'
-          +'<div style="font-size:11px;color:#b45309">'+(ZH?'您于 '+fmtTimeUTC8(_pIn.datetime)+' 签到但未签退，请联系主管更正。':'Checked in at '+fmtTimeUTC8(_pIn.datetime)+' but no checkout. Ask supervisor to edit.')+'</div>'
-        +'</div>'
+          +'<div style="font-size:11px;color:#b45309">'+(ZH?'于 '+fmtTimeUTC8(_pIn.datetime)+' 签到，未签退':'Checked in at '+fmtTimeUTC8(_pIn.datetime)+' — no checkout')+'</div>'
+        +'</div>'+_fixBtn
       +'</div>';
+    }
+  }
+  // If supervisor/admin — also scan store staff for missing checkouts (last 2 days)
+  if(_canFix){
+    var _allAtt=getAllAttendance();
+    var _storeUsers=_allAtt.filter(function(r){
+      return r.store===currentUser.store && r.username!==currentUser.username;
+    });
+    var _staffUsernames=[...new Set(_storeUsers.map(function(r){return r.username;}))];
+    for(var _sd=1;_sd<=2;_sd++){
+      var _spd=new Date(); _spd.setDate(_spd.getDate()-_sd);
+      var _spdk=_spd.toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'});
+      _staffUsernames.forEach(function(uname){
+        var _sIn=_allAtt.find(function(r){return r.username===uname&&r.dateKey===_spdk&&r.type==='check_in'&&r.status!=='rejected'&&r.status!=='voided';});
+        var _sOut=_allAtt.find(function(r){return r.username===uname&&r.dateKey===_spdk&&r.type==='check_out'&&r.status!=='rejected'&&r.status!=='voided';});
+        if(_sIn&&!_sOut){
+          unclosedWarnings+='<div style="background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">'
+            +'<div style="font-size:18px">👤</div>'
+            +'<div style="flex:1">'
+              +'<div style="font-size:13px;font-weight:800;color:#92400e">'+(_sIn.name||uname)+' — '+_spdk+'</div>'
+              +'<div style="font-size:11px;color:#b45309">'+(ZH?'签到 ':'Check in ')+fmtTimeUTC8(_sIn.datetime)+(ZH?' 未签退':' — no checkout')+'</div>'
+            +'</div>'
+            +'<button onclick="openFixCheckout(\''+(_sIn.id||'')+'\',\''+uname+'\',\''+_spdk+'\')" '
+              +'style="padding:6px 12px;border-radius:8px;border:none;background:#f59e0b;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">'
+              +'⚠️ '+(ZH?'补签退':'Fix Checkout')+'</button>'
+          +'</div>';
+        }
+      });
     }
   }
 
@@ -3624,6 +3659,82 @@ function resetStaffAttendance(username,dateKey,recordId){
   showToast(('Attendance reset for ')+username,'success');
   fetchServerAttendance().then(function(){renderAttendanceTab();if(currentTab==='admin')renderAdminTab();});
 }
+// Opens the edit modal to add a missing checkout for a specific user/date
+function openFixCheckout(recordId, username, dateKey){
+  var EN=lang==='en';
+  var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='fix-checkout-modal';
+  var sched=null;
+  // Default checkout to end-of-shift or 20:00
+  var defaultTime='20:00';
+  ov.innerHTML='<div class="modal-box">'
+    +'<div class="modal-title" style="color:#92400e">⚠️ '+(EN?'Add Missing Checkout':'Tambah Keluar yang Hilang')+'</div>'
+    +'<div style="background:#fff7ed;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#92400e">'
+      +'<b>'+(EN?'Staff:':'Pekerja:')+' '+username+'</b><br>'
+      +'<b>'+(EN?'Date:':'Tarikh:')+' '+dateKey+'</b><br>'
+      +(EN?'Add the checkout time for this day. This will be saved to the server and the warning will disappear.'
+           :'Tambah masa keluar untuk hari ini. Amaran akan hilang setelah disimpan.')
+    +'</div>'
+    +'<div class="input-wrap"><label class="field-label">'+(EN?'Checkout Time (HH:MM)':'Masa Keluar (HH:MM)')+'</label>'
+      +'<input type="time" id="fix-checkout-time" value="'+defaultTime+'" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);font-size:18px;font-weight:700;text-align:center">'
+    +'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:12px">'
+      +(EN?'⚠️ This edit is recorded in the audit log.':'⚠️ Pengeditan ini direkodkan dalam log audit.')
+    +'</div>'
+    +'<div style="display:flex;gap:10px">'
+      +'<button class="btn secondary" style="flex:1" onclick="document.getElementById(\'fix-checkout-modal\').remove()">'+(EN?'Cancel':'Batal')+'</button>'
+      +'<button class="btn success" style="flex:2" id="fix-checkout-save">'+(EN?'💾 Save Checkout':'💾 Simpan Keluar')+'</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+
+  document.getElementById('fix-checkout-save').onclick=function(){
+    var timeVal=document.getElementById('fix-checkout-time').value;
+    if(!timeVal){showToast(EN?'Enter checkout time':'Masukkan masa keluar','error');return;}
+    this.disabled=true; this.textContent=EN?'Saving...':'Menyimpan...';
+
+    // Build the datetime string for this checkout
+    var isoDatetime=dateKey+'T'+timeVal+':00+08:00';
+
+    // Submit as a new check_out record to GAS
+    var newRecord={
+      action:'submitAttendance',
+      type:'check_out',
+      username:username,
+      name:(cachedUsers&&cachedUsers[username]?cachedUsers[username].name:username),
+      store:currentUser.store,
+      role:currentUser.role,
+      dateKey:dateKey,
+      datetime:isoDatetime,
+      status:'present',
+      source:'manual_fix',
+      remark:(EN?'Manual checkout added by '+currentUser.name:'Keluar manual oleh '+currentUser.name),
+      editedBy:currentUser.username,
+      editedAt:nowUTC8()
+    };
+
+    fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',cache:'no-cache',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify(newRecord)}).catch(function(){});
+
+    // Also update local session so banner disappears immediately
+    var localRec=Object.assign({},newRecord,{
+      id:'fix_'+dateKey+'_'+username+'_checkout',
+      lat:'',lng:'',accuracy:''
+    });
+    if(!_attSession.find(function(r){return r.id===localRec.id;})){
+      _attSession.push(localRec);
+    }
+    // Remove any missed_checkout marker for this date/user
+    var missedId='missed_'+dateKey+'_'+username;
+    var midx=_attSession.findIndex(function(r){return r.id===missedId;});
+    if(midx>=0) _attSession.splice(midx,1);
+
+    ov.remove();
+    showToast((EN?'Checkout saved for '+dateKey:'Keluar disimpan untuk '+dateKey),'success');
+    // Re-render attendance tab so banner disappears
+    renderAttendanceTab();
+  };
+}
+
 function showAttEditModal(recordId,username,dateKey,type,datetimeStr){
   var ex=document.getElementById('att-edit-modal');if(ex)ex.remove();
   var EN=lang==='en';
