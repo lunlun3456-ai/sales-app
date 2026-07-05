@@ -753,8 +753,9 @@ const ALL_COMPANIES  = Object.keys(COMPANY_STORES);
 const STORES   = ['HQ'].concat(Object.values(COMPANY_STORES).flat());
 const BRANCHES = Object.values(COMPANY_STORES).flat();
 
-// Active company GAS URL — set dynamically after central login
-var WEB_APP_URL    = '';
+// Company GAS URL — set dynamically after central login
+// For fallback (before Central GAS configured): paste your existing GAS URL here
+var WEB_APP_URL    = 'https://script.google.com/macros/s/AKfycbyXPbDgndv-K_6kyG8_EFocidQZ6wTnRnnrYkURLXOxvWBrhlFeyze1dM69itKFMhDz7A/exec';
 var _activeCompany = localStorage.getItem('active_company') || '';
 var _centralUser   = null; // full user profile returned by Central GAS
 
@@ -797,8 +798,7 @@ let summaryStoreFilter = 'all';   // 'all' or store name
 let summaryViewMode    = 'today'; // 'today','yesterday','custom_date','month'
 let summaryCustDate    = dateKeyUTC8();
 
-const STORES = ['HQ','Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
-const BRANCHES = ['Bonia Sabindo','Bonia Eastern','Polo Sabindo','Polo Eastern','Gm Sabindo','Gm Eastern'];
+// STORES and BRANCHES are defined above via COMPANY_STORES mapping
 
 function getDeviceId(){
   let id = localStorage.getItem('attendance_device_id');
@@ -2273,6 +2273,43 @@ function showPendingPopup(username){
   document.body.appendChild(ov);
 }
 
+// ── Direct login fallback (used when Central GAS URL not yet set) ──
+// Uses the original single-company WEB_APP_URL login flow
+async function _directFallbackLogin(username,pin,loginBtn){
+  // Try cached users first for instant login
+  var cached=loadData('cached_users',{});
+  if(Object.keys(cached).length>0) cachedUsers=cached;
+
+  // Try fetching live users if WEB_APP_URL is set
+  if(WEB_APP_URL&&!WEB_APP_URL.includes('PASTE_')&&WEB_APP_URL.length>20){
+    try{ await fetchLiveUsers(); }catch(e){}
+  }
+
+  if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='Login 登录';}
+
+  if(Object.keys(cachedUsers).length===0){
+    showToast('Cannot reach server. Check WEB_APP_URL or CENTRAL_GAS_URL.','error'); return;
+  }
+  var userMatch=cachedUsers[username]||cachedUsers[username.toLowerCase()];
+  if(!userMatch){showRegisterPopup(username);return;}
+
+  var _p=String(userMatch.pin??'').trim().replace(/\.0$/,'');
+  if(_p!==String(pin).trim()){showToast('Wrong PIN','error');return;}
+
+  var _s=String(userMatch.status??'active').trim().toLowerCase();
+  if(_s==='pending'){showPendingPopup(username);return;}
+  if(_s==='inactive'||_s==='disabled'){showToast('Account disabled. Contact Admin.','error');return;}
+
+  // Create a minimal _centralUser so the rest of the app works
+  _centralUser={
+    username:username,name:userMatch.name||username,
+    role:userMatch.role||'staff',store:userMatch.store||'HQ',
+    phone:userMatch.phone||'',homeCompany:'',
+    allowedCompanies:[],isSuperAdmin:false,companies:{}
+  };
+  _doAppLogin(userMatch);
+}
+
 // ── Stage 2: after company selected, proceed to login ──────────
 async function _proceedToCompanyLogin(){
   var sel=document.getElementById('login-company-select');
@@ -2299,8 +2336,11 @@ async function doLogin(){
 
   // ── STAGE 1: Central GAS authentication ────────────────────
   try{
+    // ── FALLBACK: If Central GAS not yet configured, use direct login ──
     if(!CENTRAL_GAS_URL||CENTRAL_GAS_URL.includes('PASTE_')){
-      throw new Error('Central GAS URL not configured. Contact Admin.');
+      showToast('⚠️ Central GAS not configured — using direct login','pending');
+      await _directFallbackLogin(username,pin,loginBtn);
+      return;
     }
     var resp=await fetch(CENTRAL_GAS_URL+'?action=login&username='
       +encodeURIComponent(username)+'&pin='+encodeURIComponent(pin)+'&t='+Date.now(),
